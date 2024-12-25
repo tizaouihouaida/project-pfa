@@ -1,39 +1,36 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from django.db import models
-
-class Utilisateur(models.Model):
+class Utilisateur(AbstractUser):
     ROLE_CHOICES = [
         ('gestionnaire_stocks', 'Gestionnaire de Stocks'),
         ('gestionnaire_ventes', 'Gestionnaire de Ventes'),
     ]
 
-    id_User = models.AutoField(primary_key=True)
-    nom = models.CharField(max_length=255)
-    prenom = models.CharField(max_length=255)
-    email = models.EmailField()
-    phone = models.CharField(max_length=15)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
+    phone = models.CharField(max_length=15, blank=True, null=True)
 
-    def creerUser(self):
-        self.save()
+    class Meta:
+        permissions = [('can_view_user', 'Can view user')]
+        verbose_name = 'Utilisateur'
+        verbose_name_plural = 'Utilisateurs'
+        unique_together = (('username', 'email'),)
 
-    def modifierUser(self, nom=None, prenom=None, email=None, phone=None, role=None):
-        if nom:
-            self.nom = nom
-        if prenom:
-            self.prenom = prenom
-        if email:
-            self.email = email
-        if phone:
-            self.phone = phone
-        if role:
-            self.role = role
-        self.save()
-
-    def supprimerUser(self):
-        self.delete()
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='utilisateur_set',
+        blank=True,
+        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
+        verbose_name='groups'
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='utilisateur_set',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions'
+    )
 
     def __str__(self):
-        return f"{self.nom} {self.prenom} {self.role}"
+        return f"{self.username} - {self.role}"
 

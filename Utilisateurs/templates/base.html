@@ -1,0 +1,25 @@
+<!-- Utilisateurs/templates/login.html -->
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-white">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}Titre par défaut{% endblock %}</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="h-full">
+    <header>
+      <h1>Bienvenue sur notre site</h1>
+      <!-- Ajoutez ici un menu de navigation si nécessaire -->
+    </header>
+    <main>
+      {% block content %}
+      <!-- Contenu par défaut -->
+      {% endblock %}
+    </main>
+    
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+  </body>
+</html>

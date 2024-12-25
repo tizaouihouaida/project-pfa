@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mon Profil</title>
+  </head>
+  <body>
+    <h1>Profil de {{ user.username }}</h1>
+    <p>Email: {{ user.email }}</p>
+    <p>Téléphone: {{ user.phone }}</p>
+    <p><a href="{% url 'logout' %}">Se déconnecter</a></p>
+  </body>
+</html>
