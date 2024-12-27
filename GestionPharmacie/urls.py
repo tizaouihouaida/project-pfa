@@ -16,7 +16,7 @@ Including another URLconf
 """
 # GestionPharmacie/urls.py
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from Utilisateurs.views import login_view, registration_view, home_view, logout_view, profile_view
 from GestionStocks.views import stocks_dashboard
 from GestionVentes.views import sales_dashboard
@@ -30,4 +30,5 @@ urlpatterns = [
     path('profile/', profile_view, name='profile'),  # URL pour le profil
     path('stocks_dashboard/', stocks_dashboard, name='stocks_dashboard'),
     path('sales_dashboard/', sales_dashboard, name='sales_dashboard'),
+    path('stocks/', include('GestionStocks.urls')),
 ]

@@ -1,7 +1,5 @@
 from django.db import models
 
-from django.db import models
-
 class CategorieMedicament(models.Model):
     id_Categorie = models.AutoField(primary_key=True)
     nom_Categorie = models.CharField(max_length=255)
@@ -35,7 +33,7 @@ class Medicament(models.Model):
     description = models.TextField()
     id_Categorie = models.ForeignKey('CategorieMedicament', on_delete=models.CASCADE)
     prixUnitaire = models.DecimalField(max_digits=10, decimal_places=2)
-    code_barre = models.IntegerField()
+    est_vendu = models.BooleanField(default=True)
 
     def ajouterMedicament(self):
         self.save()
@@ -49,8 +47,6 @@ class Medicament(models.Model):
             self.id_Categorie = id_Categorie
         if prixUnitaire:
             self.prixUnitaire = prixUnitaire
-        if code_barre:
-            self.code_barre = code_barre
         self.save()
 
     def supprimerMedicament(self):
@@ -63,10 +59,6 @@ class Medicament(models.Model):
     @staticmethod
     def MedicamentParCategorie(categorie_id):
         return Medicament.objects.filter(id_Categorie=categorie_id)
-
-    def __str__(self):
-        return self.nom
-
 
     def __str__(self):
         return self.nom
@@ -99,4 +91,27 @@ class Stock(models.Model):
     def __str__(self):
         return f"Stock {self.id_Stock} - {self.medicament.nom}"
 
-        
+# GestionStocks/models.py
+class Notification(models.Model):
+    message = models.CharField(max_length=255)
+    date = models.DateTimeField(auto_now_add=True)
+    lu = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.message
+
+class Fournisseur(models.Model):
+    nom = models.CharField(max_length=255)
+    contact = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.nom
+
+class Commande(models.Model):
+    medicament = models.ForeignKey('Medicament', on_delete=models.CASCADE)
+    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
+    date_commande = models.DateField(auto_now_add=True)
+    statut = models.CharField(max_length=50, choices=[('en_attente', 'En attente'), ('livrée', 'Livrée')])
+
+    def __str__(self):
+        return f"Commande de {self.medicament.nom} auprès de {self.fournisseur.nom}"

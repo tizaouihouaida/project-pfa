@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Tableau de Bord - Gestion des Stocks</title>
-  </head>
-  <body>
-    <h1>Bienvenue sur le tableau de bord des Gestionnaires de Stocks</h1>
-    <p><a href="{% url 'profile' %}">Voir mon profil</a></p>
-    <p><a href="{% url 'logout' %}">Se déconnecter</a></p>
-    <!-- Ajoutez ici le contenu de votre tableau de bord -->
-  </body>
-</html>
+{% extends 'layout/base.html' %} 
+{% block title %}Tableau de Bord des Stocks{%endblock %}
+{% block main_content %}
+<div class="card-body">
+  <h5 class="card-title fw-semibold mb-4">Sample Page</h5>
+  <p class="mb-0">This is a sample page </p>
+</div>
+{% endblock %}
