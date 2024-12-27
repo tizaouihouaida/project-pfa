@@ -1,65 +1,125 @@
 <!-- Utilisateurs/templates/login.html -->
 {% extends 'base.html' %} 
-
 {% block title %}Connexion{% endblock %} 
-
 {% block content %}
-        <div class="flex min-h-full flex-col justify-center px-2 py-6 lg:px-4 w-full">
-            <div class="sm:mx-auto sm:w-full sm:max-w-md">
-                <img class="mx-auto h-10 w-auto" src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company">
-                <h2 class="mt-10 text-center text-2xl font-bold tracking-tight text-gray-900">Sign in to your account</h2>
-            </div>
-            {% if messages %}
-            <div class="mt-4">
-                {% for message in messages %}
-                    <p class="text-red-500">{{ message }}</p>
-                {% endfor %}
-            </div>
-            {% endif %}
-            <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-lg w-full">
-                 <form method="post" class="space-y-20">
-                    {% csrf_token %}
-                    <div>
-                        <label for="id_username" class="block text-md font-bold text-gray-900">Nom d'Utilisateur</label>
-                            <div class="mt-2">
-                                <div class="flex">
-                                    <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-e-0 border-gray-300 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
-                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"/>
-                                    </svg>
-                                    </span>
-                                    <input type="text" name="username" id="id_username" required class="rounded-none rounded-e-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                </div>
-                            </div>
-                    <div>
-                        <label for="id_role" class="block text-md font-bold text-gray-900 mt-5">Rôle</label>
-                        <div class="mt-2">
-                            <select name="role" id="id_role" required  class="bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                <option value="gestionnaire_stocks">Gestionnaire de Stocks</option>
-                                <option value="gestionnaire_ventes">Gestionnaire de Ventes</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <label for="id_password" class="block text-sm/6 font-medium text-gray-900">Password</label>
-                        </div>
-                        <div class="mt-2">
-                            <input type="password" name="password" id="id_password" autocomplete="current-password" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        </div>
-                    </div>
-                    </div>
-                    <div class=" mt-32 ">
-                        <button type="submit" class=" flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Se connecter</button>
-                    </div>
-                    </form>
-                    <p class="mt-10 text-center text-sm/6 text-gray-500">
-                        Pas encore inscrit ? 
-                        <a href="{% url 'register' %}" class="font-semibold text-indigo-600 hover:text-indigo-500">S'inscrire ici</a>
-                    </p>
-            </div>
-           
-
+<div class="flex min-h-full flex-col justify-center w-full h-full">
+  <div class="sm:mx-auto sm:w-full sm:max-w-md">
+    <img class="mx-auto h-10 w-auto" src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company"/>
+    <h2 class="mt-5 text-center text-2xl font-bold tracking-tight text-gray-900">
+      Connecter vous à votre compte
+    </h2>
+  </div>
+  {% if messages %} 
+  <div id="alert-2" class="flex items-center p-4  text-red-800 rounded-lg bg-red-50  dark:text-red-400 w-[500px] ml-[450px]" role="alert">
+  <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+  </svg>
+  <span class="sr-only">Info</span>
+  {% for message in messages %}
+  <div class="ms-3 text-sm font-medium">
+    {{ message }}
+   
+  </div>
+   {% endfor %} 
+  <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-red-50 text-red-500 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 hover:bg-red-200 inline-flex items-center justify-center h-8 w-8  dark:text-red-400" data-dismiss-target="#alert-2" aria-label="Close">
+    <span class="sr-only">Close</span>
+    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+    </svg>
+  </button>
+</div>
+  {% endif %}
+  <div class="w-96 ml-[500px]">
+    <form method="post" class="space-y-9">
+      {% csrf_token %}
+      <div>
+        <label for="id_username" class="block text-sm font-medium text-gray-900"> 
+          Nom d'utilisateur
+        </label>
+        <div class="mt-2">
+          <div class="flex mb-2">
+            <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-e-0 border-gray-300 rounded-s-md">
+              <svg
+                class="w-4 h-4 text-gray-500 dark:text-gray-400"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"
+                />
+              </svg>
+            </span>
+            <input
+              type="text"
+              name="username"
+              id="id_username"
+              required
+              class="rounded-none rounded-e-lg bg-white border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5"
+            />
+          </div>
         </div>
+        <div class=" mt-5">
+          <label
+            for="id_role"
+            class="block text-sm font-medium text-gray-900"
+            >Rôle</label
+          >
+          <div class="mt-2 mb-2">
+            <select
+              name="role"
+              id="id_role"
+              required
+              class="bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
+            >
+              <option value="gestionnaire_stocks">
+                Gestionnaire de Stocks
+              </option>
+              <option value="gestionnaire_ventes">
+                Gestionnaire de Ventes
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between">
+            <label
+              for="id_password"
+              class="block text-sm font-medium text-gray-900"
+              >Password</label
+            >
+          </div>
+          <div class="mt-2">
+            <input
+              type="password"
+              name="password"
+              id="id_password"
+              autocomplete="current-password"
+              required
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="mt-2">
+        <button
+          type="submit"
+          class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >
+          Se connecter
+        </button>
+      </div>
+    </form>
+    <p class="mt-5 text-center text-sm/6 text-gray-500">
+      Pas encore inscrit ?
+      <a
+        href="{% url 'register' %}"
+        class="font-semibold text-indigo-600 hover:text-indigo-500"
+        >S'inscrire ici</a
+      >
+    </p>
+  </div>
+</div>
 {% endblock %}

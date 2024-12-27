@@ -17,7 +17,7 @@ def login_view(request):
                 login(request, user)
                 return redirect('stocks_dashboard' if role == 'gestionnaire_stocks' else 'sales_dashboard')
             else:
-                messages.error(request, "Identifiants invalides ou rôle incorrect.")
+                messages.error(request, "Identifiants invalides ou rôle incorrect ou mot de passe incorrect")
         else:
             messages.error(request, "Le formulaire est invalide.")
     else:

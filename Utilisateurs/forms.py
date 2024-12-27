@@ -10,9 +10,16 @@ class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput, label='Mot de passe')
 
 class RegistrationForm(forms.ModelForm):
+    username = forms.CharField(label='Nom d’utilisateur', max_length=150)
+    email = forms.EmailField(label='Email')
+    phone = forms.CharField(label='Téléphone', max_length=15, required=False)
     password = forms.CharField(widget=forms.PasswordInput, label='Mot de passe')
     password_confirm = forms.CharField(widget=forms.PasswordInput, label='Confirmer le mot de passe')
-
+    role = forms.ChoiceField(choices=[
+        ('gestionnaire_stocks', 'Gestionnaire de Stocks'),
+        ('gestionnaire_ventes', 'Gestionnaire de Ventes'),
+    ], label='Rôle')
+    
     class Meta:
         model = Utilisateur
         fields = ['username', 'email', 'role', 'phone', 'password']
