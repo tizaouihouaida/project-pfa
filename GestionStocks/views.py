@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from Utilisateurs.decorators import role_required
 from django.utils import timezone
@@ -16,18 +16,36 @@ def stocks_dashboard(request):
 @login_required
 @role_required('gestionnaire_stocks')
 def categories_index(request):
-    username = request.user.username
-    categories = CategorieMedicament.objects.all()
+    categories = CategorieMedicament.objects.filter(est_cachee=False)  # Filtrer les catégories cachées
 
     if request.method == 'POST':
         form = CategorieForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('categories_index')  # Redirige vers l'index après l'ajout
+            return redirect('categories_index')
     else:
         form = CategorieForm()
 
     return render(request, 'categories/index.html', {'categories': categories, 'form': form}) # Assurez-vous que ce template existe
+
+def edit_category(request, id):
+    category = get_object_or_404(CategorieMedicament, id_Categorie=id)
+    if request.method == 'POST':
+        form = CategorieForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            return redirect('categories_index')
+    else:
+        form = CategorieForm(instance=category)
+
+    return render(request, 'categories/edit.html', {'form': form, 'category': category})
+
+def delete_category(request, id):
+    category = get_object_or_404(CategorieMedicament, id_Categorie=id)
+    category.est_cachee = True  # Marquer comme cachée
+    category.save()
+    return redirect('categories_index')
+
 @login_required
 @role_required('gestionnaire_stocks')
 def medicaments_index(request):

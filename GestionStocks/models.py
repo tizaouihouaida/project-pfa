@@ -4,6 +4,7 @@ class CategorieMedicament(models.Model):
     id_Categorie = models.AutoField(primary_key=True)
     nom_Categorie = models.CharField(max_length=255)
     description = models.TextField()
+    est_cachee = models.BooleanField(default=False)
 
     def ajouterCategorie(self):
         self.save()
