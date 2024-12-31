@@ -35,11 +35,12 @@ class Medicament(models.Model):
     id_Categorie = models.ForeignKey('CategorieMedicament', on_delete=models.CASCADE)
     prixUnitaire = models.DecimalField(max_digits=10, decimal_places=2)
     est_vendu = models.BooleanField(default=True)
+    image = models.ImageField(upload_to='medicament_image/', blank=True, null=True)
 
     def ajouterMedicament(self):
         self.save()
 
-    def modifierMedicament(self, nom=None, description=None, id_Categorie=None, prixUnitaire=None, code_barre=None):
+    def modifierMedicament(self, nom=None, description=None, id_Categorie=None, prixUnitaire=None):
         if nom:
             self.nom = nom
         if description:
@@ -68,6 +69,7 @@ class Stock(models.Model):
     id_Stock = models.AutoField(primary_key=True)
     medicament = models.ForeignKey(Medicament, on_delete=models.CASCADE)
     quantite = models.IntegerField()
+    date_preemption = models.DateField(null=True, blank=True)
     seuil_alerte = models.IntegerField()
 
     def ajouterStock(self):
@@ -104,6 +106,9 @@ class Notification(models.Model):
 class Fournisseur(models.Model):
     nom = models.CharField(max_length=255)
     contact = models.CharField(max_length=255)
+    email = models.EmailField(null=True, blank=True)
+    telephone = models.CharField(max_length=20, null=True, blank=True)
+    adresse = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.nom
@@ -111,7 +116,8 @@ class Fournisseur(models.Model):
 class Commande(models.Model):
     medicament = models.ForeignKey('Medicament', on_delete=models.CASCADE)
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
-    date_commande = models.DateField(auto_now_add=True)
+    quantite_commander = models.FloatField(null=True, blank=True)
+    date_commande = models.DateTimeField (auto_now_add=True)
     statut = models.CharField(max_length=50, choices=[('en_attente', 'En attente'), ('livrée', 'Livrée')])
 
     def __str__(self):

@@ -1,0 +1,70 @@
+{% extends 'layout/base.html' %} {% block title %}Ajouter un Médicament{%
+endblock %} {% block main_content %}
+<div class="container mx-auto p-4">
+  <h2 class="text-lg font-bold">Ajouter un Médicament</h2>
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    action="{% url 'medicament_create' %}"
+  >
+    {% csrf_token %}
+    <div class="mb-4">
+      <label for="nom" class="block">Nom</label>
+      <input
+        type="text"
+        name="nom"
+        id="nom"
+        class="border p-2 rounded w-full"
+        required
+      />
+    </div>
+    <div class="mb-4">
+      <label for="description" class="block">Description</label>
+      <textarea
+        name="description"
+        id="description"
+        class="border p-2 rounded w-full"
+        required
+      ></textarea>
+    </div>
+    <div class="mb-4">
+      <label for="id_Categorie" class="block">Catégorie</label>
+      <select
+        name="id_Categorie"
+        id="id_Categorie"
+        class="border p-2 rounded w-full"
+        required
+      >
+        <option value="">Sélectionnez une catégorie</option>
+        {% for categorie in categories %}
+        <option value="{{ categorie.id_Categorie }}">
+          {{ categorie.nom_Categorie }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-4">
+      <label for="prixUnitaire" class="block">Prix Unitaire</label>
+      <input
+        type="number"
+        name="prixUnitaire"
+        id="prixUnitaire"
+        class="border p-2 rounded w-full"
+        required
+      />
+    </div>
+    <div class="mb-4">
+      <label for="image" class="block">Image</label>
+      <input
+        type="file"
+        name="image"
+        id="image"
+        class="border p-2 rounded w-full"
+      />
+    </div>
+    <button type="submit" class="bg-blue-500 text-white p-2 rounded">
+      Ajouter
+    </button>
+  </form>
+</div>
+{% endblock %}

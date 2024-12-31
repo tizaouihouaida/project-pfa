@@ -31,4 +31,5 @@ urlpatterns = [
     path('stocks_dashboard/', stocks_dashboard, name='stocks_dashboard'),
     path('sales_dashboard/', sales_dashboard, name='sales_dashboard'),
     path('stocks/', include('GestionStocks.urls')),
+    path('sales/', include('GestionVentes.urls')),
 ]

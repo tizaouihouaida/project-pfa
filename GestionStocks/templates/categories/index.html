@@ -1,209 +1,116 @@
-{% extends 'layout/base.html' %} {% block title %}Catégories{% endblock %}
-{%block main_content %}
-<div class="container mx-auto p-4">
-  <div class="flex justify-between mb-4">
-    <input
-      type="text"
-      placeholder="Rechercher par nom"
-      class="border p-2 rounded"
-      id="search"
-    />
-    <button id="addCategoryBtn" class="bg-blue-500 text-white p-2 rounded">
-      Ajouter une Catégorie
-    </button>
-  </div>
+{% extends 'layout/base.html' %}
+{% block title %}Catégories{% endblock %}
+{% block main_content %}
+<div class="flex justify-between items-center mb-4">
+    <input type="text" id="search" placeholder="Rechercher une catégorie..." class="border p-2 rounded w-1/2" onkeyup="searchCategories()">
+    <button onclick="openCreateModal()" class="bg-blue-500 text-white p-2 rounded">Ajouter une Catégorie</button>
+</div>
 
-  <table class="min-w-full border-4 border-solid border-gray-900">
+<table class="min-w-full border mt-4">
     <thead>
-      <tr>
-        <th class="border text-center">N°</th>
-        <th class="border text-center">Nom</th>
-        <th class="border text-center">Actions</th>
-      </tr>
+        <tr>
+            <th class="border">N°</th>
+            <th class="border">Nom</th>
+            <th class="border">Actions</th>
+        </tr>
     </thead>
-    <tbody>
-      {% for category in categories %}
-      <tr>
-        <td class="border text-center">{{ category.id_Categorie }}</td>
-        <td class="border text-center">{{ category.nom_Categorie }}</td>
-        <td class="border text-center ml-10">
-          <div class="flex space-x-2 justify-center">
-            <button
-              onclick="openEditModal({{ category.id_Categorie }}, '{{ category.nom_Categorie|escapejs }}', '{{ category.description|escapejs }}')"
-              class="text-white bg-yellow-500 hover:bg-yellow-400 focus:outline-none focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-4 py-1 text-center me-2 mb-2"
-            >
-              <svg
-                class="w-6 h-6 text-gray-800 dark:text-white"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
-                />
-              </svg>
-            </button>
-            <form
-              action="{% url 'delete_category' category.id_Categorie %}"
-              method="post"
-              style="display: inline"
-            >
-              {% csrf_token %}
-              <button
-                type="submit"
-                class="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-1 text-center me-2 mb-2"
-              >
-                <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"
-                  />
-                </svg>
-              </button>
-            </form>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
+    <tbody id="categoryTableBody">
+        {% for category in categories %}
+        <tr>
+            <td class="border">{{ forloop.counter }}</td>
+            <td class="border">{{ category.nom_Categorie }}</td>
+            <td class="border">
+                <button onclick="openEditModal({{ category.id_Categorie }}, '{{ category.nom_Categorie|escapejs }}')" class="bg-yellow-500 text-white p-1 rounded">Modifier</button>
+                <form action="{% url 'category_delete' category.id_Categorie %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-500 text-white p-1 rounded">Supprimer</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
-  </table>
+</table>
 
-  <!-- Modal pour ajouter une catégorie -->
-  <div
-    id="addCategoryModal"
-    class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
-  >
-    <div class="bg-white p-4 rounded w-96 ml-48">
-      <h2 class="text-lg font-bold">Ajouter une Catégorie</h2>
-      <form method="post">
-        {% csrf_token %}
-        <div class="mb-4 mt-4">
-          <label
-            for="nom_Categorie"
-            class="block text-md font-semibold text-black"
-            >Nom de la Catégorie</label
-          >
-          <input
-            type="text"
-            name="nom_Categorie"
-            id="nom_Categorie"
-            class="border-4 border-solid border-gray-300 p-2 rounded w-full"
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label
-            for="description"
-            class="block block text-md font-semibold text-black"
-            >Description</label
-          >
-          <textarea
-            name="description"
-            id="description"
-            class="border-4 border-solid border-gray-300 p-2 rounded w-full"
-            required
-          ></textarea>
-        </div>
-        <button type="submit" class="bg-blue-500 text-white p-2 rounded">
-          Ajouter
-        </button>
-        <button
-          type="button"
-          id="closeAddModal"
-          class="bg-gray-300 p-2 rounded ml-3"
-        >
-          Annuler
-        </button>
-      </form>
+<!-- Modal pour ajouter une catégorie -->
+<div id="createCategoryModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-4 rounded w-96">
+        <h2 class="text-lg font-bold">Ajouter une Catégorie</h2>
+        <form id="createCategoryForm" method="post" action="{% url 'category_create' %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="nom_Categorie" class="block">Nom</label>
+                <input type="text" name="nom_Categorie" id="nom_Categorie" class="border p-2 rounded w-full" required>
+            </div>
+            <div class="mb-4">
+                <label for="description" class="block">Description</label>
+                <textarea name="description" id="description" class="border p-2 rounded w-full"></textarea>
+            </div>
+            <button type="submit" class="bg-blue-500 text-white p-2 rounded">Ajouter</button>
+            <button type="button" onclick="closeCreateModal()" class="bg-gray-300 p-2 rounded">Annuler</button>
+        </form>
     </div>
-  </div>
+</div>
 
-  <!-- Modal pour éditer une catégorie -->
-  <div
-    id="editCategoryModal"
-    class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
-  >
-    <div class="bg-white p-4 rounded w-96 ml-48">
-      <h2 class="text-lg font-bold">Éditer la Catégorie</h2>
-      <form id="editCategoryForm" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="id_Categorie" id="editCategoryId" />
-        <div class="mb-4">
-          <label for="editNom" class="block text-md font-semibold text-black"
-            >Nom de la Catégorie</label
-          >
-          <input
-            type="text"
-            name="nom_Categorie"
-            id="editNom"
-            class="border-4 border-solid border-gray-300 p-2 rounded w-full"
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label
-            for="editDescription"
-            class="block block text-md font-semibold text-black"
-            >Description</label
-          >
-          <textarea
-            name="description"
-            id="editDescription"
-            class="border-4 border-solid border-gray-300 p-2 rounded w-full"
-            required
-          ></textarea>
-        </div>
-        <button type="submit" class="bg-blue-500 text-white p-2 rounded">
-          Mettre à jour
-        </button>
-        <button
-          type="button"
-          id="closeEditModal"
-          class="bg-gray-300 p-2 rounded"
-        >
-          Annuler
-        </button>
-      </form>
+<!-- Modal pour éditer une catégorie -->
+<div id="editCategoryModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-4 rounded w-96">
+        <h2 class="text-lg font-bold">Modifier une Catégorie</h2>
+        <form id="editCategoryForm" method="post" action="{% url 'category_edit' 0 %}">
+            {% csrf_token %}
+            <input type="hidden" name="id_Categorie" id="editCategoryId">
+            <div class="mb-4">
+                <label for="editNom" class="block">Nom</label>
+                <input type="text" name="nom_Categorie" id="editNom" class="border p-2 rounded w-full" required>
+            </div>
+            <div class="mb-4">
+                <label for="editDescription" class="block">Description</label>
+                <textarea name="description" id="editDescription" class="border p-2 rounded w-full"></textarea>
+            </div>
+            <button type="submit" class="bg-blue-500 text-white p-2 rounded">Mettre à jour</button>
+            <button type="button" onclick="closeEditModal()" class="bg-gray-300 p-2 rounded">Annuler</button>
+        </form>
     </div>
-  </div>
+</div>
 
-  <script>
-    function openEditModal(id, nom, description) {
-      document.getElementById("editCategoryId").value = id;
-      document.getElementById("editNom").value = nom;
-      document.getElementById("editDescription").value = description;
-      document.getElementById("editCategoryModal").classList.remove("hidden");
+<script>
+    function openCreateModal() {
+        document.getElementById("createCategoryModal").classList.remove("hidden");
     }
 
-    document.getElementById("addCategoryBtn").onclick = function () {
-      document.getElementById("addCategoryModal").classList.remove("hidden");
-    };
+    function closeCreateModal() {
+        document.getElementById("createCategoryModal").classList.add("hidden");
+    }
 
-    document.getElementById("closeAddModal").onclick = function () {
-      document.getElementById("addCategoryModal").classList.add("hidden");
-    };
+    function openEditModal(id, nom) {
+        document.getElementById("editCategoryId").value = id;
+        document.getElementById("editNom").value = nom;
+        document.getElementById("editCategoryModal").classList.remove("hidden");
+    }
 
-    document.getElementById("closeEditModal").onclick = function () {
-      document.getElementById("editCategoryModal").classList.add("hidden");
-    };
-  </script>
-</div>
+    function closeEditModal() {
+        document.getElementById("editCategoryModal").classList.add("hidden");
+    }
+
+    function searchCategories() {
+        const input = document.getElementById("search");
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById("categoryTableBody");
+        const rows = table.getElementsByTagName("tr");
+
+        for (let i = 0; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName("td");
+            let found = false;
+            for (let j = 0; j < cells.length; j++) {
+                if (cells[j]) {
+                    const txtValue = cells[j].textContent || cells[j].innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            rows[i].style.display = found ? "" : "none";
+        }
+    }
+</script>
 {% endblock %}
