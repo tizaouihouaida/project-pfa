@@ -18,6 +18,18 @@
 
       <div class="body-wrapper">
         {% include 'layout/header.html' %}
+        {% if form.errors %}
+          <div class="alert alert-danger">
+              <ul>
+                  {% for field in form %}
+                      {% for error in field.errors %}
+                          <li>{{ error }}</li>
+                      {% endfor %}
+                  {% endfor %}
+              </ul>
+          </div>
+        {% endif %}
+
         <div class="container-fluid">
           {% block main_content %} {% endblock %}
         </div>

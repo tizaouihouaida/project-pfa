@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from Utilisateurs.decorators import role_required
 from django.utils import timezone
-from .models import Stock, Notification, Medicament
+from .models import Stock, Notification, Medicament, Fournisseur, Commande
 from .models import CategorieMedicament
 from .forms import CategorieForm, MedicamentForm
 import os
@@ -21,12 +22,12 @@ def stocks_dashboard(request):
 @role_required('gestionnaire_stocks')
 def categories_index(request):
     username = request.user.username
-    categories = CategorieMedicament.objects.filter(est_cachee=False)  # Récupérer les catégories visibles
+    categories = CategorieMedicament.afficheLesCategories() # Récupérer les catégories visibles
     return render(request, 'categories/index.html', {'categories': categories, 'username': username,})
 
 @login_required
 @role_required('gestionnaire_stocks')
-def category_create(request):
+def categories_create(request):
     if request.method == 'POST':
         form = CategorieForm(request.POST)
         if form.is_valid():
@@ -38,47 +39,27 @@ def category_create(request):
 
 @login_required
 @role_required('gestionnaire_stocks')
-def category_edit(request, id):
-    category = get_object_or_404(CategorieMedicament, id_Categorie=id)
+def categories_edit(request, id):
+    categorie = get_object_or_404(CategorieMedicament, id_Categorie=id)
     if request.method == 'POST':
-        form = CategorieForm(request.POST, instance=category)
+        form = CategorieForm(request.POST, instance=categorie)
         if form.is_valid():
             form.save()
-            return redirect('categories_index')  # Redirige vers la liste des catégories
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
-        form = CategorieForm(instance=category)
-    return render(request, 'categories/update.html', {'form': form})
+        form = CategorieForm(instance=categorie)
+    return render(request, 'categories/index.html', {'form': form})
 
 @login_required
 @role_required('gestionnaire_stocks')
-def category_delete(request, id):
-    category = get_object_or_404(CategorieMedicament, id_Categorie=id)
-    category.est_cachee = True  # Mettre à jour le champ est_cachee
-    category.save()
-    return redirect('categories_index')  # Redirige vers la liste des catégories
-
-@login_required
-@role_required('gestionnaire_stocks')
-def medicaments_index(request):
-    categories = CategorieMedicament.objects.all()  # Récupérer toutes les catégories
-    username = request.user.username
-    medicaments = Medicament.objects.all()  # Affiche uniquement les médicaments non vendus
+def categories_delete(request, id):
+    categorie = get_object_or_404(CategorieMedicament, id_Categorie=id)
     if request.method == 'POST':
-        form = MedicamentForm(request.POST, request.FILES)
-        if form.is_valid():
-            medicament = form.save(commit=False)
-            medicament.est_vendu = False  # Par défaut, le médicament n'est pas vendu
-            medicament.save()
-            return redirect('medicaments_index')  # Redirige vers la liste des médicaments
-    else:
-        form = MedicamentForm()
-
-    return render(request, 'medicaments/index.html', {
-        'medicaments': medicaments,
-        'categories': categories,
-        'username': username,
-        'form': form,
-    })
+        categorie.cacherCategorie()
+        return redirect('categories_index')
+    return redirect('categories_index')  # Redirige vers la liste des catégories
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -98,13 +79,24 @@ def stocks_index(request):
 @login_required
 @role_required('gestionnaire_stocks')
 def medicaments_index(request):
-    medicaments = Medicament.objects.all()  # Récupérer les médicaments disponibles
-    categories = CategorieMedicament.objects.all()  # Récupérer toutes les catégories
+    medicaments = Medicament.afficheLesMedicaments()  # Récupérer les médicaments disponibles
+    categories = CategorieMedicament.afficheLesCategories()  # Récupérer toutes les catégories
     username = request.user.username
+    if request.method == 'POST':
+        form = MedicamentForm(request.POST, request.FILES)
+        if form.is_valid():
+            medicament = form.save(commit=False)
+            medicament.est_vendu = False  # Par défaut, le médicament n'est pas vendu
+            medicament.save()
+            return redirect('medicaments_index')  # Redirige vers la liste des médicaments
+    else:
+        form = MedicamentForm()
+
     return render(request, 'medicaments/index.html', {
         'medicaments': medicaments,
         'categories': categories,
-        'username': username
+        'username': username,
+        'form': form,
     })
 
 @login_required
@@ -136,12 +128,13 @@ def medicament_list(request):
 
 @login_required
 @role_required('gestionnaire_stocks')
-def medicament_delete(request, id):
+def medicament_hide(request, id):
     medicament = get_object_or_404(Medicament, id_Medicament=id)
     if request.method == 'POST':
-        medicament.delete()
+        medicament.cacherMedicament()
         return redirect('medicaments_index')
-    return render(request, 'medicaments/confirm_delete.html', {'medicament': medicament})
+    return redirect('medicaments_index')
+
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -176,4 +169,27 @@ def medicament_update(request, id_Medicament):
     return render(request, 'medicaments/update.html', {'medicament': medicament, 'categories': categories})
 
 
-# Ajoutez d'autres vues pour update et delete
+@login_required
+@role_required('gestionnaire_stocks')
+def fournisseurs_index(request):
+    username = request.user.username
+    fournisseurs = Fournisseur.objects.all()
+    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username,}) # Assurez-vous que ce template existe
+
+
+@login_required
+@role_required('gestionnaire_stocks')
+def commandes_index(request):
+    username = request.user.username
+    commandes = Commande.objects.all()
+    return render(request, 'commandes/index.html', {'commandes': commandes, 'username': username})
+
+
+@login_required
+@role_required('gestionnaire_stocks')
+def livrer_commande(request, id):
+    commande = get_object_or_404(Commande, id=id)
+    if request.method == 'POST':
+        commande.livrer_commande()
+        return redirect('commandes_index')
+    return redirect('commandes_index')

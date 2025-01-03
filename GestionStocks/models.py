@@ -16,26 +16,27 @@ class CategorieMedicament(models.Model):
             self.description = description
         self.save()
 
-    def supprimerCategorie(self):
-        self.delete()
+    def cacherCategorie(self):
+        self.est_cachee = True
+        self.save()
+        Medicament.objects.filter(id_Categorie=self).update(est_cachee=True)
 
     @staticmethod
     def afficheLesCategories():
-        return CategorieMedicament.objects.all()
+        return CategorieMedicament.objects.filter(est_cachee=False)
 
     def __str__(self):
         return self.nom_Categorie
-
-
 
 class Medicament(models.Model):
     id_Medicament = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=255)
     description = models.TextField()
-    id_Categorie = models.ForeignKey('CategorieMedicament', on_delete=models.CASCADE)
     prixUnitaire = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to='medicament_images/', null=True, blank=True)
+    id_Categorie = models.ForeignKey(CategorieMedicament, on_delete=models.CASCADE)
     est_vendu = models.BooleanField(default=False)
-    image = models.ImageField(upload_to='medicament_images/', blank=True, null=True)
+    est_cachee = models.BooleanField(default=False)
 
     def ajouterMedicament(self):
         self.save()
@@ -51,16 +52,17 @@ class Medicament(models.Model):
             self.prixUnitaire = prixUnitaire
         self.save()
 
-    def supprimerMedicament(self):
-        self.delete()
+    def cacherMedicament(self):
+        self.est_cachee = True
+        self.save()
 
     @staticmethod
     def afficheLesMedicaments():
-        return Medicament.objects.all()
+        return Medicament.objects.filter(est_cachee=False)
 
     @staticmethod
     def MedicamentParCategorie(categorie_id):
-        return Medicament.objects.filter(id_Categorie=categorie_id)
+        return Medicament.objects.filter(id_Categorie=categorie_id, est_cachee=False)
 
     def __str__(self):
         return self.nom
@@ -94,7 +96,6 @@ class Stock(models.Model):
     def __str__(self):
         return f"Stock {self.id_Stock} - {self.medicament.nom}"
 
-# GestionStocks/models.py
 class Notification(models.Model):
     message = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
@@ -116,9 +117,20 @@ class Fournisseur(models.Model):
 class Commande(models.Model):
     medicament = models.ForeignKey('Medicament', on_delete=models.CASCADE)
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
-    quantite_commander = models.FloatField(null=True, blank=True)
-    date_commande = models.DateTimeField (auto_now_add=True)
+    quantite_commande = models.FloatField(null=True, blank=True)
+    date_commande = models.DateTimeField(auto_now_add=True)
     statut = models.CharField(max_length=50, choices=[('en_attente', 'En attente'), ('livrée', 'Livrée')])
 
     def __str__(self):
         return f"Commande de {self.medicament.nom} auprès de {self.fournisseur.nom}"
+
+    def livrer_commande(self):
+        if self.statut == 'livrée':
+            return
+        self.medicament.est_vendu = False
+        self.medicament.save()
+        stock, created = Stock.objects.get_or_create(medicament=self.medicament)
+        stock.quantite += self.quantite_commande
+        stock.save()
+        self.statut = 'livrée'
+        self.save()

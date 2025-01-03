@@ -1,6 +1,6 @@
-{% extends 'layout/base.html' %} {% block title %}Médicaments{%endblock %} {%
-load static %} {%block main_content %}
-
+{% extends 'layout/base.html' %}
+{% block title %}Médicaments{% endblock %}
+{% block main_content %}
 <div class="flex justify-between items-center mb-4">
   <h2 class="text-xl font-bold">Liste des Médicaments</h2>
   <button
@@ -18,15 +18,14 @@ load static %} {%block main_content %}
       <th class="border">Nom</th>
       <th class="border">Prix Unitaire</th>
       <th class="border">Catégorie</th>
-      <th class="border">Actions</th>
+      <th class="border flex justify-center">Actions</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody id="medicamentTableBody">
     {% for medicament in medicaments %}
     <tr>
       <td class="border">
         {% if medicament.image %}
-
         <img
           src="{{ medicament.image.url }}"
           alt="{{ medicament.nom }}"
@@ -35,26 +34,25 @@ load static %} {%block main_content %}
         {% else %} Pas d'image {% endif %}
       </td>
       <td class="border">{{ medicament.nom }}</td>
-
       <td class="border">{{ medicament.prixUnitaire }}</td>
       <td class="border">{{ medicament.id_Categorie.nom_Categorie }}</td>
-      <td class="border">
+      <td class="border flex justify-center">
         <button
           onclick="openEditModal({{ medicament.id_Medicament }}, '{{ medicament.nom|escapejs }}', '{{ medicament.description|escapejs }}', '{{ medicament.prixUnitaire }}', '{{ medicament.image.url }}', '{{ medicament.id_Categorie.id_Categorie }}')"
-          class="bg-yellow-500 text-white p-1 rounded"
+          class="text-yellow-700 border border-yellow-700 hover:bg-yellow-500 hover:text-white focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-yellow-500 dark:text-yellow-500 dark:hover:text-white dark:focus:ring-yellow-800 dark:hover:bg-yellow-500"
         >
-          Éditer
+          <svg class="w-6 h-6 text-yellow-700 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"/>
+          </svg>
         </button>
-        <form
-          action="{% url 'medicament_delete' medicament.id_Medicament %}"
-          method="post"
-          style="display: inline"
+        <button
+          onclick="confirmDeleteMedicament({{ medicament.id_Medicament }}, '{{ medicament.nom|escapejs }}')"
+          class="text-red-700 border border-red-700 hover:bg-red-500 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500"
         >
-          {% csrf_token %}
-          <button type="submit" class="bg-red-500 text-white p-1 rounded">
-            Supprimer
-          </button>
-        </form>
+          <svg class="w-8 h-8 text-red-700 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
+          </svg>
+        </button>
       </td>
     </tr>
     {% endfor %}
@@ -73,53 +71,53 @@ load static %} {%block main_content %}
       enctype="multipart/form-data"
       action="{% url 'medicament_create' %}"
     >
-      {% csrf_token %} {% if error %}
-      <div class="error">{{ error }}</div>
-      {% endif %}
-      <div class="mb-4">
-        <label for="nom" class="block">Nom</label>
-        <input
-          type="text"
-          name="nom"
-          id="nom"
-          class="border p-2 rounded w-full"
-          required
-        />
-      </div>
-      <div class="mb-4">
-        <label for="description" class="block">Description</label>
-        <textarea
-          name="description"
-          id="description"
-          class="border p-2 rounded w-full"
-          required
-        ></textarea>
-      </div>
-      <div class="mb-4">
-        <label for="id_Categorie" class="block">Catégorie</label>
-        <select
-          name="id_Categorie"
-          id="id_Categorie"
-          class="border p-2 rounded w-full"
-          required
-        >
-          <option value="">Sélectionnez une catégorie</option>
-          {% for categorie in categories %}
-          <option value="{{ categorie.id_Categorie }}">
-            {{ categorie.nom_Categorie }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="mb-4">
-        <label for="prixUnitaire" class="block">Prix Unitaire</label>
-        <input
-          type="number"
-          name="prixUnitaire"
-          id="prixUnitaire"
-          class="border p-2 rounded w-full"
-          required
-        />
+      {% csrf_token %}
+      <div class="grid grid-cols-2 gap-4">
+        <div class="mb-4">
+          <label for="nom" class="block">Nom</label>
+          <input
+            type="text"
+            name="nom"
+            id="nom"
+            class="border p-2 rounded w-full"
+            required
+          />
+        </div>
+        <div class="mb-4">
+          <label for="id_Categorie" class="block">Catégorie</label>
+          <select
+            name="id_Categorie"
+            id="id_Categorie"
+            class="border p-2 rounded w-full"
+            required
+          >
+            <option value="">Sélectionnez une catégorie</option>
+            {% for categorie in categories %}
+            <option value="{{ categorie.id_Categorie }}">
+              {{ categorie.nom_Categorie }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="description" class="block">Description</label>
+          <textarea
+            name="description"
+            id="description"
+            class="border p-2 rounded w-full"
+            required
+          ></textarea>
+        </div>
+        <div class="mb-4">
+          <label for="prixUnitaire" class="block">Prix Unitaire</label>
+          <input
+            type="number"
+            name="prixUnitaire"
+            id="prixUnitaire"
+            class="border p-2 rounded w-full"
+            required
+          />
+        </div>
       </div>
       <div class="mb-4">
         <label for="image" class="block">Image</label>
@@ -157,52 +155,54 @@ load static %} {%block main_content %}
       method="post"
       enctype="multipart/form-data"
       action="{% url 'medicament_update' 0 %}"
+      onsubmit="updateFormAction()"
     >
       {% csrf_token %}
       <input type="hidden" name="id_Medicament" id="editMedicamentId" />
-      <div class="mb-4">
-        <label for="editNom" class="block">Nom</label>
-        <input
-          type="text"
-          name="nom"
-          id="editNom"
-          class="border p-2 rounded w-full"
-          required
-        />
-      </div>
-      <div class="mb-4">
-        <label for="editDescription" class="block">Description</label>
-        <textarea
-          name="description"
-          id="editDescription"
-          class="border p-2 rounded w-full"
-          required
-        ></textarea>
-      </div>
-      <div class="mb-4">
-        <label for="editPrixUnitaire" class="block">Prix Unitaire</label>
-        <input
-          type="number"
-          name="prixUnitaire"
-          id="editPrixUnitaire"
-          class="border p-2 rounded w-full"
-          required
-        />
-      </div>
-      <div class="mb-4">
-        <label for="editCategorie" class="block">Catégorie</label>
-        <select
-          name="id_Categorie"
-          id="editCategorie"
-          class="border p-2 rounded w-full"
-          required
-        >
-          {% for category in categories %}
-          <option value="{{ category.id_Categorie }}">
-            {{ category.nom_Categorie }}
-          </option>
-          {% endfor %}
-        </select>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="mb-4">
+          <label for="editNom" class="block">Nom</label>
+          <input
+            type="text"
+            name="nom"
+            id="editNom"
+            class="border p-2 rounded w-full"
+            required
+          />
+        </div>
+        <div class="mb-4">
+          <label for="editCategorie" class="block">Catégorie</label>
+          <select
+            name="id_Categorie"
+            id="editCategorie"
+            class="border p-2 rounded w-full"
+            required
+          >
+            {% for category in categories %}
+            <option value="{{ category.id_Categorie }}">
+              {{ category.nom_Categorie }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="editDescription" class="block">Description</label>
+          <textarea
+            name="description"
+            id="editDescription"
+            class="border p-2 rounded w-full"
+          ></textarea>
+        </div>
+        <div class="mb-4">
+          <label for="editPrixUnitaire" class="block">Prix Unitaire</label>
+          <input
+            type="number"
+            name="prixUnitaire"
+            id="editPrixUnitaire"
+            class="border p-2 rounded w-full"
+            required
+          />
+        </div>
       </div>
       <div class="mb-4">
         <label for="editImage" class="block"
@@ -226,6 +226,47 @@ load static %} {%block main_content %}
         Annuler
       </button>
     </form>
+  </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div
+  class="modal fade"
+  id="deleteMedicamentConfirmationModal"
+  tabindex="-1"
+  aria-labelledby="deleteMedicamentConfirmationModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteMedicamentConfirmationModalLabel">
+          Confirmer la Suppression
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteMedicamentConfirmationMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <form id="deleteMedicamentForm" method="post" action="">
+          {% csrf_token %}
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Non
+          </button>
+          <button type="submit" class="btn btn-danger">Oui</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -258,42 +299,21 @@ load static %} {%block main_content %}
     document.getElementById("editMedicamentModal").classList.add("hidden");
   }
 
-  function submitCreateForm() {
-    const form = document.getElementById("createMedicamentForm");
-    const formData = new FormData(form);
-    fetch(form.action, {
-      method: "POST",
-      body: formData,
-      headers: {
-        "X-CSRFToken": "{{ csrf_token }}",
-      },
-    }).then((response) => {
-      if (response.ok) {
-        location.reload(); // Actualiser la page pour voir le nouveau médicament
-      } else {
-        alert("Erreur lors de l'ajout du médicament.");
-      }
-    });
-    return false; // Empêche le rechargement de la page
+  function confirmDeleteMedicament(id, nom) {
+    document.getElementById(
+      "deleteMedicamentConfirmationMessage"
+    ).innerText = `Êtes-vous sûr de vouloir supprimer le médicament "${nom}" ?`;
+    document.getElementById("deleteMedicamentForm").action = "{% url 'medicament_hide' 0 %}".replace("0", id);
+    var myModal = new bootstrap.Modal(
+      document.getElementById("deleteMedicamentConfirmationModal")
+    );
+    myModal.show();
   }
 
-  function submitEditForm() {
+  function updateFormAction() {
+    const id = document.getElementById("editMedicamentId").value;
     const form = document.getElementById("editMedicamentForm");
-    const formData = new FormData(form);
-    fetch(form.action, {
-      method: "POST",
-      body: formData,
-      headers: {
-        "X-CSRFToken": "{{ csrf_token }}",
-      },
-    }).then((response) => {
-      if (response.ok) {
-        location.reload(); // Actualiser la page pour voir les modifications
-      } else {
-        alert("Erreur lors de la mise à jour du médicament.");
-      }
-    });
-    return false; // Empêche le rechargement de la page
+    form.action = "{% url 'medicament_update' 0 %}".replace("0", id);
   }
 
   function searchMedicaments() {
@@ -317,11 +337,5 @@ load static %} {%block main_content %}
       rows[i].style.display = found ? "" : "none";
     }
   }
-
-  document.getElementById("editMedicamentForm").onsubmit = function () {
-    const form = this;
-    const id = document.getElementById("editMedicamentId").value;
-    form.action = "{% url 'medicament_update' 0 %}".replace("0", id);
-  };
 </script>
 {% endblock %}

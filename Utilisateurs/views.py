@@ -41,7 +41,7 @@ def registration_view(request):
 def home_view(request):
     return redirect('login')  # Redirige vers la page de connexion
 @login_required
-def profile_view(request):
+def profile(request):
     user = request.user  # Récupère l'utilisateur connecté
     if request.method == 'POST':
         # Mettre à jour les informations de l'utilisateur
@@ -65,3 +65,32 @@ def profile_view(request):
 def logout_view(request):
     logout(request)  # Déconnexion de l'utilisateur
     return redirect('login')  # Redirige vers la page de connexion
+
+@login_required
+def delete_account(request):
+    if request.method == 'POST':
+        user = request.user
+        user.delete()  # Supprime l'utilisateur
+        return redirect('login')  # Redirige vers la page de connexion
+    return render(request, 'confirm_delete.html')
+
+  # Optionnel : afficher une page de confirmation
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if new_password == confirm_password:
+            user = request.user
+            if user.check_password(current_password):
+                user.set_password(new_password)
+                user.save()
+                update_session_auth_hash(request, user)  # Garder l'utilisateur connecté
+                return redirect('profil')  # Redirige vers la page de profil
+            else:
+                # Gérer l'erreur de mot de passe actuel incorrect
+                pass  # Ajoutez votre logique ici
+
+    return render(request, 'profile.html', {'user': request.user})
