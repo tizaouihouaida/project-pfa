@@ -1,0 +1,327 @@
+{% extends 'layout/base.html' %} {% block title %}Médicaments{%endblock %} {%
+load static %} {%block main_content %}
+
+<div class="flex justify-between items-center mb-4">
+  <h2 class="text-xl font-bold">Liste des Médicaments</h2>
+  <button
+    onclick="openCreateModal()"
+    class="bg-blue-500 text-white p-2 rounded"
+  >
+    Ajouter un Médicament
+  </button>
+</div>
+
+<table class="min-w-full border mt-4">
+  <thead>
+    <tr>
+      <th class="border">Image</th>
+      <th class="border">Nom</th>
+      <th class="border">Prix Unitaire</th>
+      <th class="border">Catégorie</th>
+      <th class="border">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for medicament in medicaments %}
+    <tr>
+      <td class="border">
+        {% if medicament.image %}
+
+        <img
+          src="{{ medicament.image.url }}"
+          alt="{{ medicament.nom }}"
+          class="w-16 h-16 object-cover"
+        />
+        {% else %} Pas d'image {% endif %}
+      </td>
+      <td class="border">{{ medicament.nom }}</td>
+
+      <td class="border">{{ medicament.prixUnitaire }}</td>
+      <td class="border">{{ medicament.id_Categorie.nom_Categorie }}</td>
+      <td class="border">
+        <button
+          onclick="openEditModal({{ medicament.id_Medicament }}, '{{ medicament.nom|escapejs }}', '{{ medicament.description|escapejs }}', '{{ medicament.prixUnitaire }}', '{{ medicament.image.url }}', '{{ medicament.id_Categorie.id_Categorie }}')"
+          class="bg-yellow-500 text-white p-1 rounded"
+        >
+          Éditer
+        </button>
+        <form
+          action="{% url 'medicament_delete' medicament.id_Medicament %}"
+          method="post"
+          style="display: inline"
+        >
+          {% csrf_token %}
+          <button type="submit" class="bg-red-500 text-white p-1 rounded">
+            Supprimer
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Modal pour ajouter un médicament -->
+<div
+  id="createMedicamentModal"
+  class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
+>
+  <div class="bg-white p-4 rounded w-96">
+    <h2 class="text-lg font-bold">Ajouter un Médicament</h2>
+    <form
+      method="post"
+      enctype="multipart/form-data"
+      action="{% url 'medicament_create' %}"
+    >
+      {% csrf_token %} {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+      <div class="mb-4">
+        <label for="nom" class="block">Nom</label>
+        <input
+          type="text"
+          name="nom"
+          id="nom"
+          class="border p-2 rounded w-full"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label for="description" class="block">Description</label>
+        <textarea
+          name="description"
+          id="description"
+          class="border p-2 rounded w-full"
+          required
+        ></textarea>
+      </div>
+      <div class="mb-4">
+        <label for="id_Categorie" class="block">Catégorie</label>
+        <select
+          name="id_Categorie"
+          id="id_Categorie"
+          class="border p-2 rounded w-full"
+          required
+        >
+          <option value="">Sélectionnez une catégorie</option>
+          {% for categorie in categories %}
+          <option value="{{ categorie.id_Categorie }}">
+            {{ categorie.nom_Categorie }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="prixUnitaire" class="block">Prix Unitaire</label>
+        <input
+          type="number"
+          name="prixUnitaire"
+          id="prixUnitaire"
+          class="border p-2 rounded w-full"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label for="image" class="block">Image</label>
+        <input
+          type="file"
+          name="image"
+          id="image"
+          class="border p-2 rounded w-full"
+          required
+        />
+      </div>
+      <button type="submit" class="bg-blue-500 text-white p-2 rounded">
+        Ajouter
+      </button>
+      <button
+        type="button"
+        onclick="closeCreateModal()"
+        class="bg-gray-300 p-2 rounded"
+      >
+        Annuler
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal pour éditer un médicament -->
+<div
+  id="editMedicamentModal"
+  class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
+>
+  <div class="bg-white p-4 rounded w-96">
+    <h2 class="text-lg font-bold">Éditer un Médicament</h2>
+    <form
+      id="editMedicamentForm"
+      method="post"
+      enctype="multipart/form-data"
+      action="{% url 'medicament_update' 0 %}"
+    >
+      {% csrf_token %}
+      <input type="hidden" name="id_Medicament" id="editMedicamentId" />
+      <div class="mb-4">
+        <label for="editNom" class="block">Nom</label>
+        <input
+          type="text"
+          name="nom"
+          id="editNom"
+          class="border p-2 rounded w-full"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label for="editDescription" class="block">Description</label>
+        <textarea
+          name="description"
+          id="editDescription"
+          class="border p-2 rounded w-full"
+          required
+        ></textarea>
+      </div>
+      <div class="mb-4">
+        <label for="editPrixUnitaire" class="block">Prix Unitaire</label>
+        <input
+          type="number"
+          name="prixUnitaire"
+          id="editPrixUnitaire"
+          class="border p-2 rounded w-full"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label for="editCategorie" class="block">Catégorie</label>
+        <select
+          name="id_Categorie"
+          id="editCategorie"
+          class="border p-2 rounded w-full"
+          required
+        >
+          {% for category in categories %}
+          <option value="{{ category.id_Categorie }}">
+            {{ category.nom_Categorie }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="editImage" class="block"
+          >Image (laisser vide si pas de changement)</label
+        >
+        <input
+          type="file"
+          name="image"
+          id="editImage"
+          class="border p-2 rounded w-full"
+        />
+      </div>
+      <button type="submit" class="bg-blue-500 text-white p-2 rounded">
+        Mettre à jour
+      </button>
+      <button
+        type="button"
+        onclick="closeEditModal()"
+        class="bg-gray-300 p-2 rounded"
+      >
+        Annuler
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openCreateModal() {
+    document.getElementById("createMedicamentModal").classList.remove("hidden");
+  }
+
+  function closeCreateModal() {
+    document.getElementById("createMedicamentModal").classList.add("hidden");
+  }
+
+  function openEditModal(
+    id,
+    nom,
+    description,
+    prixUnitaire,
+    imageUrl,
+    id_Categorie
+  ) {
+    document.getElementById("editMedicamentId").value = id;
+    document.getElementById("editNom").value = nom;
+    document.getElementById("editDescription").value = description;
+    document.getElementById("editPrixUnitaire").value = prixUnitaire;
+    document.getElementById("editCategorie").value = id_Categorie;
+    document.getElementById("editMedicamentModal").classList.remove("hidden");
+  }
+
+  function closeEditModal() {
+    document.getElementById("editMedicamentModal").classList.add("hidden");
+  }
+
+  function submitCreateForm() {
+    const form = document.getElementById("createMedicamentForm");
+    const formData = new FormData(form);
+    fetch(form.action, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+    }).then((response) => {
+      if (response.ok) {
+        location.reload(); // Actualiser la page pour voir le nouveau médicament
+      } else {
+        alert("Erreur lors de l'ajout du médicament.");
+      }
+    });
+    return false; // Empêche le rechargement de la page
+  }
+
+  function submitEditForm() {
+    const form = document.getElementById("editMedicamentForm");
+    const formData = new FormData(form);
+    fetch(form.action, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+    }).then((response) => {
+      if (response.ok) {
+        location.reload(); // Actualiser la page pour voir les modifications
+      } else {
+        alert("Erreur lors de la mise à jour du médicament.");
+      }
+    });
+    return false; // Empêche le rechargement de la page
+  }
+
+  function searchMedicaments() {
+    const input = document.getElementById("search");
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById("medicamentTableBody");
+    const rows = table.getElementsByTagName("tr");
+
+    for (let i = 0; i < rows.length; i++) {
+      const cells = rows[i].getElementsByTagName("td");
+      let found = false;
+      for (let j = 0; j < cells.length; j++) {
+        if (cells[j]) {
+          const txtValue = cells[j].textContent || cells[j].innerText;
+          if (txtValue.toLowerCase().indexOf(filter) > -1) {
+            found = true;
+            break;
+          }
+        }
+      }
+      rows[i].style.display = found ? "" : "none";
+    }
+  }
+
+  document.getElementById("editMedicamentForm").onsubmit = function () {
+    const form = this;
+    const id = document.getElementById("editMedicamentId").value;
+    form.action = "{% url 'medicament_update' 0 %}".replace("0", id);
+  };
+</script>
+{% endblock %}

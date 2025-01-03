@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 from .forms import LoginForm, RegistrationForm
 from .models import Utilisateur
 from django.contrib.auth.decorators import login_required
@@ -41,7 +43,24 @@ def home_view(request):
 @login_required
 def profile_view(request):
     user = request.user  # Récupère l'utilisateur connecté
-    return render(request, 'profile.html', {'user': user})  # Passe l'utilisateur au template
+    if request.method == 'POST':
+        # Mettre à jour les informations de l'utilisateur
+        user.username = request.POST.get('username')
+        user.email = request.POST.get('email')
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.save()  # Enregistrer les modifications
+
+        # Gérer le changement de mot de passe
+        password_form = PasswordChangeForm(request.user, request.POST)
+        if password_form.is_valid():
+            user = password_form.save()
+            update_session_auth_hash(request, user)  # Garder l'utilisateur connecté après le changement de mot de passe
+            return redirect('login')  # Rediriger vers la page de connexion
+
+    else:
+        password_form = PasswordChangeForm(user)
+    return render(request, 'profile.html', {'user': user, 'password_form': password_form})  # Passe l'utilisateur au template
 
 def logout_view(request):
     logout(request)  # Déconnexion de l'utilisateur

@@ -20,6 +20,9 @@ from django.urls import path, include
 from Utilisateurs.views import login_view, registration_view, home_view, logout_view, profile_view
 from GestionStocks.views import stocks_dashboard
 from GestionVentes.views import sales_dashboard
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,3 +36,5 @@ urlpatterns = [
     path('stocks/', include('GestionStocks.urls')),
     path('sales/', include('GestionVentes.urls')),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

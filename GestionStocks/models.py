@@ -34,8 +34,8 @@ class Medicament(models.Model):
     description = models.TextField()
     id_Categorie = models.ForeignKey('CategorieMedicament', on_delete=models.CASCADE)
     prixUnitaire = models.DecimalField(max_digits=10, decimal_places=2)
-    est_vendu = models.BooleanField(default=True)
-    image = models.ImageField(upload_to='medicament_image/', blank=True, null=True)
+    est_vendu = models.BooleanField(default=False)
+    image = models.ImageField(upload_to='medicament_images/', blank=True, null=True)
 
     def ajouterMedicament(self):
         self.save()
