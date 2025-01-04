@@ -1,8 +1,14 @@
 from django.urls import path
-from .views import profile, delete_account, change_password  # Importez la vue de changement de mot de passe
+from . import views
 
 urlpatterns = [
-    path('profil/', profile, name='profil'),  # Assurez-vous que cette ligne est présente
-    path('delete_account/', delete_account, name='delete_account'),  # Assurez-vous que cette ligne est présente
-    path('change_password/', change_password, name='change_password'),  # Ajoutez cette ligne
+    path('profil/', views.profile, name='profil'),
+    path('delete_account/', views.delete_account, name='delete_account'),
+    path('change_password/', views.change_password, name='change_password'),
+    path('change_password_ventes/', views.change_password_ventes, name='change_password_ventes'),
+    path('profil_vente/', views.profile_vente, name='profil_vente'),
+    path('login/', views.login_view, name='login'),
+    path('register/', views.registration_view, name='register'),
+    path('', views.home_view, name='home'),
+    path('logout/', views.logout_view, name='logout'),
 ]

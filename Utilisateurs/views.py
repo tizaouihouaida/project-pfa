@@ -31,50 +31,48 @@ def registration_view(request):
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])  # Hachage du mot de passe
+            user.set_password(form.cleaned_data['password'])
             user.save()
-            return redirect('login')  # Redirige vers la page de connexion
+            return redirect('login')
     else:
         form = RegistrationForm()
     return render(request, 'register.html', {'form': form})
 
 def home_view(request):
-    return redirect('login')  # Redirige vers la page de connexion
+    return redirect('login')
+
 @login_required
 def profile(request):
-    user = request.user  # Récupère l'utilisateur connecté
+    user = request.user
     if request.method == 'POST':
-        # Mettre à jour les informations de l'utilisateur
         user.username = request.POST.get('username')
         user.email = request.POST.get('email')
         user.first_name = request.POST.get('first_name')
         user.last_name = request.POST.get('last_name')
-        user.save()  # Enregistrer les modifications
+        user.save()
 
-        # Gérer le changement de mot de passe
         password_form = PasswordChangeForm(request.user, request.POST)
         if password_form.is_valid():
             user = password_form.save()
-            update_session_auth_hash(request, user)  # Garder l'utilisateur connecté après le changement de mot de passe
-            return redirect('login')  # Rediriger vers la page de connexion
+            update_session_auth_hash(request, user)
+            return redirect('login')
 
     else:
         password_form = PasswordChangeForm(user)
-    return render(request, 'profile.html', {'user': user, 'password_form': password_form})  # Passe l'utilisateur au template
+    return render(request, 'profile.html', {'user': user, 'password_form': password_form})
 
 def logout_view(request):
-    logout(request)  # Déconnexion de l'utilisateur
-    return redirect('login')  # Redirige vers la page de connexion
+    logout(request)
+    return redirect('login')
 
 @login_required
 def delete_account(request):
     if request.method == 'POST':
         user = request.user
-        user.delete()  # Supprime l'utilisateur
-        return redirect('login')  # Redirige vers la page de connexion
+        user.delete()
+        return redirect('login')
     return render(request, 'confirm_delete.html')
 
-  # Optionnel : afficher une page de confirmation
 @login_required
 def change_password(request):
     if request.method == 'POST':
@@ -87,10 +85,48 @@ def change_password(request):
             if user.check_password(current_password):
                 user.set_password(new_password)
                 user.save()
-                update_session_auth_hash(request, user)  # Garder l'utilisateur connecté
-                return redirect('profil')  # Redirige vers la page de profil
+                update_session_auth_hash(request, user)
+                return redirect('profil')
             else:
-                # Gérer l'erreur de mot de passe actuel incorrect
-                pass  # Ajoutez votre logique ici
+                messages.error(request, "Mot de passe actuel incorrect.")
 
     return render(request, 'profile.html', {'user': request.user})
+
+@login_required
+def profile_vente(request):
+    user = request.user
+    if request.method == 'POST':
+        user.username = request.POST.get('username')
+        user.email = request.POST.get('email')
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.save()
+
+        password_form = PasswordChangeForm(request.user, request.POST)
+        if password_form.is_valid():
+            user = password_form.save()
+            update_session_auth_hash(request, user)
+            return redirect('login')
+
+    else:
+        password_form = PasswordChangeForm(user)
+    return render(request, 'profile_vente.html', {'user': user, 'password_form': password_form})
+
+@login_required
+def change_password_ventes(request):
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if new_password == confirm_password:
+            user = request.user
+            if user.check_password(current_password):
+                user.set_password(new_password)
+                user.save()
+                update_session_auth_hash(request, user)
+                return redirect('profil_vente')
+            else:
+                messages.error(request, "Mot de passe actuel incorrect.")
+
+    return render(request, 'profile_vente.html', {'user': request.user})
