@@ -72,7 +72,7 @@ Utilisateurs : Application pour la gestion des utilisateurs.
   ```bash
    git checkout -b ma-branche
   ```
-
+travailler sur votre branche, la base de donnée est dispo jusqu'à la fin du projet donc plus bésoin de faire des migrations
  ### 5. Commiter vos modifications
  ```bash
    git add .
@@ -87,4 +87,7 @@ Utilisateurs : Application pour la gestion des utilisateurs.
  ```
 
 ### 7. Ouvrir une Pull Request
+fait un pull request avec une description précise de ce que vous avez eu à faire. Je viendrai
+le voir et si c'est bon le merge au projet
+
     
