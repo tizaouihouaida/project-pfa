@@ -44,7 +44,7 @@
         <li class="sidebar-item">
           <a
             class="sidebar-link"
-            href=""
+            href="{% url 'ventes_index' %}"
             aria-expanded="false"
           >
             <span>
@@ -84,89 +84,13 @@
                 />
               </svg>
             </span>
-            <span class="hide-menu">Fonctionnalités 0</span>
+            <span class="hide-menu">Rapport des ventes</span>
           </a>
-        </li>
+       
         <li class="sidebar-item">
           <a
             class="sidebar-link"
-            href=""
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="icon icon-tabler icons-tabler-filled icon-tabler-pill"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M20.207 3.793a5.95 5.95 0 0 1 0 8.414l-8 8a5.95 5.95 0 0 1 -8.414 -8.414l8 -8a5.95 5.95 0 0 1 8.414 0m-7 1.414l-4.294 4.293l5.586 5.586l4.294 -4.292a3.95 3.95 0 1 0 -5.586 -5.586"
-                />
-              </svg>
-            </span>
-            <span class="hide-menu">Fonctionnalités 1</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href=""
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-stack-backward"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M14 12l6 -3l-8 -4l-8 4l6 3" />
-                <path
-                  d="M10 12l-6 3l8 4l8 -4l-6 -3l-2 1z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-            <span class="hide-menu">Fonctionnalités 2</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-             href=""
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="24px"
-                viewBox="0 -960 960 960"
-                width="24px"
-                fill="#434343"
-              >
-                <path
-                  d="M240-120q-66 0-113-47T80-280q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm480 0q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm-480-80q33 0 56.5-23.5T320-280q0-33-23.5-56.5T240-360q-33 0-56.5 23.5T160-280q0 33 23.5 56.5T240-200Zm480 0q33 0 56.5-23.5T800-280q0-33-23.5-56.5T720-360q-33 0-56.5 23.5T640-280q0 33 23.5 56.5T720-200ZM480-520q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T560-680q0-33-23.5-56.5T480-760q-33 0-56.5 23.5T400-680q0 33 23.5 56.5T480-600Zm0-80Zm240 400Zm-480 0Z"
-                />
-              </svg>
-            </span>
-            <span class="hide-menu">Fonctionnalités 3</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-             href=""
+             href="{% url 'pos_index' %}"
             aria-expanded="false"
           >
             <span>
@@ -184,7 +108,7 @@
                 />
               </svg>
             </span>
-            <span class="hide-menu">Fonctionnalités 4</span>
+            <span class="hide-menu">Point de vente</span>
           </a>
         </li>
         <li class="nav-small-cap">

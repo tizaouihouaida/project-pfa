@@ -1,9 +1,12 @@
 from django.db import models
 from Utilisateurs.models import Utilisateur
+from GestionStocks.models import Medicament
+from django.utils import timezone
+
 class Vente(models.Model):
     id_Vente = models.AutoField(primary_key=True)
     id_User = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
-    dateVente = models.DateField()
+    dateVente = models.DateTimeField(default=timezone.now)  # Utiliser DateTimeField pour inclure l'heure
     totalVente = models.DecimalField(max_digits=10, decimal_places=2)
 
     def enregistrerVente(self):
@@ -20,16 +23,15 @@ class Vente(models.Model):
 
     @staticmethod
     def afficherVenteJournaliere(date):
-        return Vente.objects.filter(dateVente=date)
+        return Vente.objects.filter(dateVente__date=date)  # Filtrer par date sans l'heure
 
     def __str__(self):
         return f"Vente {self.id_Vente} - {self.dateVente} - {self.totalVente}"
 
-
 class DetailVente(models.Model):
     id_DetailVente = models.AutoField(primary_key=True)
-    id_Vente = models.ForeignKey(Vente, on_delete=models.CASCADE)
-    id_Medicaments = models.CharField(max_length=255)
+    id_Vente = models.ForeignKey(Vente, related_name='details', on_delete=models.CASCADE)
+    id_Medicaments = models.ForeignKey(Medicament, on_delete=models.CASCADE)  # Utiliser ForeignKey
     quantiteVendu = models.IntegerField()
     sousTotal = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -49,5 +51,3 @@ class DetailVente(models.Model):
 
     def __str__(self):
         return f"DetailVente {self.id_DetailVente} - {self.id_Vente}"
-
-
