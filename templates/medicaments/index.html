@@ -1,11 +1,16 @@
 {% extends 'layout/base.html' %}
 {% block title %}Médicaments{% endblock %}
 {% block main_content %}
+
+<div class=" flex flex-row h-[130px] justify-center">
+        <h1 class="text-2xl font-bold mb-4 pt-[65px]">Liste des Médicaments</h1>
+        {% load static %}
+            <img src="{% static 'assets\images\profile\medicament.png' %}" alt="" width="200" height="200" class=" ml-28">
+</div>
 <div class="flex justify-between items-center mb-4">
-  <h2 class="text-xl font-bold">Liste des Médicaments</h2>
   <button
     onclick="openCreateModal()"
-    class="bg-blue-500 text-white p-2 rounded"
+    class="bg-blue-500 text-white p-2 rounded mt-4"
   >
     Ajouter un Médicament
   </button>
