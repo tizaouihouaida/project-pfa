@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class CategorieMedicament(models.Model):
     id_Categorie = models.AutoField(primary_key=True)
     nom_Categorie = models.CharField(max_length=255)
@@ -106,11 +107,28 @@ class Notification(models.Model):
 
 class Fournisseur(models.Model):
     nom = models.CharField(max_length=255)
-    contact = models.CharField(max_length=255)
     email = models.EmailField(null=True, blank=True)
     telephone = models.CharField(max_length=20, null=True, blank=True)
     adresse = models.TextField(null=True, blank=True)
 
+    def ajouterFournisseur(self):
+        self.save()
+
+    def modifierFournisseur(self, nom=None, email=None, telephone=None, adresse=None):
+        if nom:
+            self.nom = nom
+        if email:
+            self.email = email
+        if telephone:
+            self.telephone = telephone
+        if adresse:
+            self.adresse = adresse
+        self.save()
+    def supprimerFournisseur(self):
+        self.delete()
+    def afficheLesFournisseurs(self):
+        return Fournisseur.objects.all()
+    
     def __str__(self):
         return self.nom
 
