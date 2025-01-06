@@ -1,0 +1,33 @@
+<div class="card">
+    <div class="card-body">
+        
+        <p class="card-text"> Vendeur :   {{ vente.id_User.username }}</p>
+        <p class="card-text">
+            {% if vente.dateVente %}
+                Date de Vente: {{ vente.dateVente|date:"d/m/Y H:i" }}
+            {% else %}
+                Date de Vente: Non spécifiée
+            {% endif %}
+        </p>
+        <p class="card-text">Total Vente: {{ vente.totalVente }}</p>
+    </div>
+</div>
+<h3 class="mt-4">Détails des Produits Vendus</h3>
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Produit</th>
+            <th>Quantité Vendue</th>
+            <th>Sous-Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for detail in details %}
+            <tr>
+                <td>{{ detail.id_Medicaments.nom }}</td>
+                <td>{{ detail.quantiteVendu }}</td>
+                <td>{{ detail.sousTotal }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
