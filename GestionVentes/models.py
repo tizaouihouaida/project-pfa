@@ -1,6 +1,6 @@
 from django.db import models
 from Utilisateurs.models import Utilisateur
-from GestionStocks.models import Medicament
+from GestionStocks.models import Medicament, Stock
 from django.utils import timezone
 
 class Vente(models.Model):

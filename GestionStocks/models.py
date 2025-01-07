@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class CategorieMedicament(models.Model):
     id_Categorie = models.AutoField(primary_key=True)
     nom_Categorie = models.CharField(max_length=255)
@@ -31,7 +32,7 @@ class CategorieMedicament(models.Model):
 class Medicament(models.Model):
     id_Medicament = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField() 
     prixUnitaire = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='medicament_images/', null=True, blank=True)
     id_Categorie = models.ForeignKey(CategorieMedicament, on_delete=models.CASCADE)
@@ -59,7 +60,11 @@ class Medicament(models.Model):
     @staticmethod
     def afficheLesMedicaments():
         return Medicament.objects.filter(est_cachee=False)
-
+    
+    @staticmethod
+    def afficheMedicamentStock():
+        return Medicament.objects.filter(est_vendu=False)
+    
     @staticmethod
     def MedicamentParCategorie(categorie_id):
         return Medicament.objects.filter(id_Categorie=categorie_id, est_cachee=False)
@@ -85,13 +90,26 @@ class Stock(models.Model):
         if seuil_alerte:
             self.seuil_alerte = seuil_alerte
         self.save()
-
+    @staticmethod
+    def afficheLesMedicaments():
+        return Stock.medicament.afficheLesMedicaments()
     def supprimerStock(self):
         self.delete()
 
     @staticmethod
     def afficheLesStocks():
         return Stock.objects.all()
+    
+    def clean(self):
+        # Valider que le seuil d'alerte ne dépasse pas la quantité
+        if self.seuil_alerte > self.quantite:
+            raise ValidationError({
+                'seuil_alerte': 'Le seuil d\'alerte ne peut pas être supérieur à la quantité'
+            })
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Appelle la validation avant la sauvegarde
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Stock {self.id_Stock} - {self.medicament.nom}"
@@ -106,11 +124,28 @@ class Notification(models.Model):
 
 class Fournisseur(models.Model):
     nom = models.CharField(max_length=255)
-    contact = models.CharField(max_length=255)
     email = models.EmailField(null=True, blank=True)
     telephone = models.CharField(max_length=20, null=True, blank=True)
     adresse = models.TextField(null=True, blank=True)
 
+    def ajouterFournisseur(self):
+        self.save()
+
+    def modifierFournisseur(self, nom=None, email=None, telephone=None, adresse=None):
+        if nom:
+            self.nom = nom
+        if email:
+            self.email = email
+        if telephone:
+            self.telephone = telephone
+        if adresse:
+            self.adresse = adresse
+        self.save()
+    def supprimerFournisseur(self):
+        self.delete()
+    def afficheLesFournisseurs(self):
+        return Fournisseur.objects.all()
+    
     def __str__(self):
         return self.nom
 
