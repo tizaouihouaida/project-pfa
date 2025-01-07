@@ -1,13 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.template.loader import render_to_string  # Importer render_to_string
+from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import Vente, DetailVente
-from GestionStocks.models import Medicament, CategorieMedicament  # Importez depuis GestionStocks
+from GestionStocks.models import Medicament, CategorieMedicament
 from .forms import VenteForm, DetailVenteForm
 from Utilisateurs.decorators import role_required
+from django.db.models import Sum, DecimalField, IntegerField
+from django.db.models.functions import Coalesce
 from django.utils import timezone
-from datetime import timedelta
+from decimal import Decimal
 import json
 import logging
 
@@ -25,7 +27,42 @@ def pos_index(request):
 def sales_dashboard(request):
     today = timezone.now().date()
     ventes = Vente.objects.filter(dateVente__date=today)
-    return render(request, 'sales_dashboard.html', {'ventes': ventes})
+    total_revenue = ventes.aggregate(
+        total=Coalesce(Sum('totalVente', output_field=DecimalField()), Decimal('0.00'))
+    )['total']
+
+    top_medicament = (
+        DetailVente.objects.values('id_Medicaments__nom')
+        .annotate(total_quantity=Sum('quantiteVendu', output_field=IntegerField()))
+        .order_by('-total_quantity')
+        .first()
+    )
+
+    medicament_stats = (
+        DetailVente.objects.values('id_Medicaments__nom')
+        .annotate(total_quantity=Sum('quantiteVendu', output_field=IntegerField()))
+        .order_by('-total_quantity')[:5]
+    )
+
+    top_sale = ventes.order_by('-totalVente').first()
+
+    top_sales = ventes.values('dateVente', 'totalVente').order_by('dateVente')
+
+    # Sérialiser les données en JSON
+    top_sales_json = json.dumps(list(top_sales), default=str)
+    medicament_stats_json = json.dumps(list(medicament_stats), default=str)
+
+    return render(request, 'sales_dashboard.html', {
+        'ventes': ventes,
+        'total_revenue': total_revenue,
+        'top_medicament': top_medicament,
+        'medicament_stats': medicament_stats_json,  # Passer les données sérialisées
+        'top_sales': top_sales_json,  # Passer les données sérialisées
+        'top_sale': top_sale,
+    })
+
+
+
 
 @login_required
 @role_required('gestionnaire_ventes')

@@ -1,8 +1,143 @@
 {% extends 'layout/base_vente.html' %}
-{% block title %}Tableau de Bord des Stocks{%endblock %}
+{% block title %}Dashboard des Ventes{% endblock %}
 {% block main_content %}
-<div class="card-body">
-  <h5 class="card-title fw-semibold mb-4">Sample Page</h5>
-  <p class="mb-0">This is a sample page </p>
+<div class="container mx-auto p-6">
+  <h1 class="text-3xl font-bold mb-6">Dashboard des Ventes</h1>
+
+  <!-- Section des statistiques -->
+  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Ventes du Jour -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <h2 class="text-lg font-bold text-gray-600">Ventes du Jour</h2>
+        <p class="text-3xl font-bold text-blue-500">{{ ventes.count }}</p>
+    </div>
+
+    <!-- Total des Revenus -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-lg font-bold text-gray-600">Total des Revenus</h2>
+      <p class="text-3xl font-bold text-green-500">{{ total_revenue }} FCFA</p>
+    </div>
+
+    <!-- Médicament le Plus Vendu -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-lg font-bold text-gray-600">Médicament le Plus Vendu</h2>
+      {% if top_medicament %}
+        <p class="text-xl font-bold text-yellow-500">{{ top_medicament.id_Medicaments__nom }}</p>
+        <p class="text-yellow-800">Quantité : {{ top_medicament.total_quantity }}</p>
+      {% else %}
+        <p class="text-gray-600">Aucune donnée disponible</p>
+      {% endif %}
+    </div>
+
+    <!-- Vente la Plus Chère -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-lg font-bold text-gray-600">Vente la Plus Chère</h2>
+      {% if top_sale %}
+        <p class="text-xl font-bold text-red-500">Vente {{ top_sale.id_Vente }}</p>
+        <p class="text-red-800">Montant : {{ top_sale.totalVente }} FCFA</p>
+        <p class="text-red-800">date : {{ top_sale.dateVente }} </p>
+      {% else %}
+        <p class="text-gray-600">Aucune donnée disponible</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Graphiques -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Médicaments les Plus Vendus -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-lg font-semibold mb-4">Médicaments les Plus Vendus</h2>
+      <canvas id="medicamentChart"></canvas>
+    </div>
+
+    <!-- Courbe des Ventes -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-lg font-semibold mb-4">Courbe des Ventes</h2>
+      <canvas id="topSalesChart"></canvas>
+    </div>
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Graphique pour la courbe des ventes
+    const topSalesData = {{ top_sales|safe }};
+    const labels = topSalesData.map(item => item.dateVente); // Dates des ventes
+    const data = topSalesData.map(item => item.totalVente); // Revenus
+
+    const ctx = document.getElementById('topSalesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Revenus par Vente',
+                data: data,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                tension: 0.3, // Pour des courbes lisses
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Dates'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Revenus (FCFA)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Graphique pour les médicaments les plus vendus
+    const medicamentData = {{ medicament_stats|safe }};
+    const medicamentLabels = medicamentData.map(item => item.id_Medicaments__nom);
+    const medicamentQuantities = medicamentData.map(item => item.total_quantity);
+
+    const medicamentCtx = document.getElementById('medicamentChart').getContext('2d');
+    new Chart(medicamentCtx, {
+        type: 'bar',
+        data: {
+            labels: medicamentLabels,
+            datasets: [{
+                label: 'Quantité Vendue',
+                data: medicamentQuantities,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Médicaments'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Quantité Vendue'
+                    }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}
