@@ -4,12 +4,10 @@ from django.http import JsonResponse
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from Utilisateurs.decorators import role_required
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
 from django.utils import timezone
 from .models import Stock, Notification, Medicament, Fournisseur, Commande
 from .models import CategorieMedicament
-from .forms import CategorieForm, MedicamentForm, FournisseurForm
+from .forms import CategorieForm, MedicamentForm
 import os
 from django.conf import settings
 
@@ -113,6 +111,17 @@ def medicament_create(request):
         form = MedicamentForm()
     return render(request, 'medicaments/create.html', {'form': form})
 
+@login_required
+@role_required('gestionnaire_stocks')
+def medicament_edit(request, id):
+    medicament = get_object_or_404(Medicament, id_Medicament=id)
+    if request.method == 'POST':
+        form = MedicamentForm(request.POST, request.FILES, instance=medicament)
+        if form.is_valid():
+            form.save()
+            return redirect('medicaments_index')
+    return redirect('medicaments_index')  # Redirige si la méthode n'est pas POST
+
 def medicament_list(request):
     medicaments = Medicament.objects.all()
     return render(request, 'medicament_list.html', {'medicaments': medicaments})
@@ -164,64 +173,8 @@ def medicament_update(request, id_Medicament):
 @role_required('gestionnaire_stocks')
 def fournisseurs_index(request):
     username = request.user.username
-    fournisseur_instance = Fournisseur()
-    fournisseurs = fournisseur_instance.afficheLesFournisseurs()
+    fournisseurs = Fournisseur.objects.all()
     return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username,}) # Assurez-vous que ce template existe
-
-@login_required
-@role_required('gestionnaire_stocks')
-@require_POST
-def fournisseur_create(request):
-    form = FournisseurForm(request.POST)
-    if form.is_valid():
-        fournisseur = form.save(commit=False)
-        fournisseur.ajouterFournisseur()
-        return redirect('fournisseurs_index')
-    else:
-        form = FournisseurForm()
-    form = FournisseurForm()
-    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username, 'form': form})
-
-@login_required
-@role_required('gestionnaire_stocks')
-def fournisseur_update(request, pk):
-    fournisseur = get_object_or_404(Fournisseur, pk=pk)
-    if request.method == 'POST':
-        form = FournisseurForm(request.POST, instance=fournisseur)
-        if form.is_valid():
-            fournisseur = form.save(commit=False)
-            fournisseur.modifierFournisseur(
-                nom=form.cleaned_data['nom'],
-                email=form.cleaned_data['email'],
-                telephone=form.cleaned_data['telephone'],
-                adresse=form.cleaned_data['adresse']
-            )
-            return redirect('fournisseurs_index')
-    else:
-        form = FournisseurForm(instance=fournisseur)
-    form = FournisseurForm()
-    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username, 'form': form})
-
-
-
-@login_required
-@role_required('gestionnaire_stocks')
-@require_POST
-def fournisseur_delete(request, pk):
-    fournisseur = get_object_or_404(Fournisseur, pk=pk)
-    if request.method == 'POST':
-        fournisseur.supprimerFournisseur()
-        return redirect('fournisseurs_index')
-    form = FournisseurForm()
-    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username, 'form': form})
-
-
-@login_required
-@role_required('gestionnaire_stocks')
-def fournisseurs_search(request):
-    query = request.GET.get('q', '')
-    fournisseurs = Fournisseur.objects.filter(nom__icontains=query)
-    return JsonResponse(list(fournisseurs.values()), safe=False)
 
 
 @login_required
