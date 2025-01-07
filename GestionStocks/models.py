@@ -32,7 +32,7 @@ class CategorieMedicament(models.Model):
 class Medicament(models.Model):
     id_Medicament = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField() 
     prixUnitaire = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='medicament_images/', null=True, blank=True)
     id_Categorie = models.ForeignKey(CategorieMedicament, on_delete=models.CASCADE)
@@ -60,7 +60,11 @@ class Medicament(models.Model):
     @staticmethod
     def afficheLesMedicaments():
         return Medicament.objects.filter(est_cachee=False)
-
+    
+    @staticmethod
+    def afficheMedicamentStock():
+        return Medicament.objects.filter(est_vendu=False)
+    
     @staticmethod
     def MedicamentParCategorie(categorie_id):
         return Medicament.objects.filter(id_Categorie=categorie_id, est_cachee=False)
@@ -86,13 +90,26 @@ class Stock(models.Model):
         if seuil_alerte:
             self.seuil_alerte = seuil_alerte
         self.save()
-
+    @staticmethod
+    def afficheLesMedicaments():
+        return Stock.medicament.afficheLesMedicaments()
     def supprimerStock(self):
         self.delete()
 
     @staticmethod
     def afficheLesStocks():
         return Stock.objects.all()
+    
+    def clean(self):
+        # Valider que le seuil d'alerte ne dépasse pas la quantité
+        if self.seuil_alerte > self.quantite:
+            raise ValidationError({
+                'seuil_alerte': 'Le seuil d\'alerte ne peut pas être supérieur à la quantité'
+            })
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Appelle la validation avant la sauvegarde
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Stock {self.id_Stock} - {self.medicament.nom}"

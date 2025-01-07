@@ -4,12 +4,12 @@ from django.http import JsonResponse
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from Utilisateurs.decorators import role_required
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from .models import Stock, Notification, Medicament, Fournisseur, Commande
 from .models import CategorieMedicament
-from .forms import CategorieForm, MedicamentForm, FournisseurForm
+from .forms import CategorieForm, MedicamentForm, FournisseurForm, StockForm
+from django.core.exceptions import ValidationError
 import os
 from django.conf import settings
 
@@ -63,20 +63,6 @@ def categories_delete(request, id):
         return redirect('categories_index')
     return redirect('categories_index')  # Redirige vers la liste des catégories
 
-@login_required
-@role_required('gestionnaire_stocks')
-def stocks_index(request):
-    username = request.user.username
-    stocks = Stock.objects.all()
-    notifications = []
-
-    for stock in stocks:
-        if stock.quantite < stock.seuil_alerte and not stock.medicament.est_vendu:
-            notifications.append(Notification(message=f"Le médicament {stock.medicament.nom} a dépassé le seuil d'alerte."))
-        if stock.date_preemption < timezone.now().date() and not stock.medicament.est_vendu:
-            notifications.append(Notification(message=f"Le médicament {stock.medicament.nom} a dépassé la date de préemption."))
-
-    return render(request, 'stocks/index.html', {'stocks': stocks, 'notifications': notifications, 'username': username,}) # Assurez-vous que ce template existe
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -223,7 +209,6 @@ def fournisseurs_search(request):
     fournisseurs = Fournisseur.objects.filter(nom__icontains=query)
     return JsonResponse(list(fournisseurs.values()), safe=False)
 
-
 @login_required
 @role_required('gestionnaire_stocks')
 def commandes_index(request):
@@ -240,3 +225,141 @@ def livrer_commande(request, id):
         commande.livrer_commande()
         return redirect('commandes_index')
     return redirect('commandes_index')
+
+
+@login_required
+@role_required('gestionnaire_stocks')
+def stocks_index(request):
+    stocks = Stock.afficheLesStocks()
+    medicaments_disponibles = Medicament.afficheMedicamentStock()
+    return render(request, 'stocks/index.html', {
+        'stocks': stocks,
+        'medicaments': medicaments_disponibles,
+        'username': request.user.username
+    })
+
+
+@login_required
+@role_required('gestionnaire_stocks')
+@require_POST
+def stocks_create(request):
+    try:
+        form = StockForm(request.POST)
+        if form.is_valid():
+            medicament = form.cleaned_data['medicament']
+            
+            # Vérifier si un stock existe déjà pour ce médicament
+            if Stock.objects.filter(medicament=medicament).exists():
+                return JsonResponse({
+                    'success': False,
+                    'errors': {
+                        'medicament': ['Un stock existe déjà pour ce médicament']
+                    }
+                })
+
+            stock = form.save(commit=False)
+
+            # Validation du seuil d'alerte
+            if stock.seuil_alerte > stock.quantite:
+                return JsonResponse({
+                    'success': False,
+                    'errors': {
+                        'seuil_alerte': ['Le seuil d\'alerte ne peut pas être supérieur à la quantité']
+                    }
+                })
+
+            # Mise à jour du statut du médicament
+            medicament.est_vendu = True
+            medicament.save()
+
+            stock.save()
+
+            # Préparer les données pour la réponse JSON
+            response_data = {
+                'success': True,
+                'stock': {
+                    'id': stock.id_Stock,
+                    'medicament': stock.medicament.nom,
+                    'quantite': stock.quantite,
+                    'date_preemption': stock.date_preemption.strftime('%Y-%m-%d') if stock.date_preemption else '',
+                    'seuil_alerte': stock.seuil_alerte
+                }
+            }
+            return JsonResponse(response_data)
+        return JsonResponse({'success': False, 'errors': form.errors})
+    except Exception as e:
+        return JsonResponse({'success': False, 'errors': str(e)})
+
+
+
+@login_required
+@role_required('gestionnaire_stocks')
+@require_POST
+def stocks_update(request, id):
+    try:
+        stock = get_object_or_404(Stock, id_Stock=id)
+        form = StockForm(request.POST, instance=stock)
+
+        if form.is_valid():
+            stock = form.save(commit=False)
+
+            # Validation du seuil d'alerte
+            if stock.seuil_alerte > stock.quantite:
+                return JsonResponse({
+                    'success': False,
+                    'errors': {
+                        'seuil_alerte': ['Le seuil d\'alerte ne peut pas être supérieur à la quantité']
+                    }
+                })
+
+            stock.save()
+
+            response_data = {
+                'success': True,
+                'stock': {
+                    'id': stock.id_Stock,
+                    'medicament': stock.medicament.nom,
+                    'quantite': stock.quantite,
+                    'date_preemption': stock.date_preemption.strftime('%Y-%m-%d'),
+                    'seuil_alerte': stock.seuil_alerte
+                }
+            }
+            return JsonResponse(response_data)
+        return JsonResponse({'success': False, 'errors': form.errors})
+    except Exception as e:
+        return JsonResponse({'success': False, 'errors': str(e)})
+
+
+@login_required
+@role_required('gestionnaire_stocks')
+@require_POST
+def stocks_delete(request, id):
+    try:
+        stock = get_object_or_404(Stock, id_Stock=id)
+        medicament = stock.medicament
+        medicament.est_vendu = False
+        medicament.save()
+        stock.delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'errors': str(e)})
+
+@login_required
+@role_required('gestionnaire_stocks')
+@require_GET
+def get_stock_for_update(request, id):
+    try:
+        stock = get_object_or_404(Stock, id_Stock=id)
+        response_data = {
+            'success': True,
+            'stock': {
+                'id_Stock': stock.id_Stock,
+                'medicament_id': stock.medicament.nom,  # Changé ici
+                'quantite': stock.quantite,
+                'date_preemption': stock.date_preemption.strftime('%Y-%m-%d') if stock.date_preemption else '',
+                'seuil_alerte': stock.seuil_alerte
+            }
+        }
+        return JsonResponse(response_data)
+    except Exception as e:
+        return JsonResponse({'success': False, 'errors': str(e)})
