@@ -1,38 +1,38 @@
 {% extends 'layout/base.html' %} {% block title %}Gestion des Stocks{%endblock%}
 {% block main_content %}
-<h1 class="text-2xl font-bold mb-4">Gestion des Stocks</h1>
+<h1 class="text-2xl font-bold mb-4 text-center">Gestion des Stocks</h1>
 <div class="flex justify-between items-center mb-4">
   <input
     type="text"
     id="searchInput"
     placeholder="Rechercher un stock..."
-    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
   />
   <button
     id="createStockBtn"
-    class="bg-blue-600 text-white px-4 py-2 rounded mb-4 hover:bg-blue-700 transition"
+    class="focus:outline-none text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
   >
     Ajouter un Stock
   </button>
 </div>
 <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-  <thead class="bg-gray-200">
+  <thead class="bg-gray-400">
     <tr>
-      <th class="py-2 px-4 border-b">Médicament</th>
-      <th class="py-2 px-4 border-b">Quantité</th>
-      <th class="py-2 px-4 border-b">Date de péremption</th>
-      <th class="py-2 px-4 border-b">Seuil d'alerte</th>
-      <th class="py-2 px-4 border-b">Statut</th>
-      <th class="py-2 px-4 border-b">Actions</th>
+      <th class="py-2 px-4 border-b text-black">Médicament</th>
+      <th class="py-2 px-4 border-b text-black">Quantité</th>
+      <th class="py-2 px-4 border-b text-black">Date de péremption</th>
+      <th class="py-2 px-4 border-b text-black">Seuil d'alerte</th>
+      <th class="py-2 px-4 border-b text-black ">Statut</th>
+      <th class="py-2 px-4 border-b text-black text-center">Actions</th>
     </tr>
   </thead>
   <tbody id="stockTableBody">
     {% for stock in stocks %}
-    <tr class="hover:bg-gray-100">
-      <td class="py-2 px-4 border-b">{{ stock.medicament.nom }}</td>
-      <td class="py-2 px-4 border-b">{{ stock.quantite }}</td>
-      <td class="py-2 px-4 border-b">{{ stock.date_preemption }}</td>
-      <td class="py-2 px-4 border-b">{{ stock.seuil_alerte }}</td>
+    <tr class="hover:bg-gray-300">
+      <td class="py-2 px-4 border-b text-xl">{{ stock.medicament.nom }}</td>
+      <td class="py-2 px-4 border-b text-md">{{ stock.quantite }}</td>
+      <td class="py-2 px-4 border-b text-md">{{ stock.date_preemption }}</td>
+      <td class="py-2 px-4 border-b text-md">{{ stock.seuil_alerte }}</td>
       <td class="py-2 px-4 border-b">
         {% if stock.medicament.est_vendu %}
         <span class="px-2 py-1 text-sm rounded-full bg-green-100 text-green-800"
@@ -44,18 +44,50 @@
         >
         {% endif %}
       </td>
-      <td class="py-2 px-4 border-b">
+      <td class="py-2 px-4 border-b flex items-center justify-between flex-row">
+        {% load static %}
         <button
-          class="bg-yellow-500 text-white px-2 py-1 rounded editStockBtn"
+          class="bg-yellow-500 text-white px-1.5 py-1 rounded editStockBtn "
           data-id="{{ stock.id_Stock }}"
         >
-          Modifier
+          <svg
+            class="w-6 h-6 text-gray-800 dark:text-black"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
+            />
+          </svg>
         </button>
+        
         <button
-          class="bg-red-500 text-white px-2 py-1 rounded deleteStockBtn"
+        class="ml-3 bg-red-500 text-white px-1.5 py-1 rounded deleteStockBtn "
           data-id="{{ stock.id_Stock }}"
         >
-          Supprimer
+          <svg
+            class="w-6 h-6 text-gray-800 dark:text-black"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+              clip-rule="evenodd"
+            />
+          </svg>
         </button>
       </td>
     </tr>

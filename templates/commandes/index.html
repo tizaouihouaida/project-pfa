@@ -1,18 +1,18 @@
 <!-- templates/commandes/index.html -->
 {% extends 'layout/base.html' %} {% block title %}Commandes{% endblock %}
 {%block main_content %}
-<h1 class="text-2xl font-bold mb-4">Commandes</h1>
+<h1 class="text-2xl font-bold mb-4 text-center">Gestions Commandes</h1>
 
 <div class="flex justify-between items-center mb-4">
   <input
     type="text"
     id="searchInput"
     placeholder="Rechercher une commande..."
-    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
   />
   <button
     onclick="openCreateModal()"
-    class="bg-blue-500 text-white p-2 rounded"
+     class="focus:outline-none text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
   >
     Nouvelle Commande
   </button>
@@ -30,38 +30,38 @@
 </div>
 {% endif %}
 
-<table class="min-w-full bg-white">
-  <thead>
+<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+  <thead class="bg-gray-400 font-serif">
     <tr>
-      <th class="py-2 px-4 border-b">Médicament</th>
-      <th class="py-2 px-4 border-b">Fournisseur</th>
-      <th class="py-2 px-4 border-b">Quantité</th>
-      <th class="py-2 px-4 border-b">Statut</th>
-      <th class="py-2 px-4 border-b">Date</th>
-      <th class="py-2 px-4 border-b">Actions</th>
+      <th class="py-2 px-4 border-b text-black text-base">Médicament</th>
+      <th class="py-2 px-4 border-b text-black text-base">Fournisseur</th>
+      <th class="py-2 px-4 border-b text-black text-base">Quantité</th>
+      <th class="py-2 px-4 border-b text-black text-base">Statut</th>
+      <th class="py-2 px-4 border-b text-black text-base">Date</th>
+      <th class="py-2 px-4 border-b text-black text-base">Actions</th>
     </tr>
   </thead>
   <tbody id="commandeTableBody">
     {% for commande in commandes %}
-    <tr>
-      <td class="py-2 px-4 border-b">{{ commande.medicament.nom }}</td>
-      <td class="py-2 px-4 border-b">{{ commande.fournisseur.nom }}</td>
-      <td class="py-2 px-4 border-b">{{ commande.quantite_commande }}</td>
+    <tr class="hover:bg-gray-300">
+      <td class="py-2 px-4 border-b text-base">{{ commande.medicament.nom }}</td>
+      <td class="py-2 px-4 border-b text-base">{{ commande.fournisseur.nom }}</td>
+      <td class="py-2 px-4 border-b text-base">{{ commande.quantite_commande }}</td>
       {% if commande.statut == 'en_attente' %}
-      <td class="py-2 px-4 border-b text-blue-500">{{ commande.statut }}</td>
+      <td class="py-2 px-4 border-b text-blue-500 text-base">{{ commande.statut }}</td>
       {% elif commande.statut == 'livrée' %}
-      <td class="py-2 px-4 border-b text-red-500">{{ commande.statut }}</td>
+      <td class="py-2 px-4 border-b text-red-500 text-base">{{ commande.statut }}</td>
       {% else %}
-      <td class="py-2 px-4 border-b text-yellow-500">{{ commande.statut }}</td>
+      <td class="py-2 px-4 border-b text-yellow-500 text-base">{{ commande.statut }}</td>
       {% endif %}
-      <td class="py-2 px-4 border-b">{{ commande.date_commande }}</td>
-      <td class="flex py-2 px-4 border-b justify-between">
+      <td class="py-2 px-4 border-b text-base">{{ commande.date_commande }}</td>
+      <td class="py-2 px-4 border-b flex items-center justify-center flex-row">
         <button
-          class="bg-yellow-500 text-white py-1 px-1 rounded h-10"
+          class="bg-yellow-500 text-white px-1.5 py-1 rounded editStockBtn "
           onclick="openUpdateModal('{{ commande.pk }}')"
         >
           <svg
-            class="w-6 h-6 text-gray-800 dark:text-gray-700"
+            class="w-6 h-6 text-gray-800 dark:text-black"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -79,11 +79,11 @@
           </svg>
         </button>
         <button
-          class="bg-red-500 text-white rounded h-10"
+          class="ml-3 bg-red-500 text-white px-1.5 py-1 rounded deleteStockBtn "
           onclick="openDeleteModal({{ commande.pk }})"
         >
           <svg
-            class="w-6 h-6 text-gray-800 dark:text-white"
+            class="w-6 h-6 text-gray-800 dark:text-black"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -99,10 +99,13 @@
           </svg>
         </button>
         <button
-          class="bg-green-500 text-white rounded h-10"
+          class=" ml-3 bg-green-500 text-white rounded h-10 px-1.5 py-1"
           onclick="openChangeStatusModal({{ commande.pk }})"
         >
-          Changer Statut
+          <svg class="w-6 h-6 text-gray-800 dark:text-black" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>
+          </svg>
+
         </button>
       </td>
     </tr>

@@ -22,12 +22,10 @@ logger = logging.getLogger(__name__)
 @login_required
 @role_required('gestionnaire_ventes')
 def pos_index(request):
+    username = request.user.username
     categories = CategorieMedicament.afficheLesCategories()
-    medicaments = Medicament.objects.filter(
-        stock__quantite__gt=0,
-        est_cachee=False
-    ).distinct()
-    return render(request, 'pos/index.html', {'categories': categories, 'medicaments': medicaments})
+    medicaments = Medicament.Medicament_disponible()
+    return render(request, 'pos/index.html', {'categories': categories, 'medicaments': medicaments, 'username': username})
 
 def sales_dashboard(request):
     today = timezone.now().date()
@@ -70,9 +68,10 @@ def sales_dashboard(request):
 @login_required
 @role_required('gestionnaire_ventes')
 def ventes_index(request):
+    username = request.user.username
     today = timezone.now().date()
     ventes = Vente.objects.filter(dateVente__date=today)
-    return render(request, 'ventes/index.html', {'ventes': ventes})
+    return render(request, 'ventes/index.html', {'ventes': ventes, 'username': username})
 
 
 @login_required
@@ -150,52 +149,59 @@ def finalize_sale(request):
 
         try:
             with transaction.atomic():  # Utiliser une transaction pour garantir l'intégrité des données
-                vente = Vente(id_User=request.user, totalVente=0)
-                vente.save()
+                vente = Vente.objects.create(id_User=request.user, totalVente=0)
+                logger.info(f"Vente créée avec ID: {vente.id_Vente}")
 
                 for item in json.loads(cart):
                     medicament = get_object_or_404(Medicament, id_Medicament=item['id'])
                     quantite = int(item['quantity'])
+                    logger.info(f"Traitement de {medicament.nom}, quantité: {quantite}")
 
                     # Vérifier le stock disponible
-                    stock = Stock.objects.filter(medicament=medicament).first()
-                    if not stock or stock.quantite < quantite:
+                    stock = Stock.objects.select_for_update().get(medicament=medicament)
+                    if not stock.deduire_quantite(quantite):
                         raise ValidationError(f"Stock insuffisant pour {medicament.nom}")
 
+                    # Vérifier si le stock atteint le seuil d'alerte après la vente
+                    if stock.quantite <= stock.seuil_alerte:
+                        medicament.est_vendu = False
+                        medicament.save()
+                        Notification.objects.create(
+                            message=f"Le stock de {medicament.nom} est bas ({stock.quantite} restants)",
+                            type_notification="alerte_stock"
+                        )
+                        logger.info(f"Notification créée pour {medicament.nom}")
+                        return JsonResponse({'status': 'error', 'message': f"Le stock de {medicament.nom} est épuisé et ne peut plus être vendu."})
+
                     # Créer le détail de vente
-                    detail_vente = DetailVente(
+                    detail_vente = DetailVente.objects.create(
                         id_Vente=vente,
                         id_Medicaments=medicament,
                         quantiteVendu=quantite,
                         sousTotal=item['total']
                     )
-                    detail_vente.save()
-
-                    # Mettre à jour le stock
-                    stock.quantite -= quantite
-                    stock.save()
-
-                    # Créer une notification si le stock atteint le seuil d'alerte
-                    if stock.quantite <= stock.seuil_alerte:
-                        Notification.objects.create(
-                            message=f"Le stock de {medicament.nom} est bas ({stock.quantite} restants)",
-                            type_notification="alerte_stock"
-                        )
+                    logger.info(f"Détail de vente créé pour {medicament.nom}")
 
                     total += item['total']
 
                 vente.totalVente = total
                 vente.save()
+                logger.info(f"Vente finalisée avec total: {total}")
 
                 return JsonResponse({'status': 'success', 'total': total})
 
+        except json.JSONDecodeError:
+            logger.error("Erreur de décodage JSON")
+            return JsonResponse({'status': 'error', 'message': 'Format de panier invalide'}, status=400)
         except ValidationError as e:
+            logger.error(f"Erreur de validation: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
         except Exception as e:
-            logger.error(f"Erreur lors de la finalisation de la vente: {str(e)}")
+            logger.error(f"Erreur inattendue: {str(e)}")
             return JsonResponse({'status': 'error', 'message': 'Une erreur est survenue'}, status=500)
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+    return JsonResponse({'status': 'error', 'message': 'Méthode non autorisée'}, status=405)
+
 
 @login_required
 @role_required('gestionnaire_ventes')
@@ -203,7 +209,7 @@ def check_stock(request):
     if request.method == 'POST':
         medicament_id = request.POST.get('medicament_id')
         quantite = int(request.POST.get('quantite', 0))
-        
+
         try:
             stock = Stock.objects.get(medicament_id=medicament_id)
             if stock.quantite >= quantite:

@@ -70,7 +70,12 @@ class Medicament(models.Model):
     @staticmethod
     def MedicamentParCategorie(categorie_id):
         return Medicament.objects.filter(id_Categorie=categorie_id, est_cachee=False)
+    
 
+    @staticmethod
+    def Medicament_disponible():
+        return Medicament.objects.filter(est_vendu=True, est_cachee=False)
+    
     @staticmethod
     def medicaments_disponibles_pour_stock():
         """Retourne les médicaments disponibles pour créer un nouveau stock"""
@@ -108,6 +113,23 @@ class Stock(models.Model):
         if seuil_alerte:
             self.seuil_alerte = seuil_alerte
         self.save()
+    @staticmethod
+    def afficheLesMedicaments():
+        return Stock.medicament.afficheLesMedicaments()
+    
+    def supprimerStock(self):
+        self.delete()
+
+    @staticmethod
+    def afficheLesStocks():
+        return Stock.objects.all()
+
+    def deduire_quantite(self, quantite):
+        if self.quantite >= quantite:
+            self.quantite -= quantite
+            self.save()
+            return True
+        return False
 
     def clean(self):
         # Valider que le seuil d'alerte ne dépasse pas la quantité
@@ -119,7 +141,7 @@ class Stock(models.Model):
     def verifier_disponibilite(self):
         """Vérifie si le médicament est disponible à la vente"""
         aujourd_hui = timezone.now().date()
-        
+
         # Vérifier la date de péremption
         if self.date_preemption and self.date_preemption <= aujourd_hui:
             self.medicament.est_vendu = False
@@ -129,7 +151,7 @@ class Stock(models.Model):
                 type='peremption'
             )
             return False
-        
+
         # Vérifier le seuil d'alerte
         if self.quantite <= self.seuil_alerte:
             self.medicament.est_vendu = False
@@ -139,11 +161,12 @@ class Stock(models.Model):
                 type='stock'
             )
             return False
-        
+
         # Si tout est OK, le médicament est disponible
         self.medicament.est_vendu = True
         self.medicament.save()
         return True
+
 
     def save(self, *args, **kwargs):
         self.full_clean()

@@ -1,6 +1,7 @@
 {% extends 'layout/base.html' %}
 {% block title %}Catégories{% endblock %}
 {% block main_content %}
+<h1 class="text-2xl font-bold mb-4 text-center">Listes des Catégories de Médicaments</h1>
 <div class="flex justify-between items-center mb-4">
   <input
     type="text"
@@ -17,36 +18,63 @@
   </button>
 </div>
 
-<table class="min-w-full border-[1px] mt-4 border-gray-700 rounded">
-  <thead class="border-gray-700 border-[1px] ">
+<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+  <thead class="bg-gray-400 font-serif">
     <tr>
-      <th class="border-[1px] w-[1/6] text-indigo-800 font-bold flex text-center ">N°</th>
-      <th class="border-[1px] w-[2/6] text-indigo-800 font-bold text-center">Nom</th>
-      <th class="border-[1px] w-[2/6] text-indigo-800 font-bold text-center">Description</th>
-      <th class="border-[1px] flex justify-center w-[1/6] text-indigo-800 font-bold">Actions</th>
+      <th class="py-2 px-4 border-b text-black text-base">N°</th>
+      <th class="py-2 px-4 border-b text-black text-base">Nom</th>
+      <th class="py-2 px-4 border-b text-black text-base">Description</th>
+      <th class="py-2 px-4 border-b text-black text-center text-base">Actions</th>
     </tr>
   </thead>
   <tbody id="categoryTableBody">
     {% for category in categories %}
-    <tr>
-      <td class="flex justify-center text-gray-800">{{ forloop.counter }}</td>
-      <td class="border-[1px] pl-24 text-gray-800 text-md text-left">{{ category.nom_Categorie }}</td>
-      <td class="border-[1px] pl-24 text-gray-800 text-md text-left">{{ category.description }}</td>
-      <td class="border-[1px] flex justify-center">
+    <tr class="hover:bg-gray-300">
+      <td class="py-2 px-4 border-b">{{ forloop.counter }}</td>
+      <td class="py-2 px-4 border-b">{{ category.nom_Categorie }}</td>
+      <td class="py-2 px-4 border-b">{{ category.description }}</td>
+      <td class="py-2 px-4 border-b flex items-center justify-center flex-row">
+        {% load static %}
         <button
           onclick="openEditModal({{ category.id_Categorie }}, '{{ category.nom_Categorie|escapejs }}', '{{ category.description|escapejs }}')"
-          class="ml-2 text-gray-100  border-gray-200 hover:bg-yellow-500 hover:text-white focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-yellow-500 dark:text-yellow-500 dark:hover:text-white dark:focus:ring-yellow-800 dark:hover:bg-yellow-500"
+          class="bg-yellow-500 text-white px-1.5 py-1 rounded editStockBtn "
         >
-          <svg class="w-6 h-6 text-yellow-700 dark:text-black" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"/>
+          <svg
+            class="w-6 h-6 text-gray-800 dark:text-black"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
+            />
           </svg>
         </button>
         <button
           onclick="confirmDelete({{ category.id_Categorie }}, '{{ category.nom_Categorie|escapejs }}')"
-          class="text-red-700 border border-red-700 hover:bg-red-500 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500"
+          class="ml-3 bg-red-500 text-white px-1.5 py-1 rounded deleteStockBtn "
         >
-          <svg class="w-8 h-8 text-red-700 dark:text-black" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
+          <svg
+            class="w-6 h-6 text-gray-800 dark:text-black"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+              clip-rule="evenodd"
+            />
           </svg>
         </button>
       </td>
