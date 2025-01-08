@@ -1,8 +1,358 @@
 {% extends 'layout/base.html' %} 
-{% block title %}Tableau de Bord des Stocks{%endblock %}
+{% block title %}Tableau de Bord des Stocks{%endblock %} 
 {% block main_content %}
-<div class="card-body">
-  <h5 class="card-title fw-semibold mb-4">Sample Page</h5>
-  <p class="mb-0">This is a sample page </p>
+
+<div class="container mx-auto p-6">
+  <!-- En-tête avec statistiques -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total des médicaments -->
+    <div
+      class="bg-white rounded-lg p-6 shadow-lg transform hover:scale-105 transition-transform duration-300"
+    >
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-blue-100">
+          <svg
+            class="w-8 h-8 text-blue-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            ></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <h2 class="text-gray-600 text-sm">Total Médicaments</h2>
+          <p class="text-2xl font-semibold text-gray-800">
+            {{ total_medicaments }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Médicaments en rupture -->
+    <div
+      class="bg-white rounded-lg p-6 shadow-lg transform hover:scale-105 transition-transform duration-300"
+    >
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-red-100">
+          <svg
+            class="w-8 h-8 text-red-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            ></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <h2 class="text-gray-600 text-sm">Ruptures de Stock</h2>
+          <p class="text-2xl font-semibold text-gray-800">
+            {{ ruptures_stock }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Médicaments périmés -->
+    <div
+      class="bg-white rounded-lg p-6 shadow-lg transform hover:scale-105 transition-transform duration-300"
+    >
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-yellow-100">
+          <svg
+            class="w-8 h-8 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <h2 class="text-gray-600 text-sm">Périmés</h2>
+          <p class="text-2xl font-semibold text-gray-800">
+            {{ medicaments_perimes }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div
+      class="bg-white rounded-lg p-6 shadow-lg transform hover:scale-105 transition-transform duration-300"
+    >
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-green-100">
+          <svg
+            class="w-8 h-8 text-green-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            ></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <h2 class="text-gray-600 text-sm">Notifications</h2>
+          <p class="text-2xl font-semibold text-gray-800">
+            {{ total_notifications }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total des catégories -->
+    <div
+      class="bg-white rounded-lg p-6 shadow-lg transform hover:scale-105 transition-transform duration-300"
+    >
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-purple-100">
+          <svg
+            class="w-8 h-8 text-purple-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            ></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <h2 class="text-gray-600 text-sm">Total Catégories</h2>
+          <p class="text-2xl font-semibold text-gray-800">
+            {{ total_categories }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total des fournisseurs -->
+    <div
+      class="bg-white rounded-lg p-6 shadow-lg transform hover:scale-105 transition-transform duration-300"
+    >
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-indigo-100">
+          <svg
+            class="w-8 h-8 text-indigo-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            ></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <h2 class="text-gray-600 text-sm">Total Fournisseurs</h2>
+          <p class="text-2xl font-semibold text-gray-800">
+            {{ total_fournisseurs }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total des commandes -->
+    <div
+      class="bg-white rounded-lg p-6 shadow-lg transform hover:scale-105 transition-transform duration-300"
+    >
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-pink-100">
+          <svg
+            class="w-8 h-8 text-pink-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+            ></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <h2 class="text-gray-600 text-sm">Total Commandes</h2>
+          <p class="text-2xl font-semibold text-gray-800">
+            {{ total_commandes }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sections principales -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Stocks critiques -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Stocks Critiques</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead>
+            <tr class="bg-gray-100">
+              <th
+                class="px-6 py-3 text-left text-sm font-semibold text-gray-600"
+              >
+                Médicament
+              </th>
+              <th
+                class="px-6 py-3 text-left text-sm font-semibold text-gray-600"
+              >
+                Quantité
+              </th>
+              <th
+                class="px-6 py-3 text-left text-sm font-semibold text-gray-600"
+              >
+                Seuil
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            {% for stock in stocks_critiques %}
+            <tr class="hover:bg-gray-50 transition-colors duration-200">
+              <td class="px-6 py-4 text-sm text-gray-800">
+                {{ stock.medicament.nom }}
+              </td>
+              <td class="px-6 py-4 text-sm text-red-600 font-semibold">
+                {{ stock.quantite }}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-600">
+                {{ stock.seuil_alerte }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Péremption proche -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">
+        Péremption Proche
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead>
+            <tr class="bg-gray-100">
+              <th
+                class="px-6 py-3 text-left text-sm font-semibold text-gray-600"
+              >
+                Médicament
+              </th>
+              <th
+                class="px-6 py-3 text-left text-sm font-semibold text-gray-600"
+              >
+                Date Péremption
+              </th>
+              <th
+                class="px-6 py-3 text-left text-sm font-semibold text-gray-600"
+              >
+                Jours Restants
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            {% for stock in peremption_proche %}
+            <tr class="hover:bg-gray-50 transition-colors duration-200">
+              <td class="px-6 py-4 text-sm text-gray-800">
+                {{ stock.medicament.nom }}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-600">
+                {{ stock.date_preemption|date:"d/m/Y" }}
+              </td>
+              <td
+                class="px-6 py-4 text-sm {% if stock.jours_restants < 30 %}text-red-600{% else %}text-yellow-600{% endif %} font-semibold"
+              >
+                {{ stock.jours_restants }} jours
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dernières notifications -->
+  <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+      Dernières Notifications
+    </h3>
+    <div class="space-y-4">
+      {% for notification in dernieres_notifications %}
+      <div
+        class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+      >
+        <div
+          class="{% if notification.type == 'peremption' %}text-red-500{% else %}text-yellow-500{% endif %} mr-4"
+        >
+          {% if notification.type == 'peremption' %}
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+          {% else %}
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+          {% endif %}
+        </div>
+        <div class="flex-1">
+          <p class="text-gray-800">{{ notification.message }}</p>
+          <p class="text-sm text-gray-500">{{ notification.date|timesince }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
 </div>
+
 {% endblock %}

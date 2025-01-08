@@ -1,5 +1,5 @@
 from django import forms
-from .models import CategorieMedicament, Medicament, Fournisseur, Stock
+from .models import CategorieMedicament, Medicament, Fournisseur, Stock, Commande
 
 class CategorieForm(forms.ModelForm):
     class Meta:
@@ -29,3 +29,8 @@ class StockForm(forms.ModelForm):
     class Meta:
         model = Stock
         fields = ['medicament', 'quantite', 'date_preemption', 'seuil_alerte']
+
+class CommandeForm(forms.ModelForm):
+    class Meta:
+        model = Commande
+        fields = ['medicament', 'fournisseur', 'quantite_commande', 'statut']

@@ -3,21 +3,70 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
+from django.views.decorators.csrf import csrf_protect
 from Utilisateurs.decorators import role_required
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
+from django.db.models import F
 from .models import Stock, Notification, Medicament, Fournisseur, Commande
 from .models import CategorieMedicament
 from .forms import CategorieForm, MedicamentForm, FournisseurForm, StockForm
 from django.core.exceptions import ValidationError
+from .forms import CommandeForm
 import os
 from django.conf import settings
+from django.contrib import messages
+from datetime import timedelta
 
 @login_required
 @role_required('gestionnaire_stocks')  # Vérifie que l'utilisateur est un gestionnaire de stocks
 def stocks_dashboard(request):
-    username = request.user.username  # Récupérer le nom d'utilisateur
-    return render(request, 'stocks_dashboard.html', {'username': username}) 
+    today = timezone.now().date()
+    
+    # Statistiques générales
+    total_medicaments = Medicament.objects.filter(est_cachee=False).count()
+    total_categories = CategorieMedicament.objects.filter(est_cachee=False).count()
+    total_fournisseurs = Fournisseur.objects.count()
+    total_commandes = Commande.objects.count()
+    ruptures_stock = Stock.objects.filter(quantite__lte=F('seuil_alerte')).count()
+    medicaments_perimes = Stock.objects.filter(date_preemption__lte=today).count()
+    total_notifications = Notification.objects.count()
+
+    # Stocks critiques
+    stocks_critiques = Stock.objects.filter(
+        quantite__lte=F('seuil_alerte')
+    ).select_related('medicament')[:5]
+
+    # Médicaments proche de la péremption
+    peremption_proche = []
+    stocks = Stock.objects.filter(
+        date_preemption__gt=today
+    ).select_related('medicament')[:5]
+    
+    for stock in stocks:
+        jours_restants = (stock.date_preemption - today).days
+        stock.jours_restants = jours_restants
+        if jours_restants <= 60:  # Afficher seulement si moins de 60 jours
+            peremption_proche.append(stock)
+
+    # Dernières notifications
+    dernieres_notifications = Notification.objects.all().order_by('-date')[:5]
+
+    context = {
+        'username': request.user.username,
+        'total_medicaments': total_medicaments,
+        'total_categories': total_categories,
+        'total_fournisseurs': total_fournisseurs,
+        'total_commandes': total_commandes,
+        'ruptures_stock': ruptures_stock,
+        'medicaments_perimes': medicaments_perimes,
+        'total_notifications': total_notifications,
+        'stocks_critiques': stocks_critiques,
+        'peremption_proche': peremption_proche,
+        'dernieres_notifications': dernieres_notifications,
+    }
+    
+    return render(request, 'stocks_dashboard.html', context)
 
  # Assurez-vous que ce template existe
 @login_required
@@ -211,14 +260,6 @@ def fournisseurs_search(request):
 
 @login_required
 @role_required('gestionnaire_stocks')
-def commandes_index(request):
-    username = request.user.username
-    commandes = Commande.objects.all()
-    return render(request, 'commandes/index.html', {'commandes': commandes, 'username': username})
-
-
-@login_required
-@role_required('gestionnaire_stocks')
 def livrer_commande(request, id):
     commande = get_object_or_404(Commande, id=id)
     if request.method == 'POST':
@@ -231,10 +272,13 @@ def livrer_commande(request, id):
 @role_required('gestionnaire_stocks')
 def stocks_index(request):
     stocks = Stock.afficheLesStocks()
-    medicaments_disponibles = Medicament.afficheMedicamentStock()
+    medicaments_disponibles = Medicament.medicaments_disponibles_pour_stock()
+    tous_medicaments = Medicament.medicaments_non_caches()
+    
     return render(request, 'stocks/index.html', {
         'stocks': stocks,
         'medicaments': medicaments_disponibles,
+        'tous_medicaments': tous_medicaments,
         'username': request.user.username
     })
 
@@ -246,49 +290,24 @@ def stocks_create(request):
     try:
         form = StockForm(request.POST)
         if form.is_valid():
-            medicament = form.cleaned_data['medicament']
+            medicament_id = form.cleaned_data['medicament'].id_Medicament
             
             # Vérifier si un stock existe déjà pour ce médicament
-            if Stock.objects.filter(medicament=medicament).exists():
+            existing_stock = Stock.objects.filter(medicament_id=medicament_id).first()
+            if existing_stock:
                 return JsonResponse({
                     'success': False,
                     'errors': {
                         'medicament': ['Un stock existe déjà pour ce médicament']
                     }
                 })
-
-            stock = form.save(commit=False)
-
-            # Validation du seuil d'alerte
-            if stock.seuil_alerte > stock.quantite:
-                return JsonResponse({
-                    'success': False,
-                    'errors': {
-                        'seuil_alerte': ['Le seuil d\'alerte ne peut pas être supérieur à la quantité']
-                    }
-                })
-
-            # Mise à jour du statut du médicament
-            medicament.est_vendu = True
-            medicament.save()
-
-            stock.save()
-
-            # Préparer les données pour la réponse JSON
-            response_data = {
-                'success': True,
-                'stock': {
-                    'id': stock.id_Stock,
-                    'medicament': stock.medicament.nom,
-                    'quantite': stock.quantite,
-                    'date_preemption': stock.date_preemption.strftime('%Y-%m-%d') if stock.date_preemption else '',
-                    'seuil_alerte': stock.seuil_alerte
-                }
-            }
-            return JsonResponse(response_data)
-        return JsonResponse({'success': False, 'errors': form.errors})
+            
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
     except Exception as e:
-        return JsonResponse({'success': False, 'errors': str(e)})
+        return JsonResponse({'success': False, 'errors': {'__all__': [str(e)]}})
 
 
 
@@ -299,35 +318,26 @@ def stocks_update(request, id):
     try:
         stock = get_object_or_404(Stock, id_Stock=id)
         form = StockForm(request.POST, instance=stock)
-
+        
         if form.is_valid():
-            stock = form.save(commit=False)
-
-            # Validation du seuil d'alerte
-            if stock.seuil_alerte > stock.quantite:
+            medicament_id = form.cleaned_data['medicament'].id_Medicament
+            
+            # Vérifier si un autre stock existe déjà pour ce médicament
+            existing_stock = Stock.objects.filter(medicament_id=medicament_id).exclude(id_Stock=id).first()
+            if existing_stock:
                 return JsonResponse({
                     'success': False,
                     'errors': {
-                        'seuil_alerte': ['Le seuil d\'alerte ne peut pas être supérieur à la quantité']
+                        'medicament': ['Un stock existe déjà pour ce médicament']
                     }
                 })
-
-            stock.save()
-
-            response_data = {
-                'success': True,
-                'stock': {
-                    'id': stock.id_Stock,
-                    'medicament': stock.medicament.nom,
-                    'quantite': stock.quantite,
-                    'date_preemption': stock.date_preemption.strftime('%Y-%m-%d'),
-                    'seuil_alerte': stock.seuil_alerte
-                }
-            }
-            return JsonResponse(response_data)
-        return JsonResponse({'success': False, 'errors': form.errors})
+            
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
     except Exception as e:
-        return JsonResponse({'success': False, 'errors': str(e)})
+        return JsonResponse({'success': False, 'errors': {'__all__': [str(e)]}})
 
 
 @login_required
@@ -350,16 +360,153 @@ def stocks_delete(request, id):
 def get_stock_for_update(request, id):
     try:
         stock = get_object_or_404(Stock, id_Stock=id)
+        print(f"Medicament ID: {stock.medicament.id_Medicament}")  # Debug log
         response_data = {
             'success': True,
             'stock': {
                 'id_Stock': stock.id_Stock,
-                'medicament_id': stock.medicament.nom,  # Changé ici
-                'quantite': stock.quantite,
+                'medicament': int(stock.medicament.id_Medicament),  # Convertir en int pour être sûr
+                'quantite': str(stock.quantite),
                 'date_preemption': stock.date_preemption.strftime('%Y-%m-%d') if stock.date_preemption else '',
-                'seuil_alerte': stock.seuil_alerte
+                'seuil_alerte': str(stock.seuil_alerte)
             }
         }
+        print(f"Response data: {response_data}")  # Debug log
         return JsonResponse(response_data)
     except Exception as e:
-        return JsonResponse({'success': False, 'errors': str(e)})
+        print(f"Error: {str(e)}")  # Debug log
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+@login_required
+@role_required('gestionnaire_stocks')
+def commandes_index(request):
+    commandes = Commande.objects.all()
+    medicaments = Medicament.objects.filter(est_cachee=False)
+    fournisseurs = Fournisseur.objects.all()
+    return render(request, 'commandes/index.html', {'commandes': commandes, 'medicaments': medicaments, 'fournisseurs': fournisseurs})
+
+
+@csrf_protect
+def commandes_create(request):
+    if request.method == 'POST':
+        form = CommandeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('commandes_index')
+    medicaments = Medicament.objects.filter(est_cachee=False)
+    fournisseurs = Fournisseur.objects.all()
+    return render(request, 'commandes/index.html', {'medicaments': medicaments, 'fournisseurs': fournisseurs})
+
+
+@login_required
+@role_required('gestionnaire_stocks')
+def commandes_update(request, pk):
+    commande = get_object_or_404(Commande, pk=pk)
+    
+    # Pour les requêtes AJAX
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            data = {
+                'success': True,
+                'commande': {
+                    'id': commande.pk,
+                    'medicament': commande.medicament.id_Medicament,
+                    'fournisseur': commande.fournisseur.id,
+                    'quantite_commande': float(commande.quantite_commande),
+                    'statut': commande.statut
+                }
+            }
+            return JsonResponse(data)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    # Pour les requêtes POST normales
+    if request.method == 'POST':
+        form = CommandeForm(request.POST, instance=commande)
+        if form.is_valid():
+            form.save()
+            return redirect('commandes_index')
+
+    medicaments = Medicament.objects.filter(est_cachee=False)
+    fournisseurs = Fournisseur.objects.all()
+    return render(request, 'commandes/index.html', {
+        'commande': commande,
+        'medicaments': medicaments,
+        'fournisseurs': fournisseurs
+    })
+
+    
+@login_required
+@role_required('gestionnaire_stocks')
+@require_POST
+def commandes_delete(request, pk):
+    commande = get_object_or_404(Commande, pk=pk)
+    commande.delete()
+    return redirect('commandes_index')
+
+
+@login_required
+@role_required('gestionnaire_stocks')
+@require_POST
+def commandes_change_status(request, pk):
+    try:
+        commande = get_object_or_404(Commande, pk=pk)
+        if commande.statut == 'en_attente':
+            commande.livrer_commande()
+        else:
+            # Si on veut revenir à "en_attente", il faut retirer la quantité du stock
+            stock = Stock.objects.filter(medicament=commande.medicament).first()
+            if stock:
+                if stock.quantite >= commande.quantite_commande:
+                    stock.quantite -= commande.quantite_commande
+                    stock.save()
+                    commande.statut = 'en_attente'
+                    commande.save()
+                else:
+                    messages.error(request, "Impossible de changer le statut : quantité insuffisante en stock")
+                    return redirect('commandes_index')
+            else:
+                messages.error(request, "Impossible de changer le statut : aucun stock trouvé")
+                return redirect('commandes_index')
+        
+        messages.success(request, "Le statut de la commande a été mis à jour avec succès")
+        return redirect('commandes_index')
+    
+    except Exception as e:
+        messages.error(request, f"Une erreur est survenue : {str(e)}")
+        return redirect('commandes_index')
+
+@login_required
+@role_required('gestionnaire_stocks')
+def notifications_index(request):
+    now = timezone.now()
+    today = now.date()
+    yesterday = today - timedelta(days=1)
+    last_week = today - timedelta(days=7)
+    
+    # Récupérer toutes les notifications triées par date
+    notifications = Notification.objects.all().order_by('-date')
+    
+    # Grouper les notifications
+    grouped_notifications = {
+        'aujourdhui': [],
+        'hier': [],
+        'cette_semaine': [],
+        'plus_ancien': []
+    }
+    
+    for notif in notifications:
+        notif_date = notif.date.date()
+        if notif_date == today:
+            grouped_notifications['aujourdhui'].append(notif)
+        elif notif_date == yesterday:
+            grouped_notifications['hier'].append(notif)
+        elif notif_date > last_week:
+            grouped_notifications['cette_semaine'].append(notif)
+        else:
+            grouped_notifications['plus_ancien'].append(notif)
+    
+    return render(request, 'notifications/index.html', {
+        'grouped_notifications': grouped_notifications,
+        'username': request.user.username
+    })
+

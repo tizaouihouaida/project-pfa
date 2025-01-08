@@ -137,3 +137,5 @@ AUTH_USER_MODEL = 'Utilisateurs.Utilisateur'
 
 LOGIN_URL = 'login'  # URL de redirection pour les utilisateurs non authentifiés
 
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = False

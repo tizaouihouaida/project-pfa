@@ -1,6 +1,546 @@
-{% extends 'layout/base.html' %} 
-{% block title %}Stocks{%endblock %} 
+<!-- templates/commandes/index.html -->
+{% extends 'layout/base.html' %} {% block title %}Commandes{% endblock %}
 {%block main_content %}
-<h1>Commandes</h1>
+<h1 class="text-2xl font-bold mb-4">Commandes</h1>
 
+<div class="flex justify-between items-center mb-4">
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Rechercher une commande..."
+    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+  />
+  <button
+    onclick="openCreateModal()"
+    class="bg-blue-500 text-white p-2 rounded"
+  >
+    Nouvelle Commande
+  </button>
+</div>
+
+{% if messages %}
+<div class="messages mb-4">
+  {% for message in messages %}
+  <div
+    class="p-4 {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} rounded"
+  >
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<table class="min-w-full bg-white">
+  <thead>
+    <tr>
+      <th class="py-2 px-4 border-b">Médicament</th>
+      <th class="py-2 px-4 border-b">Fournisseur</th>
+      <th class="py-2 px-4 border-b">Quantité</th>
+      <th class="py-2 px-4 border-b">Statut</th>
+      <th class="py-2 px-4 border-b">Date</th>
+      <th class="py-2 px-4 border-b">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="commandeTableBody">
+    {% for commande in commandes %}
+    <tr>
+      <td class="py-2 px-4 border-b">{{ commande.medicament.nom }}</td>
+      <td class="py-2 px-4 border-b">{{ commande.fournisseur.nom }}</td>
+      <td class="py-2 px-4 border-b">{{ commande.quantite_commande }}</td>
+      {% if commande.statut == 'en_attente' %}
+      <td class="py-2 px-4 border-b text-blue-500">{{ commande.statut }}</td>
+      {% elif commande.statut == 'livrée' %}
+      <td class="py-2 px-4 border-b text-red-500">{{ commande.statut }}</td>
+      {% else %}
+      <td class="py-2 px-4 border-b text-yellow-500">{{ commande.statut }}</td>
+      {% endif %}
+      <td class="py-2 px-4 border-b">{{ commande.date_commande }}</td>
+      <td class="flex py-2 px-4 border-b justify-between">
+        <button
+          class="bg-yellow-500 text-white py-1 px-1 rounded h-10"
+          onclick="openUpdateModal('{{ commande.pk }}')"
+        >
+          <svg
+            class="w-6 h-6 text-gray-800 dark:text-gray-700"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
+            />
+          </svg>
+        </button>
+        <button
+          class="bg-red-500 text-white rounded h-10"
+          onclick="openDeleteModal({{ commande.pk }})"
+        >
+          <svg
+            class="w-6 h-6 text-gray-800 dark:text-white"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+        <button
+          class="bg-green-500 text-white rounded h-10"
+          onclick="openChangeStatusModal({{ commande.pk }})"
+        >
+          Changer Statut
+        </button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Create Modal -->
+<div
+  id="createModal"
+  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+  style="z-index: 1000"
+>
+  <div
+    class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+  >
+    <h2 class="text-xl font-bold mb-4">Passer commande</h2>
+    <form action="{% url 'commandes_create' %}" method="post">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 text-sm font-bold mb-2"
+          for="medicament"
+          >Médicament</label
+        >
+        <select
+          name="medicament"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        >
+          <option value="">Sélectionner un médicament</option>
+          {% for med in medicaments %}
+          <option value="{{ med.pk }}">{{ med.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 text-sm font-bold mb-2"
+          for="fournisseur"
+          >Fournisseur</label
+        >
+        <select
+          name="fournisseur"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        >
+          <option value="">Sélectionner un fournisseur</option>
+          {% for four in fournisseurs %}
+          <option value="{{ four.pk }}">{{ four.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 text-sm font-bold mb-2"
+          for="quantite_commande"
+          >Quantité</label
+        >
+        <input
+          type="number"
+          name="quantite_commande"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          step="0.01"
+        />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="statut"
+          >Statut</label
+        >
+        <select
+          name="statut"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        >
+          <option value="en_attente">En attente</option>
+          <option value="livrée">Livrée</option>
+        </select>
+      </div>
+      <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
+        Créer
+      </button>
+    </form>
+    <button
+      id="closeCreateModalBtn"
+      class="absolute top-0 right-0 mt-4 mr-4 text-gray-600"
+    >
+      <svg
+        class="w-6 h-6 text-gray-800 dark:text-gray-900"
+        aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18 17.94 6M18 18 6.06 6"
+        />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Update Modal -->
+<div
+  id="updateModal"
+  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+  style="z-index: 1000"
+>
+  <div
+    class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+  >
+    <h2 class="text-xl font-bold mb-4">Modifier commande</h2>
+    <form id="updateForm" method="post">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 text-sm font-bold mb-2"
+          for="medicament"
+          >Médicament</label
+        >
+        <select
+          name="medicament"
+          id="medicament"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        >
+          {% for med in medicaments %}
+          <option value="{{ med.id_Medicament }}">{{ med.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 text-sm font-bold mb-2"
+          for="fournisseur"
+          >Fournisseur</label
+        >
+        <select
+          name="fournisseur"
+          id="fournisseur"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        >
+          {% for four in fournisseurs %}
+          <option value="{{ four.id }}">{{ four.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 text-sm font-bold mb-2"
+          for="quantite_commande"
+          >Quantité</label
+        >
+        <input
+          type="number"
+          name="quantite_commande"
+          id="quantite_commande"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          step="0.01"
+        />
+      </div>
+      <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
+        Mettre à jour
+      </button>
+    </form>
+    <button
+      id="closeUpdateModalBtn"
+      class="absolute top-0 right-0 mt-4 mr-4 text-gray-600"
+    >
+      <svg
+        class="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        ></path>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div
+  id="deleteModal"
+  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+  style="z-index: 1000"
+>
+  <div
+    class="relative top-20 mx-auto p-5 border w-1/3 shadow-lg rounded-md bg-white"
+  >
+    <h2 class="text-xl font-bold mb-4">Supprimer commande</h2>
+    <p>Êtes-vous sûr de vouloir supprimer cette commande ?</p>
+    <form id="deleteForm" method="post">
+      {% csrf_token %}
+      <div class="flex justify-center">
+        <button
+          type="submit"
+          class="mt-5 bg-red-500 text-white px-4 py-2 rounded"
+        >
+          Oui
+        </button>
+        <button
+          id="closeDeleteModalBtn1"
+          type="button"
+          class="mt-5 ml-6 bg-gray-500 text-white px-4 py-2 rounded"
+        >
+          Non
+        </button>
+      </div>
+    </form>
+    <button
+      id="closeDeleteModalBtn"
+      class="absolute top-0 right-0 mt-4 mr-4 text-gray-600"
+    >
+      <svg
+        class="w-6 h-6 text-gray-800 dark:text-gray-900"
+        aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18 17.94 6M18 18 6.06 6"
+        />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Change Status Modal -->
+<div
+  id="changeStatusModal"
+  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+  style="z-index: 1000"
+>
+  <div
+    class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+  >
+    <h2 class="text-xl font-bold mb-4">Changer Statut</h2>
+    <form id="changeStatusForm" method="post">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="statut"
+          >Statut</label
+        >
+        <select
+          name="statut"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        >
+          <option value="en_attente">En attente</option>
+          <option value="livrée">Livrée</option>
+        </select>
+      </div>
+      <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">
+        Changer Statut
+      </button>
+    </form>
+    <button
+      id="closeChangeStatusModalBtn"
+      class="absolute top-0 right-0 mt-4 mr-4 text-gray-600"
+    >
+      <svg
+        class="w-6 h-6 text-gray-800 dark:text-gray-900"
+        aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18 17.94 6M18 18 6.06 6"
+        />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  function openCreateModal() {
+    document.getElementById("createModal").classList.remove("hidden");
+  }
+
+  document
+    .getElementById("closeCreateModalBtn")
+    .addEventListener("click", function () {
+      document.getElementById("createModal").classList.add("hidden");
+    });
+
+  function openUpdateModal(pk) {
+    console.log("Opening update modal for commande:", pk);
+
+    // Mettre à jour l'action du formulaire
+    const form = document.getElementById("updateForm");
+    form.action = "{% url 'commandes_update' 0 %}".replace("0", pk);
+
+    // Récupérer les données de la commande via une requête AJAX
+    fetch("{% url 'commandes_update' 0 %}".replace("0", pk), {
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+      },
+    })
+      .then((response) => {
+        console.log("Response status:", response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Received data:", data);
+
+        if (!data.success) {
+          throw new Error(data.error || "Données invalides");
+        }
+
+        // Sélectionner les éléments du formulaire
+        const medicamentSelect = form.querySelector(
+          'select[name="medicament"]'
+        );
+        const fournisseurSelect = form.querySelector(
+          'select[name="fournisseur"]'
+        );
+        const quantiteInput = form.querySelector(
+          'input[name="quantite_commande"]'
+        );
+
+        console.log("Form elements:", {
+          medicamentSelect,
+          fournisseurSelect,
+          quantiteInput,
+        });
+
+        // Mettre à jour les valeurs
+        if (medicamentSelect) medicamentSelect.value = data.commande.medicament;
+        if (fournisseurSelect)
+          fournisseurSelect.value = data.commande.fournisseur;
+        if (quantiteInput)
+          quantiteInput.value = data.commande.quantite_commande;
+
+        console.log("Updated form values:", {
+          medicament: medicamentSelect?.value,
+          fournisseur: fournisseurSelect?.value,
+          quantite: quantiteInput?.value,
+        });
+
+        // Afficher le modal
+        document.getElementById("updateModal").classList.remove("hidden");
+      })
+      .catch((error) => {
+        console.error("Error in openUpdateModal:", error);
+        alert(`Une erreur est survenue: ${error.message}`);
+      });
+  }
+
+  document
+    .getElementById("closeUpdateModalBtn")
+    .addEventListener("click", function () {
+      document.getElementById("updateModal").classList.add("hidden");
+    });
+
+  function openDeleteModal(pk) {
+    document.getElementById("deleteForm").action =
+      `{% url 'commandes_delete' 0 %}`.replace("/0", `/${pk}`);
+    document.getElementById("deleteModal").classList.remove("hidden");
+  }
+
+  document
+    .getElementById("closeDeleteModalBtn")
+    .addEventListener("click", function () {
+      document.getElementById("deleteModal").classList.add("hidden");
+    });
+  document
+    .getElementById("closeDeleteModalBtn1")
+    .addEventListener("click", function () {
+      document.getElementById("deleteModal").classList.add("hidden");
+    });
+
+  function openChangeStatusModal(pk) {
+    document.getElementById("changeStatusForm").action =
+      `{% url 'commandes_change_status' 0 %}`.replace("/0", `/${pk}`);
+    document.getElementById("changeStatusModal").classList.remove("hidden");
+  }
+
+  document
+    .getElementById("closeChangeStatusModalBtn")
+    .addEventListener("click", function () {
+      document.getElementById("changeStatusModal").classList.add("hidden");
+    });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const tableBody = document.getElementById("commandeTableBody");
+
+    searchInput.addEventListener("keyup", function () {
+      const searchTerm = this.value.toLowerCase();
+      const rows = tableBody.getElementsByTagName("tr");
+
+      Array.from(rows).forEach((row) => {
+        const medicamentCell = row.getElementsByTagName("td")[0]; // Index 0 pour la colonne "Médicament"
+        const fournisseurCell = row.getElementsByTagName("td")[1]; // Index 1 pour la colonne "Fournisseur"
+        const statutCell = row.getElementsByTagName("td")[3]; // Index 3 pour la colonne "Statut"
+
+        if (medicamentCell && fournisseurCell && statutCell) {
+          const medicament = medicamentCell.textContent.toLowerCase();
+          const fournisseur = fournisseurCell.textContent.toLowerCase();
+          const statut = statutCell.textContent.toLowerCase();
+
+          if (
+            medicament.includes(searchTerm) ||
+            fournisseur.includes(searchTerm) ||
+            statut.includes(searchTerm)
+          ) {
+            row.style.display = "";
+          } else {
+            row.style.display = "none";
+          }
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}

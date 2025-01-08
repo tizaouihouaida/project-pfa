@@ -4,44 +4,55 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Titre par défaut{% endblock %}</title>
-     <script src="https://cdn.tailwindcss.com"></script>
-     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.4.0/flowbite.min.css" rel="stylesheet">
-     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-     {% load static %}
-     <link rel="stylesheet" href="{% static 'assets/css/styles.min.css' %}">
-     <link rel="shortcut icon" type="image/png" href="{% static 'assets/images/logos/favicon.pn' %}">
-
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.4.0/flowbite.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'assets/css/styles.min.css' %}" />
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="{% static 'assets/images/logos/favicon.pn' %}"
+    />
   </head>
   <body>
-    <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-    data-sidebar-position="fixed" data-header-position="fixed">
+    <div
+      class="page-wrapper"
+      id="main-wrapper"
+      data-layout="vertical"
+      data-navbarbg="skin6"
+      data-sidebartype="full"
+      data-sidebar-position="fixed"
+      data-header-position="fixed"
+    >
       {% include 'layout/sidebar.html' %}
 
       <div class="body-wrapper">
-        {% include 'layout/header.html' %}
-        {% if form.errors %}
-          <div class="alert alert-danger">
-              <ul>
-                  {% for field in form %}
-                      {% for error in field.errors %}
-                          <li>{{ error }}</li>
-                      {% endfor %}
-                  {% endfor %}
-              </ul>
-          </div>
+        {% include 'layout/header.html' %} {% if form.errors %}
+        <div class="alert alert-danger">
+          <ul>
+            {% for field in form %} {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %} {% endfor %}
+          </ul>
+        </div>
         {% endif %}
 
         <div class="container-fluid">
-          {% block main_content %} {% endblock %}
+          {% block main_content %}{% endblock %}
         </div>
       </div>
     </div>
 
- {% load static %}
-  <script src="{% static 'assets/libs/jquery/dist/jquery.min.js' %}"></script>
-  <script src="{% static 'assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/js/sidebarmenu.js' %}"></script>
-  <script src="{% static 'assets/js/app.min.js' %}"></script>
-  <script src="{% static 'assets/libs/simplebar/dist/simplebar.js' %}"></script>
+    {% load static %}
+    <script src="{% static 'assets/libs/jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/sidebarmenu.js' %}"></script>
+    <script src="{% static 'assets/js/app.min.js' %}"></script>
+    <script src="{% static 'assets/libs/simplebar/dist/simplebar.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.4.0/flowbite.min.js"></script>
   </body>
 </html>
