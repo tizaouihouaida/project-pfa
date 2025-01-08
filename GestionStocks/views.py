@@ -199,9 +199,9 @@ def medicament_update(request, id_Medicament):
 @role_required('gestionnaire_stocks')
 def fournisseurs_index(request):
     username = request.user.username
-    fournisseur_instance = Fournisseur()
-    fournisseurs = fournisseur_instance.afficheLesFournisseurs()
-    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username,}) # Assurez-vous que ce template existe
+    fournisseurs = Fournisseur.objects.all()
+    form = FournisseurForm()
+    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username, 'form': form})
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -212,10 +212,13 @@ def fournisseur_create(request):
         fournisseur = form.save(commit=False)
         fournisseur.ajouterFournisseur()
         return redirect('fournisseurs_index')
-    else:
-        form = FournisseurForm()
-    form = FournisseurForm()
-    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username, 'form': form})
+    # If form is invalid, get all fournisseurs and render the page again
+    fournisseurs = Fournisseur.objects.all()
+    return render(request, 'fournisseurs/index.html', {
+        'fournisseurs': fournisseurs,
+        'username': request.user.username,
+        'form': form
+    })
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -234,8 +237,13 @@ def fournisseur_update(request, pk):
             return redirect('fournisseurs_index')
     else:
         form = FournisseurForm(instance=fournisseur)
-    form = FournisseurForm()
-    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username, 'form': form})
+    
+    fournisseurs = Fournisseur.objects.all()
+    return render(request, 'fournisseurs/index.html', {
+        'fournisseurs': fournisseurs,
+        'username': request.user.username,
+        'form': form
+    })
 
 
 
@@ -244,11 +252,8 @@ def fournisseur_update(request, pk):
 @require_POST
 def fournisseur_delete(request, pk):
     fournisseur = get_object_or_404(Fournisseur, pk=pk)
-    if request.method == 'POST':
-        fournisseur.supprimerFournisseur()
-        return redirect('fournisseurs_index')
-    form = FournisseurForm()
-    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username, 'form': form})
+    fournisseur.supprimerFournisseur()
+    return redirect('fournisseurs_index')
 
 
 @login_required
@@ -509,4 +514,43 @@ def notifications_index(request):
         'grouped_notifications': grouped_notifications,
         'username': request.user.username
     })
+
+@login_required
+@role_required('gestionnaire_stocks')
+def update_stock(request, id):
+    if request.method == 'POST':
+        try:
+            stock = Stock.objects.get(id_Stock=id)
+            nouvelle_quantite = int(request.POST.get('quantite', 0))
+            
+            if nouvelle_quantite >= 0:
+                stock.quantite = nouvelle_quantite
+                stock.save()
+                
+                # Vérifier si le seuil d'alerte est atteint
+                if stock.quantite <= stock.seuil_alerte:
+                    Notification.objects.create(
+                        message=f"Le stock de {stock.medicament.nom} est bas ({stock.quantite} restants)",
+                        type_notification="alerte_stock"
+                    )
+                
+                return JsonResponse({'status': 'success', 'message': 'Stock mis à jour avec succès'})
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'La quantité doit être positive'
+                }, status=400)
+                
+        except Stock.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Stock non trouvé'
+            }, status=404)
+        except ValueError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Quantité invalide'
+            }, status=400)
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
