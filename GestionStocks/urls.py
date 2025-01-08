@@ -22,4 +22,9 @@ urlpatterns = [
     path('fournisseurs/delete/<int:pk>/', views.fournisseur_delete, name='supprimer_fournisseur'),
     path('fournisseurs/search/', views.fournisseurs_search, name='fournisseurs_search'),
     path('commandes/', views.commandes_index, name='commandes_index'),
+    path('commandes/create/', views.commandes_create, name='commandes_create'),
+    path('commandes/update/<int:pk>/', views.commandes_update, name='commandes_update'),
+    path('commandes/delete/<int:pk>/', views.commandes_delete, name='commandes_delete'),
+    path('commandes/change_status/<int:pk>/', views.commandes_change_status, name='commandes_change_status'),
+    path('notifications/', views.notifications_index, name='notifications_index'),
 ]

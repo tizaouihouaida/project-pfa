@@ -1,244 +1,373 @@
-{% extends 'layout/base_vente.html' %}
-{% block title %}POS{% endblock %}
-{% block main_content %}
+{% extends 'layout/base_vente.html' %} {% block title %}POS{% endblock %}
+{%block main_content %}
 <div class="row">
-    <div class="col-md-7">
-        <h2>Médicaments disponibles</h2>
-        <input type="text" id="search-bar" class="form-control mb-3" placeholder="Rechercher un médicament..." onkeyup="searchMedicaments()">
-        <div class="medicaments row" id="medicaments-list">
-            {% for medicament in medicaments %}
-                <div class="medicament col-md-4 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            {% if medicament.image %}
-                                <img src="{{ medicament.image.url }}" alt="{{ medicament.nom }}" class="img-fluid mb-2 justify-center ml-8" style="max-height: 90px">
-                            {% else %}
-                                <div class="bg-gray-200 mb-2" style="height: 150px; display: flex; align-items: center; justify-content: center;">Pas d'image</div>
-                            {% endif %}
-                            <h5 class="card-title">{{ medicament.nom }}</h5>
-                            <p class="card-text">Prix: {{ medicament.prixUnitaire }}</p>
-                            <button onclick="addToCart({{ medicament.id_Medicament }})" class="btn btn-primary ">Ajouter au panier</button>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
+  <div class="col-md-7">
+    <h2>Médicaments disponibles</h2>
+    <input
+      type="text"
+      id="search-bar"
+      class="form-control mb-3"
+      placeholder="Rechercher un médicament..."
+      onkeyup="searchMedicaments()"
+    />
+    <div class="medicaments row" id="medicaments-list">
+      {% for medicament in medicaments %}
+      <div class="medicament col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            {% if medicament.image %}
+            <img
+              src="{{ medicament.image.url }}"
+              alt="{{ medicament.nom }}"
+              class="img-fluid mb-2 justify-center ml-8"
+              style="max-height: 90px"
+            />
+            {% else %}
+            <div
+              class="bg-gray-200 mb-2"
+              style="
+                height: 150px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              Pas d'image
+            </div>
+            {% endif %}
+            <h5 class="card-title">{{ medicament.nom }}</h5>
+            <p class="card-text">Prix: {{ medicament.prixUnitaire }}</p>
+            <button
+              onclick="addToCart('{{ medicament.id_Medicament }}', '{{ medicament.nom }}', '{{ medicament.prixUnitaire }}')"
+              class="btn btn-primary"
+            >
+              Ajouter au panier
+            </button>
+          </div>
         </div>
+      </div>
+      {% endfor %}
     </div>
-    <div class="col-md-4">
-        <h2>Panier</h2>
-        <table id="cart-items" class="table">
-            <thead>
-                <tr>
-                    <th>Produit</th>
-                    <th>Unit Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Les éléments du panier seront ajoutés ici -->
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="3">Total</td>
-                    <td id="total">0.00</td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
-        <button onclick="checkout()" class="btn btn-primary">Finaliser la vente</button>
-    </div>
+  </div>
+  <div class="col-md-4">
+    <h2>Panier</h2>
+    <table id="cart-items" class="table">
+      <thead>
+        <tr>
+          <th>Produit</th>
+          <th>Unit Price</th>
+          <th>Quantity</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Les éléments du panier seront ajoutés ici -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total</td>
+          <td id="total">0.00</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    <button onclick="checkout()" class="btn btn-primary">
+      Finaliser la vente
+    </button>
+  </div>
 </div>
 
 <!-- Modal for Receipt -->
-<div class="modal fade" id="receiptModal" tabindex="-1" role="dialog" aria-labelledby="receiptModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="receiptModalLabel">Reçu de vente</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeModal()">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="receiptBody">
-                <!-- Receipt content will be inserted here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close" onclick="closeModal()">Fermer</button>
-                <button type="button" class="btn btn-primary" onclick="window.print()">Imprimer</button>
-            </div>
-        </div>
+<div
+  class="modal fade"
+  id="receiptModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="receiptModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="receiptModalLabel">Reçu de vente</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+          onclick="closeModal()"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="receiptBody">
+        <!-- Receipt content will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-dismiss="modal"
+          aria-label="Close"
+          onclick="closeModal()"
+        >
+          Fermer
+        </button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          Imprimer
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
-        return cookieValue;
+      }
     }
+    return cookieValue;
+  }
 
-    const csrftoken = getCookie('csrftoken');
-    let cart = [];
+  const csrftoken = getCookie("csrftoken");
+  let cart = [];
 
-    function addToCart(medicamentId) {
-        $.post("{% url 'add_to_cart' %}", { medicament_id: medicamentId, csrfmiddlewaretoken: csrftoken }, function(data) {
-            if (data.status === 'success') {
-                let item = cart.find(i => i.id === medicamentId);
-                if (item) {
-                    item.quantity += 1;
-                    item.total = item.quantity * parseFloat(data.price);
-                } else {
-                    cart.push({ id: medicamentId, name: data.name, price: parseFloat(data.price), quantity: 1, total: parseFloat(data.price) });
-                }
-                updateCart();
-            } else {
-                alert(data.message);
-            }
-        });
-    }
+  function addToCart(id, name, price) {
+    cart.push({
+      id: id,
+      name: name,
+      price: parseFloat(price),
+      quantity: 1,
+      total: parseFloat(price),
+    });
+    updateCart();
+  }
 
-    function updateCart() {
-        let cartTable = document.getElementById('cart-items').getElementsByTagName('tbody')[0];
-        cartTable.innerHTML = '';
-        let total = 0;
-        cart.forEach(item => {
-            let row = cartTable.insertRow();
-            row.insertCell(0).innerText = item.name;
-            row.insertCell(1).innerText = item.price.toFixed(2);
-            row.insertCell(2).innerText = item.quantity;
-            row.insertCell(3).innerText = item.total.toFixed(2);
-            let actionCell = row.insertCell(4);
-            actionCell.innerHTML = `
-                <button onclick="removeFromCart(${item.id})" class="btn btn-danger">
-                    <svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
-                    </svg>
-                </button>
-            `;
-            total += item.total;
-        });
-        document.getElementById('total').innerText = total.toFixed(2);
-    }
+  function updateCart() {
+    let cartTable = document
+      .getElementById("cart-items")
+      .getElementsByTagName("tbody")[0];
+    cartTable.innerHTML = "";
+    let total = 0;
+    cart.forEach((item) => {
+      let row = cartTable.insertRow();
+      row.insertCell(0).innerText = item.name;
+      row.insertCell(1).innerText = item.price.toFixed(2);
 
-    function removeFromCart(id) {
-        cart = cart.filter(item => item.id !== id);
-        updateCart();
-    }
+      // Cellule pour la quantité avec les boutons + et -
+      let quantityCell = row.insertCell(2);
+      quantityCell.innerHTML = `
+        <div class="d-flex align-items-center">
+          <button class="btn btn-sm btn-outline-secondary me-2 decrement-btn" data-id="${
+            item.id
+          }" ${item.quantity <= 1 ? "disabled" : ""}>-</button>
+          <span class="mx-2">${item.quantity}</span>
+          <button class="btn btn-sm btn-outline-secondary ms-2 increment-btn" data-id="${
+            item.id
+          }">+</button>
+        </div>
+      `;
 
-    function checkout() {
-        if (cart.length === 0) {
-            alert('Votre panier est vide.');
-            return;
+      row.insertCell(3).innerText = item.total.toFixed(2);
+      let actionCell = row.insertCell(4);
+      actionCell.innerHTML = `
+        <button class="btn btn-danger delete-btn" data-id="${item.id}">
+          <svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
+          </svg>
+        </button>
+      `;
+      total += item.total;
+    });
+    document.getElementById("total").innerText = total.toFixed(2);
+
+    // Ajouter les écouteurs d'événements après avoir créé les éléments
+    attachQuantityHandlers();
+  }
+
+  // Fonction pour attacher les gestionnaires d'événements aux boutons
+  function attachQuantityHandlers() {
+    // Gestionnaires pour les boutons d'incrémentation
+    document.querySelectorAll(".increment-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const id = this.getAttribute("data-id");
+        const item = cart.find((item) => item.id === id);
+        if (item) {
+          item.quantity += 1;
+          item.total = item.price * item.quantity;
+          updateCart();
         }
-        $.post("{% url 'finalize_sale' %}", { cart: JSON.stringify(cart), csrfmiddlewaretoken: csrftoken }, function(data) {
-            if (data.status === 'success') {
-                showReceipt(data.total);
-                cart = [];
-                updateCart();
-            } else {
-                alert(data.message);
-            }
-        });
+      });
+    });
+
+    // Gestionnaires pour les boutons de décrémentation
+    document.querySelectorAll(".decrement-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const id = this.getAttribute("data-id");
+        const item = cart.find((item) => item.id === id);
+        if (item && item.quantity > 1) {
+          item.quantity -= 1;
+          item.total = item.price * item.quantity;
+          updateCart();
+        }
+      });
+    });
+
+    // Gestionnaires pour les boutons de suppression
+    document.querySelectorAll(".delete-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const id = this.getAttribute("data-id");
+        removeFromCart(id);
+      });
+    });
+  }
+
+  function removeFromCart(id) {
+    cart = cart.filter((item) => item.id !== id);
+    updateCart();
+  }
+
+  function checkout() {
+    if (cart.length === 0) {
+      alert("Votre panier est vide.");
+      return;
     }
+    $.post(
+      "{% url 'finalize_sale' %}",
+      { cart: JSON.stringify(cart), csrfmiddlewaretoken: csrftoken },
+      function (data) {
+        if (data.status === "success") {
+          showReceipt(data.total);
+          cart = [];
+          updateCart();
+        } else {
+          alert(data.message);
+        }
+      }
+    );
+  }
 
-    function searchMedicaments() {
-        const searchQuery = document.getElementById('search-bar').value.toLowerCase();
-        const medicaments = document.querySelectorAll('.medicament');
+  function searchMedicaments() {
+    const searchQuery = document
+      .getElementById("search-bar")
+      .value.toLowerCase();
+    const medicaments = document.querySelectorAll(".medicament");
 
-        medicaments.forEach(medicament => {
-            const name = medicament.querySelector('.card-title').innerText.toLowerCase();
-            medicament.style.display = name.includes(searchQuery) ? 'block' : 'none';
-        });
-    }
+    medicaments.forEach((medicament) => {
+      const name = medicament
+        .querySelector(".card-title")
+        .innerText.toLowerCase();
+      medicament.style.display = name.includes(searchQuery) ? "block" : "none";
+    });
+  }
 
-    function showReceipt(total) {
-        let receipt = `
-            <div class="text-center mb-4">
-                <h3>Reçu de Vente</h3>
-                <p>Date: ${new Date().toLocaleDateString()}</p>
-            </div>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Produit</th>
-                        <th>Unit Price</th>
-                        <th>Quantity</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        cart.forEach(item => {
-            receipt += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>${item.price.toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.total.toFixed(2)}</td>
-                </tr>
-            `;
-        });
-        receipt += `
-                <tr>
-                    <td colspan="3"><strong>Total</strong></td>
-                    <td><strong>${total.toFixed(2)}</strong></td>
-                </tr>
-                </tbody>
-            </table>
-            <p class="text-center mt-4">Merci pour votre achat!</p>
-        `;
-        document.getElementById('receiptBody').innerHTML = receipt;
+  function showReceipt(total) {
+    let receipt = `
+      <div class="text-center mb-4">
+        <h3>Reçu de Vente</h3>
+        <p>Date: ${new Date().toLocaleDateString()}</p>
+      </div>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Prix unitaire</th>
+            <th>Quantité</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    cart.forEach((item) => {
+      receipt += `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.price.toFixed(2)}</td>
+          <td>${item.quantity}</td>
+          <td>${item.total.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+    receipt += `
+        <tr>
+          <td colspan="3"><strong>Total</strong></td>
+          <td><strong>${total.toFixed(2)}</strong></td>
+        </tr>
+        </tbody>
+      </table>
+      <p class="text-center mt-4">Merci pour votre achat!</p>
+    `;
+    document.getElementById("receiptBody").innerHTML = receipt;
+    $("#receiptModal").modal("show");
+  }
 
-        // Affiche le modal
-        $('#receiptModal').modal('show');
-    }
-
-    // Fonction de fermeture du modal
-    function closeModal() {
-        $('#receiptModal').modal('hide');
-    }
+  function closeModal() {
+    $("#receiptModal").modal("hide");
+  }
 </script>
 <style>
-    @media print {
-        body * {
-            visibility: hidden;
-        }
-        #receiptModal, #receiptModal * {
-            visibility: visible;
-        }
-        #receiptModal {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: auto;
-            box-shadow: none;
-            padding: 20px;
-            margin: 0;
-        }
-        .modal-dialog {
-            width: 100%;
-            margin: 0;
-        }
-        .modal-content {
-            border: none;
-            box-shadow: none;
-        }
-        .modal-header, .modal-footer {
-            display: none;
-        }
+  @media print {
+    body * {
+      visibility: hidden;
     }
-</style>
+    #receiptModal,
+    #receiptModal * {
+      visibility: visible;
+    }
+    #receiptModal {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: auto;
+      box-shadow: none;
+      padding: 20px;
+      margin: 0;
+    }
+    .modal-dialog {
+      width: 100%;
+      margin: 0;
+    }
+    .modal-content {
+      border: none;
+      box-shadow: none;
+    }
+    .modal-header,
+    .modal-footer {
+      display: none;
+    }
+  }
 
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+  }
+
+  .me-2 {
+    margin-right: 0.5rem;
+  }
+
+  .ms-2 {
+    margin-left: 0.5rem;
+  }
+
+  .d-flex {
+    display: flex;
+  }
+
+  .align-items-center {
+    align-items: center;
+  }
+</style>
 {% endblock %}

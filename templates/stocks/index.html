@@ -1,246 +1,531 @@
-{% extends 'layout/base.html' %}
-{% block title %}Gestion des Stocks{% endblock %}
+{% extends 'layout/base.html' %} {% block title %}Gestion des Stocks{%endblock%}
 {% block main_content %}
 <h1 class="text-2xl font-bold mb-4">Gestion des Stocks</h1>
-<button id="createStockBtn" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Ajouter un Stock</button>
+<div class="flex justify-between items-center mb-4">
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Rechercher un stock..."
+    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+  />
+  <button
+    id="createStockBtn"
+    class="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+  >
+    Ajouter un Stock
+  </button>
+</div>
 <table class="min-w-full bg-white">
-    <thead>
-        <tr>
-            <th class="py-2 px-4 border-b">ID</th>
-            <th class="py-2 px-4 border-b">Médicament</th>
-            <th class="py-2 px-4 border-b">Quantité</th>
-            <th class="py-2 px-4 border-b">Date de péremption</th>
-            <th class="py-2 px-4 border-b">Seuil d'alerte</th>
-            <th class="py-2 px-4 border-b">Actions</th>
-        </tr>
-    </thead>
-    <tbody id="stockTableBody">
-        {% for stock in stocks %}
-        <tr>
-            <td class="py-2 px-4 border-b">{{ stock.id_Stock }}</td>
-            <td class="py-2 px-4 border-b">{{ stock.medicament.nom }}</td>
-            <td class="py-2 px-4 border-b">{{ stock.quantite }}</td>
-            <td class="py-2 px-4 border-b">{{ stock.date_preemption }}</td>
-            <td class="py-2 px-4 border-b">{{ stock.seuil_alerte }}</td>
-            <td class="py-2 px-4 border-b">
-                <button class="bg-yellow-500 text-white px-2 py-1 rounded editStockBtn" data-id="{{ stock.id_Stock }}">Modifier</button>
-                <button class="bg-red-500 text-white px-2 py-1 rounded deleteStockBtn" data-id="{{ stock.id_Stock }}">Supprimer</button>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+  <thead>
+    <tr>
+      <th class="py-2 px-4 border-b">Médicament</th>
+      <th class="py-2 px-4 border-b">Quantité</th>
+      <th class="py-2 px-4 border-b">Date de péremption</th>
+      <th class="py-2 px-4 border-b">Seuil d'alerte</th>
+      <th class="py-2 px-4 border-b">Statut</th>
+      <th class="py-2 px-4 border-b">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="stockTableBody">
+    {% for stock in stocks %}
+    <tr>
+      <td class="py-2 px-4 border-b">{{ stock.medicament.nom }}</td>
+      <td class="py-2 px-4 border-b">{{ stock.quantite }}</td>
+      <td class="py-2 px-4 border-b">{{ stock.date_preemption }}</td>
+      <td class="py-2 px-4 border-b">{{ stock.seuil_alerte }}</td>
+      <td class="py-2 px-4 border-b">
+        {% if stock.medicament.est_vendu %}
+        <span class="px-2 py-1 text-sm rounded-full bg-green-100 text-green-800"
+          >Disponible</span
+        >
+        {% else %}
+        <span class="px-2 py-1 text-sm rounded-full bg-red-100 text-red-800"
+          >Non disponible</span
+        >
+        {% endif %}
+      </td>
+      <td class="py-2 px-4 border-b">
+        <button
+          class="bg-yellow-500 text-white px-2 py-1 rounded editStockBtn"
+          data-id="{{ stock.id_Stock }}"
+        >
+          Modifier
+        </button>
+        <button
+          class="bg-red-500 text-white px-2 py-1 rounded deleteStockBtn"
+          data-id="{{ stock.id_Stock }}"
+        >
+          Supprimer
+        </button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 
 <!-- Create Stock Modal -->
-<div id="createStockModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Ajouter un Stock</h3>
-                        <form id="createStockForm">
-                            {% csrf_token %}
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="medicament">Médicament</label>
-                                <select id="medicament" name="medicament" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                                    {% for medicament in medicaments %}
-                                    <option value="{{ medicament.id_Medicament }}">{{ medicament.nom }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="quantite">Quantité</label>
-                                <input type="number" id="quantite" name="quantite" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="date_preemption">Date de péremption</label>
-                                <input type="date" id="date_preemption" name="date_preemption" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="seuil_alerte">Seuil d'alerte</label>
-                                <input type="number" id="seuil_alerte" name="seuil_alerte" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Ajouter</button>
-                                <button type="button" id="closeCreateStockModal" class="bg-gray-500 text-white px-4 py-2 rounded">Annuler</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div
+  id="createStockModal"
+  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+  aria-labelledby="modal-title"
+  role="dialog"
+  aria-modal="true"
+>
+  <div
+    class="relative top-20 mx-auto p-8 max-w-md bg-white rounded-lg shadow-xl"
+  >
+    <!-- En-tête du modal -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">Ajouter un Stock</h2>
+      <button
+        id="closeCreateStockModal"
+        class="text-gray-600 hover:text-gray-800"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </button>
     </div>
+
+    <!-- Formulaire -->
+    <form id="createStockForm" class="space-y-6">
+      {% csrf_token %}
+      <!-- Médicament -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700" for="medicament"
+          >Médicament</label
+        >
+        <select
+          id="medicament"
+          name="medicament"
+          class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          {% for medicament in tous_medicaments %}
+          <option value="{{ medicament.id_Medicament }}">
+            {{ medicament.nom }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Quantité -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700" for="quantite"
+          >Quantité</label
+        >
+        <input
+          type="number"
+          id="quantite"
+          name="quantite"
+          class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Date de péremption -->
+      <div class="space-y-2">
+        <label
+          class="block text-sm font-medium text-gray-700"
+          for="date_preemption"
+          >Date de péremption</label
+        >
+        <input
+          type="date"
+          id="date_preemption"
+          name="date_preemption"
+          class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Seuil d'alerte -->
+      <div class="space-y-2">
+        <label
+          class="block text-sm font-medium text-gray-700"
+          for="seuil_alerte"
+          >Seuil d'alerte</label
+        >
+        <input
+          type="number"
+          id="seuil_alerte"
+          name="seuil_alerte"
+          class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="flex justify-end space-x-4 pt-4">
+        <button
+          type="button"
+          id="closeCreateStockModal"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Annuler
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Ajouter
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Update Stock Modal -->
-<div id="updateStockModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Modifier un Stock</h3>
-                        <form id="updateStockForm">
-                            {% csrf_token %}
-                            <input type="hidden" id="updateStockId" name="id">
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="updateMedicament">Médicament</label>
-                                <select id="updateMedicament" name="medicament" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                                    {% for medicament in medicaments %}
-                                    <option value="{{ medicament.id_Medicament }}">{{ medicament.nom }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="updateQuantite">Quantité</label>
-                                <input type="number" id="updateQuantite" name="quantite" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="updateDatePreemption">Date de péremption</label>
-                                <input type="date" id="updateDatePreemption" name="date_preemption" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="updateSeuilAlerte">Seuil d'alerte</label>
-                                <input type="number" id="updateSeuilAlerte" name="seuil_alerte" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Modifier</button>
-                                <button type="button" id="closeUpdateStockModal" class="bg-gray-500 text-white px-4 py-2 rounded">Annuler</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div
+  id="updateStockModal"
+  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+>
+  <div
+    class="relative top-20 mx-auto p-8 max-w-md bg-white rounded-lg shadow-xl"
+  >
+    <!-- En-tête du modal -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">Modifier un Stock</h2>
+      <button
+        id="closeUpdateStockModal"
+        class="text-gray-600 hover:text-gray-800"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </button>
     </div>
+
+    <!-- Formulaire -->
+    <form id="updateStockForm" method="post" class="space-y-6">
+      {% csrf_token %}
+      <input type="hidden" id="updateStockId" name="id_Stock" />
+
+      <!-- Médicament -->
+      <div class="space-y-2">
+        <label
+          class="block text-sm font-medium text-gray-700"
+          for="updateMedicament"
+        >
+          Médicament
+        </label>
+        <select
+          id="updateMedicament"
+          name="medicament"
+          class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          {% for medicament in tous_medicaments %}
+          <option value="{{ medicament.id_Medicament }}">
+            {{ medicament.nom }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Quantité -->
+      <div class="space-y-2">
+        <label
+          class="block text-sm font-medium text-gray-700"
+          for="updateQuantite"
+        >
+          Quantité
+        </label>
+        <input
+          type="number"
+          id="updateQuantite"
+          name="quantite"
+          class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Date de péremption -->
+      <div class="space-y-2">
+        <label
+          class="block text-sm font-medium text-gray-700"
+          for="updateDatePreemption"
+        >
+          Date de péremption
+        </label>
+        <input
+          type="date"
+          id="updateDatePreemption"
+          name="date_preemption"
+          class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Seuil d'alerte -->
+      <div class="space-y-2">
+        <label
+          class="block text-sm font-medium text-gray-700"
+          for="updateSeuilAlerte"
+        >
+          Seuil d'alerte
+        </label>
+        <input
+          type="number"
+          id="updateSeuilAlerte"
+          name="seuil_alerte"
+          class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="flex justify-end space-x-4 pt-4">
+        <button
+          type="button"
+          id="closeUpdateStockModal"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Annuler
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Mettre à jour
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
-    $(document).ready(function() {
-        // Open Create Stock Modal
-        $('#createStockBtn').click(function() {
-            $('#createStockModal').removeClass('hidden');
-        });
+  $(document).ready(function () {
+    // Open Create Stock Modal
+    $("#createStockBtn").click(function () {
+      $("#createStockModal").removeClass("hidden");
+    });
 
-        // Close Create Stock Modal
-        $('#closeCreateStockModal').click(function() {
-            $('#createStockModal').addClass('hidden');
-        });
+    // Close Create Stock Modal
+    $("#closeCreateStockModal").click(function () {
+      $("#createStockModal").addClass("hidden");
+    });
 
-        // Submit Create Stock Form
-        $('#createStockForm').submit(function(e) {
-            e.preventDefault();
-            var quantite = $('#quantite').val();
-            var seuil_alerte = $('#seuil_alerte').val();
-            if (parseFloat(seuil_alerte) > parseFloat(quantite)) {
-                alert('Le seuil d\'alerte ne peut pas être supérieur à la quantité');
-                return;
+    // Submit Create Stock Form
+    $("#createStockForm").submit(function (e) {
+      e.preventDefault();
+      var quantite = $("#quantite").val();
+      var seuil_alerte = $("#seuil_alerte").val();
+      if (parseFloat(seuil_alerte) > parseFloat(quantite)) {
+        alert("Le seuil d'alerte ne peut pas être supérieur à la quantité");
+        return;
+      }
+      $.ajax({
+        url: '{% url "stocks_create" %}',
+        type: "POST",
+        data: $(this).serialize(),
+        success: function (response) {
+          if (response.success) {
+            $("#createStockModal").addClass("hidden");
+            location.reload();
+          } else {
+            var errorMessages = [];
+            for (var field in response.errors) {
+              errorMessages = errorMessages.concat(response.errors[field]);
             }
-            $.ajax({
-                url: '{% url "stocks_create" %}',
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function(response) {
-                    if (response.success) {
-                        $('#createStockModal').addClass('hidden');
-                        location.reload();
-                    } else {
-                        var errorMessages = [];
-                        for (var field in response.errors) {
-                            errorMessages = errorMessages.concat(response.errors[field]);
-                        }
-                        alert('Erreur: ' + errorMessages.join('\n'));
-                    }
-                },
-                error: function(xhr, errmsg, err) {
-                    alert('Erreur: ' + xhr.status + ': ' + xhr.responseText);
-                }
-            });
-        });
+            alert("Erreur: " + errorMessages.join("\n"));
+          }
+        },
+        error: function (xhr, errmsg, err) {
+          alert("Erreur: " + xhr.status + ": " + xhr.responseText);
+        },
+      });
+    });
 
-        // Open Update Stock Modal
-        $('.editStockBtn').click(function() {
-            var stockId = $(this).data('id');
-            $.ajax({
-                url: '{% url "get_stock_for_update" 0 %}'.replace('/0', '/' + stockId),
-                type: 'GET',
-                success: function(response) {
-                    if (response.success) {
-                        var stock = response.stock;
-                        $('#updateStockId').val(stock.id_Stock);
-                        $('#updateMedicament').val(stock.medicament_id);  // Modifié ici
-                        $('#updateQuantite').val(stock.quantite);
-                        $('#updateDatePreemption').val(stock.date_preemption);
-                        $('#updateSeuilAlerte').val(stock.seuil_alerte);
-                        $('#updateStockModal').removeClass('hidden');
-                    } else {
-                        alert('Erreur: ' + JSON.stringify(response.errors));
-                    }
-                },
-                error: function(xhr, errmsg, err) {
-                    alert('Erreur: ' + xhr.status + ': ' + xhr.responseText);
-                }
-            });
-        });
-        // Close Update Stock Modal
-        $('#closeUpdateStockModal').click(function() {
-            $('#updateStockModal').addClass('hidden');
-        });
+    // Open Update Stock Modal
+    $(".editStockBtn").click(function () {
+      var stockId = $(this).data("id");
+      console.log("Editing stock:", stockId);
 
-        // Submit Update Stock Form
-        $('#updateStockForm').submit(function(e) {
-            e.preventDefault();
-            var quantite = $('#updateQuantite').val();
-            var seuil_alerte = $('#updateSeuilAlerte').val();
-            if (parseFloat(seuil_alerte) > parseFloat(quantite)) {
-                alert('Le seuil d\'alerte ne peut pas être supérieur à la quantité');
-                return;
-            }
-            var stockId = $('#updateStockId').val();
-            $.ajax({
-                url: '{% url "stocks_update" 0 %}'.replace('/0', '/' + stockId),
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function(response) {
-                    if (response.success) {
-                        $('#updateStockModal').addClass('hidden');
-                        location.reload();
-                    } else {
-                        alert('Erreur: ' + JSON.stringify(response.errors));
-                    }
-                },
-                error: function(xhr, errmsg, err) {
-                    alert('Erreur: ' + xhr.status + ': ' + xhr.responseText);
-                }
-            });
-        });
+      // Récupérer les données du stock via une requête AJAX
+      fetch(`{% url 'get_stock_for_update' 0 %}`.replace("0", stockId), {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          Accept: "application/json",
+        },
+      })
+        .then((response) => {
+          console.log("Response status:", response.status);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Received data:", data);
 
-        // Delete Stock
-        $('.deleteStockBtn').click(function() {
-            var stockId = $(this).data('id');
-            if (confirm('Voulez-vous vraiment supprimer ce stock?')) {
-                $.ajax({
-                    url: '{% url "stocks_delete" 0 %}'.replace('/0', '/' + stockId),
-                    type: 'POST',
-                    data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
-                    success: function(response) {
-                        if (response.success) {
-                            location.reload();
-                        } else {
-                            alert('Erreur: ' + JSON.stringify(response.errors));
-                        }
-                    },
-                    error: function(xhr, errmsg, err) {
-                        alert('Erreur: ' + xhr.status + ': ' + xhr.responseText);
-                    }
-                });
-            }
+          if (!data.success) {
+            throw new Error(data.error || "Données invalides");
+          }
+
+          // Remplir le formulaire avec les données
+          const form = document.getElementById("updateStockForm");
+          const medicamentSelect = form.querySelector("#updateMedicament");
+
+          // Debug logs
+          console.log("Medicament ID from server:", data.stock.medicament);
+          console.log(
+            "Available options:",
+            Array.from(medicamentSelect.options).map((opt) => ({
+              value: opt.value,
+              text: opt.text,
+            }))
+          );
+
+          // Mettre à jour les champs
+          form.querySelector("#updateStockId").value = data.stock.id_Stock;
+
+          // Convertir en string pour la comparaison
+          const medicamentId = String(data.stock.medicament);
+
+          // Trouver et sélectionner la bonne option
+          const option = Array.from(medicamentSelect.options).find(
+            (opt) => String(opt.value) === medicamentId
+          );
+          if (option) {
+            medicamentSelect.value = option.value;
+          } else {
+            console.error(`Option non trouvée pour l'ID ${medicamentId}`);
+          }
+
+          form.querySelector("#updateQuantite").value = data.stock.quantite;
+          form.querySelector("#updateDatePreemption").value =
+            data.stock.date_preemption;
+          form.querySelector("#updateSeuilAlerte").value =
+            data.stock.seuil_alerte;
+
+          // Vérifier la sélection
+          if (medicamentSelect.value !== String(data.stock.medicament)) {
+            console.error("Le médicament n'a pas été correctement sélectionné");
+            console.log("Valeur attendue:", data.stock.medicament);
+            console.log("Valeur actuelle:", medicamentSelect.value);
+          }
+
+          // Afficher le modal
+          document
+            .getElementById("updateStockModal")
+            .classList.remove("hidden");
+        })
+        .catch((error) => {
+          console.error("Error in editStock:", error);
+          alert(`Une erreur est survenue: ${error.message}`);
         });
     });
+
+    // Submit Update Stock Form
+    $("#updateStockForm").submit(function (e) {
+      e.preventDefault();
+      var quantite = $("#updateQuantite").val();
+      var seuil_alerte = $("#updateSeuilAlerte").val();
+
+      if (parseFloat(seuil_alerte) > parseFloat(quantite)) {
+        alert("Le seuil d'alerte ne peut pas être supérieur à la quantité");
+        return;
+      }
+
+      var stockId = $("#updateStockId").val();
+      fetch(`{% url 'stocks_update' 0 %}`.replace("0", stockId), {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(new FormData(this)),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            $("#updateStockModal").addClass("hidden");
+            location.reload();
+          } else {
+            alert("Erreur: " + JSON.stringify(data.errors));
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("Une erreur est survenue lors de la mise à jour");
+        });
+    });
+
+    // Close Update Stock Modal
+    $("#closeUpdateStockModal").click(function () {
+      $("#updateStockModal").addClass("hidden");
+    });
+
+    // Close Update Stock Modal with Cancel button
+    $("#closeUpdateStockModal, #closeUpdateModalBtn").click(function () {
+      $("#updateStockModal").addClass("hidden");
+    });
+
+    // Delete Stock
+    $(".deleteStockBtn").click(function () {
+      var stockId = $(this).data("id");
+      if (confirm("Voulez-vous vraiment supprimer ce stock?")) {
+        $.ajax({
+          url: '{% url "stocks_delete" 0 %}'.replace("/0", "/" + stockId),
+          type: "POST",
+          data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
+          success: function (response) {
+            if (response.success) {
+              location.reload();
+            } else {
+              alert("Erreur: " + JSON.stringify(response.errors));
+            }
+          },
+          error: function (xhr, errmsg, err) {
+            alert("Erreur: " + xhr.status + ": " + xhr.responseText);
+          },
+        });
+      }
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const tableBody = document.getElementById("stockTableBody");
+
+    searchInput.addEventListener("keyup", function () {
+      const searchTerm = this.value.toLowerCase();
+      const rows = tableBody.getElementsByTagName("tr");
+
+      Array.from(rows).forEach((row) => {
+        const medicamentCell = row.getElementsByTagName("td")[0]; // Index 0 pour la colonne "Médicament"
+        const quantiteCell = row.getElementsByTagName("td")[1]; // Index 1 pour la colonne "Quantité"
+
+        if (medicamentCell && quantiteCell) {
+          const medicament = medicamentCell.textContent.toLowerCase();
+          const quantite = quantiteCell.textContent.toLowerCase();
+
+          if (
+            medicament.includes(searchTerm) ||
+            quantite.includes(searchTerm)
+          ) {
+            row.style.display = "";
+          } else {
+            row.style.display = "none";
+          }
+        }
+      });
+    });
+  });
 </script>
 {% endblock %}

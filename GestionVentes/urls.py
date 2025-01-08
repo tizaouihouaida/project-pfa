@@ -10,5 +10,6 @@ urlpatterns = [
     path('search_medicaments/', views.search_medicaments, name='search_medicaments'),
     path('add_to_cart/', views.add_to_cart, name='add_to_cart'),
     path('finalize_sale/', views.finalize_sale, name='finalize_sale'),
-    path('search_ventes/', views.search_ventes, name='search_ventes'),  
+    path('search_ventes/', views.search_ventes, name='search_ventes'),
+    path('check_stock/', views.check_stock, name='check_stock'),
 ]
