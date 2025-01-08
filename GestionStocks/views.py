@@ -295,18 +295,7 @@ def stocks_create(request):
     try:
         form = StockForm(request.POST)
         if form.is_valid():
-            medicament_id = form.cleaned_data['medicament'].id_Medicament
-            
-            # Vérifier si un stock existe déjà pour ce médicament
-            existing_stock = Stock.objects.filter(medicament_id=medicament_id).first()
-            if existing_stock:
-                return JsonResponse({
-                    'success': False,
-                    'errors': {
-                        'medicament': ['Un stock existe déjà pour ce médicament']
-                    }
-                })
-            
+            # Assurez-vous que tous les champs requis sont remplis
             form.save()
             return JsonResponse({'success': True})
         else:

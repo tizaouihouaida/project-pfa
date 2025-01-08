@@ -10,13 +10,13 @@
   />
   <button
     id="createStockBtn"
-    class="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+    class="bg-blue-600 text-white px-4 py-2 rounded mb-4 hover:bg-blue-700 transition"
   >
     Ajouter un Stock
   </button>
 </div>
-<table class="min-w-full bg-white">
-  <thead>
+<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+  <thead class="bg-gray-200">
     <tr>
       <th class="py-2 px-4 border-b">Médicament</th>
       <th class="py-2 px-4 border-b">Quantité</th>
@@ -28,7 +28,7 @@
   </thead>
   <tbody id="stockTableBody">
     {% for stock in stocks %}
-    <tr>
+    <tr class="hover:bg-gray-100">
       <td class="py-2 px-4 border-b">{{ stock.medicament.nom }}</td>
       <td class="py-2 px-4 border-b">{{ stock.quantite }}</td>
       <td class="py-2 px-4 border-b">{{ stock.date_preemption }}</td>

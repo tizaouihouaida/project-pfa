@@ -95,6 +95,7 @@ class Stock(models.Model):
     quantite = models.IntegerField()
     date_preemption = models.DateField(null=True, blank=True)
     seuil_alerte = models.IntegerField()
+    date_derniere_modification = models.DateTimeField(auto_now=True)
 
     def ajouterStock(self):
         self.save()
