@@ -236,25 +236,30 @@
     updateCart();
   }
 
-  function checkout() {
+ function checkout() {
     if (cart.length === 0) {
-      alert("Votre panier est vide.");
-      return;
+        alert("Votre panier est vide.");
+        return;
     }
     $.post(
-      "{% url 'finalize_sale' %}",
-      { cart: JSON.stringify(cart), csrfmiddlewaretoken: csrftoken },
-      function (data) {
+    "{% url 'finalize_sale' %}",
+    { cart: JSON.stringify(cart), csrfmiddlewaretoken: csrftoken },
+    function (data) {
         if (data.status === "success") {
-          showReceipt(data.total);
-          cart = [];
-          updateCart();
+            showReceipt(data.total);
+            cart = [];
+            updateCart();
         } else {
-          alert(data.message);
+            alert(data.message);
         }
-      }
-    );
-  }
+    }
+).fail(function(jqXHR, textStatus, errorThrown) {
+    console.error("Error finalizing sale: ", textStatus, errorThrown);
+    alert("Une erreur est survenue lors de la finalisation de la vente.");
+});
+;
+}
+
 
   function searchMedicaments() {
     const searchQuery = document
