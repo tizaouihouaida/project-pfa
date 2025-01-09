@@ -130,3 +130,9 @@ def change_password_ventes(request):
                 messages.error(request, "Mot de passe actuel incorrect.")
 
     return render(request, 'profile_vente.html', {'user': request.user})
+
+def handler404(request, exception):
+    return render(request, '404.html', status=404)
+
+def handler403(request, exception):
+    return render(request, '403.html', status=403)

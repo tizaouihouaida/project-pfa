@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-
+from .views import handler404, handler403
 urlpatterns = [
     path('', views.home_view, name='home'),
     path('login/', views.login_view, name='login'),
@@ -12,3 +12,5 @@ urlpatterns = [
     path('change_password/', views.change_password, name='change_password'),
     path('change_password_ventes/', views.change_password_ventes, name='change_password_ventes'),
 ]
+handler404 = 'Utilisateurs.views.handler404'
+handler403 = 'Utilisateurs.views.handler403'
