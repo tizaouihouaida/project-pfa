@@ -39,6 +39,12 @@ GestionPharmacie est une application web conçue pour aider les pharmacies à g�
 
   ![Capture 10](https://github.com/user-attachments/assets/a9ab1172-03f6-4b85-96bb-77359724401c)
 
+  ![Capture 1](https://github.com/user-attachments/assets/5b9ee2da-d904-418d-92d2-9c4646607188)
+
+  ![Capture 2](https://github.com/user-attachments/assets/37c73c58-9867-4561-bda8-c6b8a8d4dc2e)
+
+  ![Capture 3](https://github.com/user-attachments/assets/15921be7-9424-4327-8d4b-56e7551ce89d)
+
 
 ## Installation
 
