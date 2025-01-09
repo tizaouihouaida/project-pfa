@@ -1,7 +1,7 @@
 <!-- templates/commandes/index.html -->
 {% extends 'layout/base.html' %} {% block title %}Commandes{% endblock %}
 {%block main_content %}
-<h1 class="text-2xl font-bold mb-4 text-center">Gestions Commandes</h1>
+<h1 class="text-2xl font-bold mb-4 text-center">Gestions des Commandes</h1>
 
 <div class="flex justify-between items-center mb-4">
   <input
@@ -301,25 +301,25 @@
   style="z-index: 1000"
 >
   <div
-    class="relative top-20 mx-auto p-5 border w-1/3 shadow-lg rounded-md bg-white"
+    class="relative top-10 mx-auto p-5 border w-1/3 shadow-lg rounded-md bg-white"
   >
-    <h2 class="text-xl font-bold mb-4">Supprimer commande</h2>
-    <p>Êtes-vous sûr de vouloir supprimer cette commande ?</p>
+    <h2 class="text-2xl font-bold mb-4" style="font-size: 24px; font-weight: bold;">Supprimer commande</h2>
+    <p style="font-size: 18px; font-weight: bold;">Êtes-vous sûr de vouloir supprimer cette commande ?</p>
     <form id="deleteForm" method="post">
       {% csrf_token %}
       <div class="flex justify-center">
+        <button
+          id="closeDeleteModalBtn1"
+          type="button"
+          class="mt-5 bg-blue-500 text-white px-4 py-2 rounded mr-2"
+        >
+          Non
+        </button>
         <button
           type="submit"
           class="mt-5 bg-red-500 text-white px-4 py-2 rounded"
         >
           Oui
-        </button>
-        <button
-          id="closeDeleteModalBtn1"
-          type="button"
-          class="mt-5 ml-6 bg-gray-500 text-white px-4 py-2 rounded"
-        >
-          Non
         </button>
       </div>
     </form>
@@ -347,6 +347,7 @@
     </button>
   </div>
 </div>
+
 
 <!-- Change Status Modal -->
 <div

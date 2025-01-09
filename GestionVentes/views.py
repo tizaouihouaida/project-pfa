@@ -28,6 +28,7 @@ def pos_index(request):
     return render(request, 'pos/index.html', {'categories': categories, 'medicaments': medicaments, 'username': username})
 
 def sales_dashboard(request):
+    username = request.user.username
     today = timezone.now().date()
     ventes = Vente.objects.filter(dateVente__date=today)
     total_revenue = ventes.aggregate(
@@ -62,6 +63,8 @@ def sales_dashboard(request):
         'medicament_stats': medicament_stats_json,  # Passer les données sérialisées
         'top_sales': top_sales_json,  # Passer les données sérialisées
         'top_sale': top_sale,
+        'username': username,
+        
     })
 
 

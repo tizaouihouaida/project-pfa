@@ -1,7 +1,7 @@
 {% extends 'layout/base.html' %}
 {% block title %}Catégories{% endblock %}
 {% block main_content %}
-<h1 class="text-2xl font-bold mb-4 text-center">Listes des Catégories de Médicaments</h1>
+<h1 class="text-2xl font-bold mb-4 text-center">Gestion  des Catégories de Médicaments</h1>
 <div class="flex justify-between items-center mb-4">
   <input
     type="text"
@@ -185,10 +185,10 @@
   aria-labelledby="deleteConfirmationModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="deleteConfirmationModalLabel">
+        <h5 class="modal-title" id="deleteConfirmationModalLabel" style="font-size: 24px; font-weight: bold;">
           Confirmer la Suppression
         </h5>
         <button
@@ -198,22 +198,19 @@
           aria-label="Close"
         ></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body"style="font-size: 18px; font-weight: bold;">
         <p id="deleteConfirmationMessage"></p>
       </div>
-      <div class="modal-footer">
-        <form id="deleteForm" method="post" action="">
+      <div class="modal-footer d-flex justify-content-center align-items-center">
+        <form id="deleteForm" method="post" action="" class="d-flex">
           {% csrf_token %}
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
+          <button type="button" class="btn btn-outline-primary me-2" data-bs-dismiss="modal">
             Non
           </button>
-          <button type="submit" class="btn btn-danger">Oui</button>
+          <button type="submit" class="btn btn-outline-danger">Oui</button>
         </form>
       </div>
+
     </div>
   </div>
 </div>

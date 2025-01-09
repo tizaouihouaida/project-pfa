@@ -373,10 +373,11 @@ def get_stock_for_update(request, id):
 @login_required
 @role_required('gestionnaire_stocks')
 def commandes_index(request):
+    username = request.user.username
     commandes = Commande.objects.all()
     medicaments = Medicament.objects.filter(est_cachee=False)
     fournisseurs = Fournisseur.objects.all()
-    return render(request, 'commandes/index.html', {'commandes': commandes, 'medicaments': medicaments, 'fournisseurs': fournisseurs})
+    return render(request, 'commandes/index.html', {'commandes': commandes, 'medicaments': medicaments, 'fournisseurs': fournisseurs, 'username': username})
 
 
 @csrf_protect

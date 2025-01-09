@@ -2,7 +2,7 @@
 {%block main_content %}
 
 <div class="flex flex-row h-[130px] justify-center">
-  <h1 class="text-2xl font-bold mb-4 pt-[65px]">Liste des Médicaments</h1>
+  <h1 class="text-2xl font-bold mb-4 pt-[65px]">Gestion des Médicaments</h1>
   {% load static %}
   <img
     src="{% static 'assets\images\profile\medicament.png' %}"
@@ -280,10 +280,10 @@
   aria-labelledby="deleteMedicamentConfirmationModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg"> <!-- Ajout de la classe modal-lg pour élargir le modal -->
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="deleteMedicamentConfirmationModalLabel">
+        <h5 class="modal-title" id="deleteMedicamentConfirmationModalLabel" style="font-size: 24px; font-weight: bold;">
           Confirmer la Suppression
         </h5>
         <button
@@ -293,25 +293,26 @@
           aria-label="Close"
         ></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="font-size: 18px; font-weight: bold;">
         <p id="deleteMedicamentConfirmationMessage"></p>
       </div>
-      <div class="modal-footer">
-        <form id="deleteMedicamentForm" method="post" action="">
+      <div class="modal-footer d-flex justify-content-center align-items-center">
+        <form id="deleteMedicamentForm" method="post" action="" class="d-flex">
           {% csrf_token %}
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-outline-primary me-2"
             data-bs-dismiss="modal"
           >
             Non
           </button>
-          <button type="submit" class="btn btn-danger">Oui</button>
+          <button type="submit" class="btn btn-outline-danger">Oui</button>
         </form>
       </div>
     </div>
   </div>
 </div>
+
 
 <script>
   function openCreateModal() {
