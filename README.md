@@ -85,8 +85,8 @@ Pour installer et configurer le projet, suivez ces étapes :
 * Poussez vers la branche (git push origin feature/nouvelle-fonctionnalité).
 * Ouvrez une Pull Request.
 ## Collaborateurs
-- @GoldenDev74
-- @dollardking
-- @Roi12122525
-- @JBDEV-stack
+- GoldenDev74
+- dollardking
+- Roi12122525
+- JBDEV-stack
 
