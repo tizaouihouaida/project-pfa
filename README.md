@@ -25,20 +25,21 @@ GestionPharmacie est une application web conçue pour aider les pharmacies à g�
 - Interface utilisateur intuitive
 ## Captures d'écran
   
-  ![WhatsApp Image 2025-01-08 à 05 29 53_29b0b0d3](https://github.com/user-attachments/assets/69a8ae9e-7da8-4f42-aa6c-e51f0e40ba1d)
+  ![Capture 4](https://github.com/user-attachments/assets/963b64c0-272f-45ab-b0bc-7585c8545103)
 
-  ![WhatsApp Image 2025-01-08 à 05 30 04_658431ac](https://github.com/user-attachments/assets/92e60c1e-c57c-41d8-a30e-e7479624084e)
+  ![Capture 5](https://github.com/user-attachments/assets/3bcc07f1-a92d-41f5-9e83-1367d5e983f4)
 
-  ![WhatsApp Image 2025-01-08 à 05 30 14_066cd549](https://github.com/user-attachments/assets/c40bb122-a7c3-417c-94dd-4ca8d29fb349)
-  
-  ![WhatsApp Image 2025-01-08 à 05 30 42_ff3bad03](https://github.com/user-attachments/assets/9abccec0-cb26-40a2-b0cc-6b335a19fbef)
+  ![Capture 6](https://github.com/user-attachments/assets/95fef471-1e4b-400d-a483-01ea70ca8c3c)
 
-  ![WhatsApp Image 2025-01-08 à 05 58 15_df811b04](https://github.com/user-attachments/assets/47565fe9-b57f-4997-b3b3-5579ff3cf149)
+  ![Capture 7](https://github.com/user-attachments/assets/edc7993e-2210-44b9-8f05-be35f1d7fee0)
 
-  ![WhatsApp Image 2025-01-08 à 05 58 38_c2bd94dc](https://github.com/user-attachments/assets/8f767398-c35d-4de8-9170-8e27884d81dd)
+  ![Capture 8](https://github.com/user-attachments/assets/dab43788-2277-44ab-bd49-3624193846e1)
 
-  ![WhatsApp Image 2025-01-08 à 05 58 57_0b1bbe55](https://github.com/user-attachments/assets/7a05d743-3c24-4560-9765-5bb7b2715355)
-  
+  ![Capture 9](https://github.com/user-attachments/assets/ea1b2a0b-f944-4afb-88dc-735ee89b8936)
+
+  ![Capture 10](https://github.com/user-attachments/assets/a9ab1172-03f6-4b85-96bb-77359724401c)
+
+
 ## Installation
 
 Pour installer et configurer le projet, suivez ces étapes :
@@ -59,7 +60,11 @@ Pour installer et configurer le projet, suivez ces étapes :
 4. Appliquez les migrations :
    ```bash
    python manage.py migrate
-5. Lancez le serveur de développement :
+5. Insérer des données dans la base de données:
+   copier le contenue du fichier backup.sql dans le logiciel
+   avec laquel vous avez ouvert la base de donnée db.sqlite3
+   de préférence DbBrowser Sqlite et exécuter les requêtes.
+6. Lancez le serveur de développement :
    ```bash
    python manage.py runserver
 ## Utilisation
