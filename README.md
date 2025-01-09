@@ -78,15 +78,15 @@ Pour installer et configurer le projet, suivez ces étapes :
 2. Connectez-vous avec les identifiants du superutilisateur que vous avez créés.
 3. Utilisez l'interface pour gérer les stocks et les ventes de la pharmacie.
 ## Contribution
-Nous apprécions les contributions de la communauté. Pour contribuer au projet, suivez ces étapes :
-Fork le dépôt.
-Créez une branche pour votre fonctionnalité (git checkout -b feature/nouvelle-fonctionnalité).
-Committez vos modifications (git commit -am 'Ajout de la nouvelle fonctionnalité').
-Poussez vers la branche (git push origin feature/nouvelle-fonctionnalité).
-Ouvrez une Pull Request.
-##Collaborateurs
-GoldenDev74
-dollardking
-Roi12122525
-JBDEV-stack
+* Nous apprécions les contributions de la communauté. Pour contribuer au projet, suivez ces étapes :
+* Fork le dépôt.
+* Créez une branche pour votre fonctionnalité (git checkout -b feature/nouvelle-fonctionnalité).
+* Committez vos modifications (git commit -am 'Ajout de la nouvelle fonctionnalité').
+* Poussez vers la branche (git push origin feature/nouvelle-fonctionnalité).
+* Ouvrez une Pull Request.
+## Collaborateurs
+- GoldenDev74
+- dollardking
+- Roi12122525
+- JBDEV-stack
 
