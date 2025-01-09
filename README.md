@@ -52,7 +52,7 @@ Pour installer et configurer le projet, suivez ces étapes :
 
 1. Clonez le dépôt :
    ```bash
-   git clone https://github.com/votre-utilisateur/GestionPharmacie.git
+   git clone https://github.com/GoldenDev74/GestionPharmacie.git
    cd GestionPharmacie
 2. Créez et activez un environnement virtuel :
     ```bash
