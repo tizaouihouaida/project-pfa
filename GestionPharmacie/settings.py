@@ -71,6 +71,9 @@ TEMPLATES = [
     },
 ]
 
+# Configuration du gestionnaire d'erreur 403
+handler403 = 'GestionPharmacie.views.handler403'
+
 WSGI_APPLICATION = 'GestionPharmacie.wsgi.application'
 
 

@@ -1,4 +1,3 @@
-INSERT INTO GestionStocks_stock VALUES(6,452,'2025-04-13',15,1);
 INSERT INTO Utilisateurs_utilisateur VALUES(1,'pbkdf2_sha256$870000$JsPd9zfz1nUtepFBKV560Y$SuJouPwKSSDNEKJ8n+wNPnA6GzUFP1ezALKtZTz+4dw=','2025-01-07 18:26:57.864180',0,'golden','','','golden@gmail.com',0,1,'2025-01-03 18:36:49.556405','gestionnaire_stocks','957458663');
 INSERT INTO Utilisateurs_utilisateur VALUES(2,'pbkdf2_sha256$870000$bbrSCOXX6CqkRWerg7ysaJ$4MRa+QSK9AyPCF1cFPCz0NtEO8i8NRqb5jc/dkogJHQ=','2025-01-07 18:27:58.050794',0,'jean','','','jean@gmail.com',0,1,'2025-01-04 00:08:45.719339','gestionnaire_ventes','78965241');
 INSERT INTO GestionStocks_categoriemedicament VALUES(1,'Analgésiques','Médicaments contre la douleur.',0);

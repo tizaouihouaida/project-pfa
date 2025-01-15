@@ -27,6 +27,8 @@ def pos_index(request):
     medicaments = Medicament.Medicament_disponible()
     return render(request, 'pos/index.html', {'categories': categories, 'medicaments': medicaments, 'username': username})
 
+@login_required
+@role_required('gestionnaire_ventes')
 def sales_dashboard(request):
     username = request.user.username
     today = timezone.now().date()
