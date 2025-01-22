@@ -1,235 +1,82 @@
 {% load static %}
-<aside class="left-sidebar">
-  <!-- Sidebar scroll-->
-  <div>
-    <div class="brand-logo d-flex align-items-center justify-content-between">
-      <a href="" class="text-nowrap logo-img">
+<aside class="fixed top-0 left-0 z-40 w-72 h-screen transition-transform">
+  <div class="h-full px-4 py-6 overflow-y-auto bg-white border-r border-gray-200">
+    <div class="flex items-center justify-between mb-8">
+      <a href="" class="flex items-center">
         {% load static %}
-        <img
-          src="{%static 'assets/images/logos/logo_1.png' %}"
-          width="180"
-          alt=""
-        />
+        <img src="{% static 'assets/images/logos/logo_1.png' %}" class="h-16 w-auto" alt="Logo" />
       </a>
-      <div
-        class="close-btn d-xl-none d-block sidebartoggler cursor-pointer"
-        id="sidebarCollapse"
-      >
-        <i class="ti ti-x fs-8"></i>
-      </div>
+      <button type="button" class="lg:hidden text-gray-500 hover:text-gray-600" id="sidebarCollapse">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
     </div>
-    <!-- Sidebar navigation-->
-    <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
-      <ul id="sidebarnav">
-        <li class="nav-small-cap">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">Acceuil</span>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'stocks_dashboard' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <i class="ti ti-layout-dashboard"></i>
-            </span>
-            <span class="hide-menu">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-small-cap">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">Fonctionnalités</span>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'categories_index' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-dialpad"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M4 3h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M18 3h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M11 3h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M4 10h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M18 10h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M11 10h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M11 17h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-              </svg>
-            </span>
-            <span class="hide-menu">Catégories Medicaments</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'medicaments_index' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="icon icon-tabler icons-tabler-filled icon-tabler-pill"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M20.207 3.793a5.95 5.95 0 0 1 0 8.414l-8 8a5.95 5.95 0 0 1 -8.414 -8.414l8 -8a5.95 5.95 0 0 1 8.414 0m-7 1.414l-4.294 4.293l5.586 5.586l4.294 -4.292a3.95 3.95 0 1 0 -5.586 -5.586"
-                />
-              </svg>
-            </span>
-            <span class="hide-menu">Médicaments</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'stocks_index' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-stack-backward"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M14 12l6 -3l-8 -4l-8 4l6 3" />
-                <path
-                  d="M10 12l-6 3l8 4l8 -4l-6 -3l-2 1z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-            <span class="hide-menu">Stocks</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'fournisseurs_index' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="24px"
-                viewBox="0 -960 960 960"
-                width="24px"
-                fill="#434343"
-              >
-                <path
-                  d="M240-120q-66 0-113-47T80-280q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm480 0q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm-480-80q33 0 56.5-23.5T320-280q0-33-23.5-56.5T240-360q-33 0-56.5 23.5T160-280q0 33 23.5 56.5T240-200Zm480 0q33 0 56.5-23.5T800-280q0-33-23.5-56.5T720-360q-33 0-56.5 23.5T640-280q0 33 23.5 56.5T720-200ZM480-520q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T560-680q0-33-23.5-56.5T480-760q-33 0-56.5 23.5T400-680q0 33 23.5 56.5T480-600Zm0-80Zm240 400Zm-480 0Z"
-                />
-              </svg>
-            </span>
-            <span class="hide-menu">Fournisseurs.</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'commandes_index' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="icon icon-tabler icons-tabler-filled icon-tabler-shopping-cart"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M6 2a1 1 0 0 1 .993 .883l.007 .117v1.068l13.071 .935a1 1 0 0 1 .929 1.024l-.01 .114l-1 7a1 1 0 0 1 -.877 .853l-.113 .006h-12v2h10a3 3 0 1 1 -2.995 3.176l-.005 -.176l.005 -.176c.017 -.288 .074 -.564 .166 -.824h-5.342a3 3 0 1 1 -5.824 1.176l-.005 -.176l.005 -.176a3.002 3.002 0 0 1 1.995 -2.654v-12.17h-1a1 1 0 0 1 -.993 -.883l-.007 -.117a1 1 0 0 1 .883 -.993l.117 -.007h2zm0 16a1 1 0 1 0 0 2a1 1 0 0 0 0 -2zm11 0a1 1 0 1 0 0 2a1 1 0 0 0 0 -2z"
-                />
-              </svg>
-            </span>
-            <span class="hide-menu">Commandes</span>
-          </a>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'notifications_index' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                ></path>
-              </svg>
-            </span>
-            <span class="hide-menu">Notifications</span>
-          </a>
-        </li>
-        <li class="nav-small-cap">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">GESTIONNAIRE DE STOCKS</span>
-        </li>
-        <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'logout' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <i class="ti ti-login"></i>
-            </span>
-            <span class="hide-menu">Se Deconnecter</span>
-          </a>
-        </li>
-      </ul>
+
+    <nav class="space-y-2">
+      <div class="pb-2">
+        <p class="px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Accueil</p>
+      </div>
+
+      <a href="{% url 'stocks_dashboard' %}" 
+         class="flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group">
+        <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+        </svg>
+        <span class="ml-4 text-base font-medium">Dashboard</span>
+      </a>
+
+      <div class="pt-2 pb-2">
+        <p class="px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Fonctionnalités</p>
+      </div>
+
+      <a href="{% url 'categories_index' %}" 
+         class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group">
+        <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+        </svg>
+        <span class="ml-4 text-base font-medium">Catégories Medicaments</span>
+      </a>
+
+      <a href="{% url 'medicaments_index' %}" 
+         class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group">
+        <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+        </svg>
+        <span class="ml-4 text-base font-medium">Médicaments</span>
+      </a>
+
+      <a href="{% url 'stocks_index' %}" 
+         class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group">
+        <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+        </svg>
+        <span class="ml-4 text-base font-medium">Stocks</span>
+      </a>
+
+      <a href="{% url 'fournisseurs_index' %}" 
+         class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group">
+        <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        </svg>
+        <span class="ml-4 text-base font-medium">Fournisseurs</span>
+      </a>
+
+      <a href="{% url 'commandes_index' %}" 
+         class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group">
+        <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+        </svg>
+        <span class="ml-4 text-base font-medium">Commandes</span>
+      </a>
+
+      <a href="{% url 'notifications_index' %}" 
+         class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group">
+        <svg class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+        </svg>
+        <span class="ml-4 text-base font-medium">Notifications</span>
+      </a>
     </nav>
-    <!-- End Sidebar navigation -->
   </div>
-  <!-- End Sidebar scroll-->
 </aside>

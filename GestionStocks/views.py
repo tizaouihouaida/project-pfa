@@ -3,19 +3,17 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
-from django.views.decorators.csrf import csrf_protect
-from Utilisateurs.decorators import role_required
+from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
+from .models import CategorieMedicament, Medicament, Stock, Fournisseur, Commande, Notification
+from .forms import CategorieForm, MedicamentForm, StockForm, FournisseurForm, CommandeForm
+from Utilisateurs.decorators import role_required
+from django.views.decorators.csrf import csrf_protect
 from django.utils import timezone
 from django.db.models import F
-from .models import Stock, Notification, Medicament, Fournisseur, Commande
-from .models import CategorieMedicament
-from .forms import CategorieForm, MedicamentForm, FournisseurForm, StockForm
 from django.core.exceptions import ValidationError
-from .forms import CommandeForm
 import os
 from django.conf import settings
-from django.contrib import messages
 from datetime import timedelta
 
 @login_required
@@ -315,6 +313,7 @@ def stocks_update(request, id):
         
         if form.is_valid():
             medicament_id = form.cleaned_data['medicament'].id_Medicament
+            nouvelle_quantite = form.cleaned_data['quantite']
             
             # Vérifier si un autre stock existe déjà pour ce médicament
             existing_stock = Stock.objects.filter(medicament_id=medicament_id).exclude(id_Stock=id).first()
@@ -326,7 +325,21 @@ def stocks_update(request, id):
                     }
                 })
             
-            form.save()
+            # Sauvegarder le stock
+            stock = form.save()
+            
+            # Créer les notifications appropriées
+            if nouvelle_quantite == 0:
+                Notification.objects.create(
+                    message=f"Le stock du médicament {stock.medicament.nom} est totalement épuisé. Veuillez commander.",
+                    type_notification="stock_epuise"
+                )
+            elif nouvelle_quantite <= stock.seuil_alerte:
+                Notification.objects.create(
+                    message=f"Le stock de {stock.medicament.nom} est bas ({nouvelle_quantite} restants)",
+                    type_notification="alerte_stock"
+                )
+            
             return JsonResponse({'success': True})
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
@@ -457,7 +470,7 @@ def commandes_change_status(request, pk):
                     commande.statut = 'en_attente'
                     commande.save()
                 else:
-                    messages.error(request, "Impossible de changer le statut : quantité insuffisante en stock")
+                    messages.error(request, "Impossible de changer le statut : quantité insuffisante en stock.")
                     return redirect('commandes_index')
             else:
                 messages.error(request, "Impossible de changer le statut : aucun stock trouvé")
@@ -514,11 +527,18 @@ def update_stock(request, id):
             nouvelle_quantite = int(request.POST.get('quantite', 0))
             
             if nouvelle_quantite >= 0:
+                ancienne_quantite = stock.quantite
                 stock.quantite = nouvelle_quantite
                 stock.save()
                 
-                # Vérifier si le seuil d'alerte est atteint
-                if stock.quantite <= stock.seuil_alerte:
+                # Notification pour stock épuisé
+                if nouvelle_quantite == 0:
+                    Notification.objects.create(
+                        message=f"Le stock du médicament {stock.medicament.nom} est totalement épuisé. Veuillez commander.",
+                        type_notification="stock_epuise"
+                    )
+                # Notification pour stock bas
+                elif nouvelle_quantite <= stock.seuil_alerte and nouvelle_quantite > 0:
                     Notification.objects.create(
                         message=f"Le stock de {stock.medicament.nom} est bas ({stock.quantite} restants)",
                         type_notification="alerte_stock"
@@ -544,3 +564,28 @@ def update_stock(request, id):
             
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
+@login_required
+@role_required('vendeur')
+def ventes_index(request):
+    # Récupérer uniquement les médicaments vendables
+    stocks = Stock.medicaments_vendables()
+    
+    # Préparer les données pour l'affichage
+    medicaments = []
+    for stock in stocks:
+        status = stock.get_status()
+        medicaments.append({
+            'id': stock.medicament.id_Medicament,
+            'nom': stock.medicament.nom,
+            'prix': stock.medicament.prixUnitaire,
+            'quantite': stock.quantite,
+            'status': status,
+            'image': stock.medicament.image.url if stock.medicament.image else None,
+            'description': stock.medicament.description,
+            'categorie': stock.medicament.id_Categorie.nom_Categorie,
+        })
+    
+    return render(request, 'ventes/index.html', {
+        'medicaments': medicaments,
+        'username': request.user.username,
+    })

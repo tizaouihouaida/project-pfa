@@ -5,7 +5,20 @@
 {% block main_content %}
 <div class="container">
     <h2 class="text-center mb-4">Liste des Ventes</h2>
-    <input type="text" id="search-bar" class="form-control mb-3" placeholder="Rechercher une vente..." onkeyup="searchVentes()">
+    
+    <!-- Filtres de recherche -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <input type="text" id="search-vendeur" class="form-control" placeholder="Rechercher par vendeur...">
+        </div>
+        <div class="col-md-4">
+            <input type="date" id="search-date" class="form-control" placeholder="Rechercher par date...">
+        </div>
+        <div class="col-md-4">
+            <input type="number" id="search-montant" class="form-control" placeholder="Rechercher par montant...">
+        </div>
+    </div>
+
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -19,7 +32,7 @@
             {% for vente in ventes %}
                 <tr>
                     <td>{{ vente.id_User.username }}</td>
-                    <td>
+                    <td data-date="{{ vente.dateVente|date:'Y-m-d' }}">
                         {% if vente.dateVente %}
                             {{ vente.dateVente|date:"d/m/Y H:i" }}
                         {% else %}
@@ -50,7 +63,7 @@
                 <!-- Vente details will be inserted here dynamically -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close" onclick="closeModal()">Fermer</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeModal()">Fermer</button>
             </div>
         </div>
     </div>
@@ -71,21 +84,18 @@
         }
         return cookieValue;
     }
-
     const csrftoken = getCookie('csrftoken');
 
     function showVenteDetail(venteId) {
         $.get("{% url 'vente_detail' id=0 %}".replace("0", venteId), function(data) {
             if (data.modal_content) {
-                // Injecter le contenu dans le modal
                 document.getElementById('venteDetailBody').innerHTML = data.modal_content;
-                // Afficher le modal
                 $('#venteDetailModal').modal('show');
             } else {
                 alert("Erreur lors du chargement des détails.");
             }
         }).fail(function() {
-            alert("Erreur lors du chargement des détails.");
+            alert("Erreur lors de la requête.");
         });
     }
 
@@ -93,18 +103,31 @@
         $('#venteDetailModal').modal('hide');
     }
 
-    function searchVentes() {
-        const searchQuery = document.getElementById('search-bar').value.toLowerCase();
+    // Fonction de recherche améliorée
+    function filterVentes() {
+        const searchVendeur = document.getElementById('search-vendeur').value.toLowerCase();
+        const searchDate = document.getElementById('search-date').value;
+        const searchMontant = document.getElementById('search-montant').value;
         const ventes = document.querySelectorAll('#ventes-list tr');
 
         ventes.forEach(vente => {
             const vendeur = vente.querySelector('td:nth-child(1)').innerText.toLowerCase();
-            const dateVente = vente.querySelector('td:nth-child(2)').innerText.toLowerCase();
-            const totalVente = vente.querySelector('td:nth-child(3)').innerText.toLowerCase();
-            const matches = vendeur.includes(searchQuery) || dateVente.includes(searchQuery) || totalVente.includes(searchQuery);
-            vente.style.display = matches ? 'table-row' : 'none';
+            const dateCell = vente.querySelector('td:nth-child(2)');
+            const dateValue = dateCell.getAttribute('data-date');
+            const montant = parseFloat(vente.querySelector('td:nth-child(3)').innerText) || 0;
+
+            const matchVendeur = vendeur.includes(searchVendeur);
+            const matchDate = !searchDate || dateValue === searchDate;
+            const matchMontant = !searchMontant || montant === parseFloat(searchMontant);
+
+            vente.style.display = (matchVendeur && matchDate && matchMontant) ? '' : 'none';
         });
     }
+
+    // Écouteurs d'événements pour la recherche en temps réel
+    document.getElementById('search-vendeur').addEventListener('input', filterVentes);
+    document.getElementById('search-date').addEventListener('change', filterVentes);
+    document.getElementById('search-montant').addEventListener('input', filterVentes);
 </script>
 
 {% endblock %}

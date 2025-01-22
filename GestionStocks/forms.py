@@ -20,15 +20,42 @@ class MedicamentForm(forms.ModelForm):
     class Meta:
         model = Medicament
         fields = ['nom', 'description', 'prixUnitaire', 'image', 'id_Categorie']
+
 class FournisseurForm(forms.ModelForm):
     class Meta:
         model = Fournisseur
         fields = ['nom', 'email', 'telephone', 'adresse']
 
 class StockForm(forms.ModelForm):
+    quantite = forms.IntegerField(
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'type': 'number',
+            'min': '0',
+            'step': '1'
+        })
+    )
+    seuil_alerte = forms.IntegerField(
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'type': 'number',
+            'min': '0',
+            'step': '1'
+        })
+    )
+    
     class Meta:
         model = Stock
         fields = ['medicament', 'quantite', 'date_preemption', 'seuil_alerte']
+        widgets = {
+            'medicament': forms.Select(attrs={'class': 'form-control'}),
+            'date_preemption': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+        }
 
 class CommandeForm(forms.ModelForm):
     class Meta:

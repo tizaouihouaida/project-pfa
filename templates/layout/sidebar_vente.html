@@ -1,135 +1,74 @@
 {% load static %}
-<aside class="left-sidebar">
-  <!-- Sidebar scroll-->
-  <div>
-    <div class="brand-logo d-flex align-items-center justify-content-between">
+<aside class="left-sidebar fixed top-0 left-0 z-40 w-72 h-screen transition-transform">
+  <div class="h-full px-4 py-6 overflow-y-auto bg-white border-r border-gray-200">
+    <div class="brand-logo flex items-center justify-between mb-8">
       <a href="" class="text-nowrap logo-img">
         {% load static %}
-        <img
-          src="{%static 'assets/images/logos/logo_1.png' %}"
-          width="180"
-          alt=""
-        />
+        <img src="{% static 'assets/images/logos/logo_1.png' %}" width="180" alt="" class="h-16 w-auto" />
       </a>
-      <div
-        class="close-btn d-xl-none d-block sidebartoggler cursor-pointer"
-        id="sidebarCollapse"
-      >
+      <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
         <i class="ti ti-x fs-8"></i>
       </div>
     </div>
-    <!-- Sidebar navigation-->
-    <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
+
+    <nav class="sidebar-nav space-y-2">
       <ul id="sidebarnav">
-        <li class="nav-small-cap">
+        <li class="nav-small-cap mb-4">
           <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">Acceuil</span>
+          <span class="hide-menu px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Acceuil</span>
         </li>
         <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'sales_dashboard' %}"
-            aria-expanded="false"
-          >
-            <span>
+          <a class="sidebar-link flex items-center px-2 py-2.5 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group" 
+             href="{% url 'sales_dashboard' %}" 
+             aria-expanded="false">
+            <span class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white">
               <i class="ti ti-layout-dashboard"></i>
             </span>
-            <span class="hide-menu">Dashboard</span>
+            <span class="hide-menu ml-4 text-base font-medium">Dashboard</span>
           </a>
         </li>
-        <li class="nav-small-cap">
+
+        <li class="nav-small-cap mb-4">
           <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">Fonctionnalités</span>
+          <span class="hide-menu px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Fonctionnalités</span>
         </li>
         <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'ventes_index' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-dialpad"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M4 3h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M18 3h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M11 3h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M4 10h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M18 10h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M11 10h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-                <path
-                  d="M11 17h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"
-                />
-              </svg>
+          <a class="sidebar-link flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group"
+             href="{% url 'ventes_index' %}"
+             aria-expanded="false">
+            <span class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white">
+              <i class="ti ti-shopping-cart"></i>
             </span>
-            <span class="hide-menu">Rapport des ventes</span>
+            <span class="hide-menu ml-4 text-base font-medium">Rapport des ventes</span>
           </a>
-       
+        </li>
+
         <li class="sidebar-item">
-          <a
-            class="sidebar-link"
+          <a class="sidebar-link flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group"
              href="{% url 'pos_index' %}"
-            aria-expanded="false"
-          >
-            <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="icon icon-tabler icons-tabler-filled icon-tabler-shopping-cart"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M6 2a1 1 0 0 1 .993 .883l.007 .117v1.068l13.071 .935a1 1 0 0 1 .929 1.024l-.01 .114l-1 7a1 1 0 0 1 -.877 .853l-.113 .006h-12v2h10a3 3 0 1 1 -2.995 3.176l-.005 -.176l.005 -.176c.017 -.288 .074 -.564 .166 -.824h-5.342a3 3 0 1 1 -5.824 1.176l-.005 -.176l.005 -.176a3.002 3.002 0 0 1 1.995 -2.654v-12.17h-1a1 1 0 0 1 -.993 -.883l-.007 -.117a1 1 0 0 1 .883 -.993l.117 -.007h2zm0 16a1 1 0 1 0 0 2a1 1 0 0 0 0 -2zm11 0a1 1 0 1 0 0 2a1 1 0 0 0 0 -2z"
-                />
-              </svg>
+             aria-expanded="false">
+            <span class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white">
+              <i class="ti ti-device-analytics"></i>
             </span>
-            <span class="hide-menu">Point de vente</span>
+            <span class="hide-menu ml-4 text-base font-medium">Point de vente</span>
           </a>
         </li>
-        <li class="nav-small-cap">
+
+        <li class="nav-small-cap mb-4">
           <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu">GESTIONNAIRE DE VENTES</span>
+          <span class="hide-menu px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">GESTIONNAIRE DE VENTES</span>
         </li>
         <li class="sidebar-item">
-          <a
-            class="sidebar-link"
-            href="{% url 'logout' %}"
-            aria-expanded="false"
-          >
-            <span>
+          <a class="sidebar-link flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-red-500 hover:text-white group"
+             href="{% url 'logout' %}"
+             aria-expanded="false">
+            <span class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white">
               <i class="ti ti-login"></i>
             </span>
-            <span class="hide-menu">Se Deconnecter</span>
+            <span class="hide-menu ml-4 text-base font-medium">Se Deconnecter</span>
           </a>
         </li>
       </ul>
     </nav>
-    <!-- End Sidebar navigation -->
   </div>
-  <!-- End Sidebar scroll-->
 </aside>

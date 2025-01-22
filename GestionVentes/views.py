@@ -97,18 +97,83 @@ def search_ventes(request):
 @role_required('gestionnaire_ventes')
 def vente_detail(request, id):
     try:
-        vente = get_object_or_404(Vente, id_Vente=id)
+        vente = Vente.objects.get(id_Vente=id)
         details = DetailVente.objects.filter(id_Vente=vente).select_related('id_Medicaments')
-
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':  # Vérifier la requête AJAX
-            modal_content = render_to_string('ventes/vente_detail_modal_content.html', {'vente': vente, 'details': details})
-            return JsonResponse({'modal_content': modal_content})
-
-        return render(request, 'ventes/detail_ventes.html', {'vente': vente, 'details': details})
-
+        
+        details_list = []
+        total_html = 0
+        for detail in details:
+            prix_unitaire = float(detail.sousTotal) / detail.quantiteVendu if detail.quantiteVendu > 0 else 0
+            details_list.append({
+                'medicament': detail.id_Medicaments.nom,
+                'quantite': detail.quantiteVendu,
+                'prix_unitaire': prix_unitaire,
+                'total': float(detail.sousTotal)
+            })
+            total_html += float(detail.sousTotal)
+        
+        # Créer le contenu HTML pour le modal
+        modal_content = f"""
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col">
+                    <strong>Numéro de vente:</strong> {vente.id_Vente}
+                </div>
+                <div class="col">
+                    <strong>Date:</strong> {vente.dateVente.strftime("%d/%m/%Y %H:%M")}
+                </div>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Médicament</th>
+                        <th>Quantité</th>
+                        <th>Prix unitaire</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """
+        
+        for detail in details_list:
+            modal_content += f"""
+                    <tr>
+                        <td>{detail['medicament']}</td>
+                        <td>{detail['quantite']}</td>
+                        <td>{detail['prix_unitaire']:.2f}</td>
+                        <td>{detail['total']:.2f}</td>
+                    </tr>
+            """
+        
+        modal_content += f"""
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right"><strong>Total</strong></td>
+                        <td><strong>{total_html:.2f}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        """
+        
+        return JsonResponse({
+            'modal_content': modal_content,
+            'vente_id': vente.id_Vente,
+            'date_vente': vente.dateVente.strftime("%Y-%m-%d %H:%M:%S"),
+            'total_vente': float(vente.totalVente),
+            'details': details_list
+        })
+    except Vente.DoesNotExist:
+        return JsonResponse({
+            'error': 'Vente non trouvée'
+        }, status=404)
     except Exception as e:
-        print(f"Erreur dans la vue vente_detail : {e}")
-        return JsonResponse({'error': 'Une erreur est survenue lors de la récupération des détails de la vente.'}, status=500)
+        logger.error(f"Erreur dans la vue vente_detail : {e}")
+        return JsonResponse({
+            'error': 'Une erreur est survenue lors de la récupération des détails de la vente.'
+        }, status=500)
+
 
 @login_required
 @role_required('gestionnaire_ventes')
@@ -123,6 +188,7 @@ def filter_by_category(request):
         return JsonResponse({'medicaments': list(medicaments)})
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
+
 @login_required
 @role_required('gestionnaire_ventes')
 def search_medicaments(request):
@@ -136,6 +202,7 @@ def search_medicaments(request):
         return JsonResponse({'medicaments': list(medicaments)})
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
+
 @login_required
 @role_required('gestionnaire_ventes')
 def add_to_cart(request):
@@ -144,68 +211,6 @@ def add_to_cart(request):
         medicament = get_object_or_404(Medicament, id_Medicament=medicament_id)
         return JsonResponse({'status': 'success', 'name': medicament.nom, 'price': str(medicament.prixUnitaire)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-@login_required
-@role_required('gestionnaire_ventes')
-def finalize_sale(request):
-    if request.method == 'POST':
-        cart = request.POST.get('cart')
-        total = 0
-
-        try:
-            with transaction.atomic():  # Utiliser une transaction pour garantir l'intégrité des données
-                vente = Vente.objects.create(id_User=request.user, totalVente=0)
-                logger.info(f"Vente créée avec ID: {vente.id_Vente}")
-
-                for item in json.loads(cart):
-                    medicament = get_object_or_404(Medicament, id_Medicament=item['id'])
-                    quantite = int(item['quantity'])
-                    logger.info(f"Traitement de {medicament.nom}, quantité: {quantite}")
-
-                    # Vérifier le stock disponible
-                    stock = Stock.objects.select_for_update().get(medicament=medicament)
-                    if not stock.deduire_quantite(quantite):
-                        raise ValidationError(f"Stock insuffisant pour {medicament.nom}")
-
-                    # Vérifier si le stock atteint le seuil d'alerte après la vente
-                    if stock.quantite <= stock.seuil_alerte:
-                        medicament.est_vendu = False
-                        medicament.save()
-                        Notification.objects.create(
-                            message=f"Le stock de {medicament.nom} est bas ({stock.quantite} restants)",
-                            type_notification="alerte_stock"
-                        )
-                        logger.info(f"Notification créée pour {medicament.nom}")
-                        return JsonResponse({'status': 'error', 'message': f"Le stock de {medicament.nom} est épuisé et ne peut plus être vendu."})
-
-                    # Créer le détail de vente
-                    detail_vente = DetailVente.objects.create(
-                        id_Vente=vente,
-                        id_Medicaments=medicament,
-                        quantiteVendu=quantite,
-                        sousTotal=item['total']
-                    )
-                    logger.info(f"Détail de vente créé pour {medicament.nom}")
-
-                    total += item['total']
-
-                vente.totalVente = total
-                vente.save()
-                logger.info(f"Vente finalisée avec total: {total}")
-
-                return JsonResponse({'status': 'success', 'total': total})
-
-        except json.JSONDecodeError:
-            logger.error("Erreur de décodage JSON")
-            return JsonResponse({'status': 'error', 'message': 'Format de panier invalide'}, status=400)
-        except ValidationError as e:
-            logger.error(f"Erreur de validation: {str(e)}")
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-        except Exception as e:
-            logger.error(f"Erreur inattendue: {str(e)}")
-            return JsonResponse({'status': 'error', 'message': 'Une erreur est survenue'}, status=500)
-
-    return JsonResponse({'status': 'error', 'message': 'Méthode non autorisée'}, status=405)
 
 
 @login_required
@@ -221,19 +226,123 @@ def check_stock(request):
                 return JsonResponse({
                     'status': 'success',
                     'available': True,
-                    'stock': stock.quantite
+                    'stock': stock.quantite,
+                    'can_sell': quantite
+                })
+            elif stock.quantite > 0:
+                return JsonResponse({
+                    'status': 'warning',
+                    'available': True,
+                    'message': f'Stock insuffisant. Seuls {stock.quantite} unités sont disponibles. Voulez-vous continuer avec cette quantité ?',
+                    'stock': stock.quantite,
+                    'can_sell': stock.quantite
                 })
             else:
                 return JsonResponse({
                     'status': 'error',
                     'available': False,
-                    'message': f'Stock insuffisant. Quantité disponible: {stock.quantite}',
-                    'stock': stock.quantite
+                    'message': 'Stock épuisé pour ce médicament',
+                    'stock': 0,
+                    'can_sell': 0
                 })
         except Stock.DoesNotExist:
             return JsonResponse({
                 'status': 'error',
                 'available': False,
-                'message': 'Aucun stock disponible pour ce médicament'
+                'message': 'Aucun stock disponible pour ce médicament',
+                'stock': 0,
+                'can_sell': 0
             })
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+
+@login_required
+@role_required('gestionnaire_ventes')
+def finalize_sale(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Méthode non autorisée'})
+
+    try:
+        cart_data = json.loads(request.POST.get('cart', '[]'))
+        
+        if not cart_data:
+            return JsonResponse({'status': 'error', 'message': 'Le panier est vide'})
+
+        with transaction.atomic():
+            total_vente = Decimal('0.00')
+            vente = Vente.objects.create(
+                totalVente=total_vente,
+                dateVente=timezone.now(),
+                id_User=request.user
+            )
+            
+            for item in cart_data:
+                medicament = Medicament.objects.select_for_update().get(id_Medicament=item['id'])
+                stock = Stock.objects.select_for_update().get(medicament=medicament)
+                
+                if stock.quantite >= item['quantity']:
+                    # Calculer le sous-total pour ce médicament
+                    sous_total = Decimal(str(item['quantity'])) * Decimal(str(item['price']))
+                    
+                    # Créer le détail de la vente
+                    DetailVente.objects.create(
+                        id_Vente=vente,
+                        id_Medicaments=medicament,
+                        quantiteVendu=item['quantity'],
+                        sousTotal=sous_total
+                    )
+                    
+                    # Mettre à jour le total
+                    total_vente += sous_total
+                    
+                    # Mettre à jour le stock
+                    stock.quantite -= item['quantity']
+                    stock.save()
+                    
+                    if stock.quantite <= stock.seuil_alerte:
+                        if stock.quantite == 0:
+                            medicament.est_vendu = False
+                            medicament.save()
+                        Notification.objects.create(
+                            message=f"Stock bas pour {medicament.nom}: {stock.quantite} restants",
+                            type_notification="alerte_stock"
+                        )
+                else:
+                    # Annuler la transaction si le stock est insuffisant
+                    raise ValidationError(f"Stock insuffisant pour {medicament.nom}")
+
+            # Mettre à jour le total de la vente
+            vente.totalVente = total_vente
+            vente.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Vente finalisée avec succès',
+                'vente_id': vente.id_Vente,
+                'total': float(total_vente)
+            })
+            
+    except ValidationError as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Format de panier invalide'
+        })
+    except Exception as e:
+        logger.error(f"Erreur lors de la finalisation de la vente: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Une erreur est survenue lors de la finalisation de la vente'
+        })
+
+
+@login_required
+def check_auth(request):
+    return JsonResponse({
+        'authenticated': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else None
+    })

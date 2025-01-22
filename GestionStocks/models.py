@@ -74,7 +74,13 @@ class Medicament(models.Model):
 
     @staticmethod
     def Medicament_disponible():
-        return Medicament.objects.filter(est_vendu=True, est_cachee=False)
+        return Medicament.objects.filter(
+            est_vendu=True,  # Le médicament est marqué comme vendable
+            est_cachee=False,  # Le médicament n'est pas caché
+            stock__isnull=False,  # Le médicament a un stock
+            stock__quantite__gt=0,  # La quantité en stock est supérieure à 0
+            stock__date_preemption__gt=timezone.now().date()  # Le médicament n'est pas périmé
+        ).distinct()
     
     @staticmethod
     def medicaments_disponibles_pour_stock():
@@ -113,6 +119,7 @@ class Stock(models.Model):
         if seuil_alerte:
             self.seuil_alerte = seuil_alerte
         self.save()
+
     @staticmethod
     def afficheLesMedicaments():
         return Stock.medicament.afficheLesMedicaments()
@@ -128,19 +135,45 @@ class Stock(models.Model):
         if self.quantite >= quantite:
             self.quantite -= quantite
             self.save()
+            
+            # Notification pour stock épuisé
+            if self.quantite == 0:
+                Notification.objects.create(
+                    message=f"Le stock du médicament {self.medicament.nom} est totalement épuisé. Veuillez commander.",
+                    type_notification="stock_epuise"
+                )
+            # Notification pour stock bas
+            elif self.quantite <= self.seuil_alerte:
+                Notification.objects.create(
+                    message=f"Le stock de {self.medicament.nom} est bas ({self.quantite} restants)",
+                    type_notification="alerte_stock"
+                )
             return True
         return False
 
     def clean(self):
-        # Valider que le seuil d'alerte ne dépasse pas la quantité
-        if self.seuil_alerte > self.quantite:
+        # Valider que la quantité n'est pas négative
+        if self.quantite < 0:
             raise ValidationError({
-                'seuil_alerte': 'Le seuil d\'alerte ne peut pas être supérieur à la quantité'
+                'quantite': 'La quantité ne peut pas être négative'
             })
+
+    def get_status(self):
+        """Retourne le statut du stock"""
+        if self.quantite <= 0:
+            return "non_disponible"
+        elif self.quantite <= self.seuil_alerte:
+            return "rupture_stock"
+        return "disponible"
 
     def verifier_disponibilite(self):
         """Vérifie si le médicament est disponible à la vente"""
         aujourd_hui = timezone.now().date()
+
+        # Supprimer toutes les anciennes notifications pour ce médicament
+        Notification.objects.filter(
+            message__contains=self.medicament.nom
+        ).delete()
 
         # Vérifier la date de péremption
         if self.date_preemption and self.date_preemption <= aujourd_hui:
@@ -148,35 +181,88 @@ class Stock(models.Model):
             self.medicament.save()
             Notification.objects.create(
                 message=f"Le médicament {self.medicament.nom} a dépassé sa date de péremption",
-                type='peremption'
+                type_notification='peremption',
+                lu=False
             )
             return False
 
-        # Vérifier le seuil d'alerte
-        if self.quantite <= self.seuil_alerte:
+        status = self.get_status()
+        
+        # Mettre à jour l'état de vente du médicament
+        if status == "non_disponible":
             self.medicament.est_vendu = False
             self.medicament.save()
             Notification.objects.create(
-                message=f"Le stock de {self.medicament.nom} a atteint le seuil d'alerte",
-                type='stock'
+                message=f"Le stock de {self.medicament.nom} est épuisé (quantité = 0)",
+                type_notification='stock',
+                lu=False
             )
             return False
-
-        # Si tout est OK, le médicament est disponible
-        self.medicament.est_vendu = True
-        self.medicament.save()
-        return True
-
+        elif status == "rupture_stock":
+            # Le médicament est toujours vendable mais avec un avertissement
+            self.medicament.est_vendu = True
+            self.medicament.save()
+            Notification.objects.create(
+                message=f"Le stock de {self.medicament.nom} a atteint le seuil d'alerte",
+                type_notification='stock',
+                lu=False
+            )
+            return True
+        else:
+            # Stock normal
+            self.medicament.est_vendu = True
+            self.medicament.save()
+            return True
 
     def save(self, *args, **kwargs):
+        # Si c'est une nouvelle instance (pas encore dans la base de données)
+        if not self.pk:
+            # Vérifier si un autre stock existe déjà pour ce médicament
+            existing_stock = Stock.objects.filter(medicament=self.medicament).first()
+            if existing_stock:
+                raise ValidationError("Un stock existe déjà pour ce médicament.")
+        
+        # Si la date de péremption est définie et est dépassée
+        if self.date_preemption and self.date_preemption <= timezone.now().date():
+            # Créer une notification
+            Notification.objects.create(
+                message=f"Le médicament {self.medicament.nom} est périmé depuis le {self.date_preemption}",
+                type_notification='peremption'
+            )
+            # Mettre le médicament comme non vendable
+            self.medicament.est_vendu = False
+            self.medicament.save()
+        
+        # Si la quantité est en dessous du seuil d'alerte
+        if self.quantite <= self.seuil_alerte:
+            Notification.objects.create(
+                message=f"Le stock de {self.medicament.nom} est bas ({self.quantite} restants)",
+                type_notification='alerte_stock'
+            )
+        
+        # Si la quantité est à zéro
+        if self.quantite == 0:
+            Notification.objects.create(
+                message=f"Le stock du médicament {self.medicament.nom} est totalement épuisé. Veuillez commander.",
+                type_notification='stock_epuise'
+            )
+            # Mettre le médicament comme non vendable
+            self.medicament.est_vendu = False
+            self.medicament.save()
+        
         self.full_clean()
         super().save(*args, **kwargs)
         self.verifier_disponibilite()
 
     @staticmethod
-    def afficheLesStocks():
-        return Stock.objects.all()
-    
+    def medicaments_vendables():
+        """Retourne les médicaments qui peuvent être vendus (disponible ou en rupture de stock)"""
+        return Stock.objects.filter(
+            quantite__gt=0,  # Quantité supérieure à 0
+            medicament__est_vendu=True,  # Médicament marqué comme vendable
+            date_preemption__gt=timezone.now().date()  # Non périmé
+        ).select_related('medicament')
+
     def __str__(self):
         return f"Stock {self.id_Stock} - {self.medicament.nom}"
 
@@ -184,11 +270,13 @@ class Notification(models.Model):
     message = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
     lu = models.BooleanField(default=False)
-    type = models.CharField(
+    type_notification = models.CharField(
         max_length=20, 
         choices=[
             ('peremption', 'Péremption'),
             ('stock', 'Stock'),
+            ('stock_epuise', 'Stock épuisé'),
+            ('alerte_stock', 'Alerte stock')
         ],
         default='stock'
     )
@@ -259,4 +347,3 @@ class Commande(models.Model):
         # Mettre à jour le statut du médicament
         self.medicament.est_vendu = True
         self.medicament.save()
-

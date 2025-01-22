@@ -353,12 +353,6 @@
     // Submit Create Stock Form
     $("#createStockForm").submit(function (e) {
       e.preventDefault();
-      var quantite = $("#quantite").val();
-      var seuil_alerte = $("#seuil_alerte").val();
-      if (parseFloat(seuil_alerte) > parseFloat(quantite)) {
-        alert("Le seuil d'alerte ne peut pas être supérieur à la quantité");
-        return;
-      }
       $.ajax({
         url: '{% url "stocks_create" %}',
         type: "POST",
@@ -464,14 +458,6 @@
     // Submit Update Stock Form
     $("#updateStockForm").submit(function (e) {
       e.preventDefault();
-      var quantite = $("#updateQuantite").val();
-      var seuil_alerte = $("#updateSeuilAlerte").val();
-
-      if (parseFloat(seuil_alerte) > parseFloat(quantite)) {
-        alert("Le seuil d'alerte ne peut pas être supérieur à la quantité");
-        return;
-      }
-
       var stockId = $("#updateStockId").val();
       fetch(`{% url 'stocks_update' 0 %}`.replace("0", stockId), {
         method: "POST",

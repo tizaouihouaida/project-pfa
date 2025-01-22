@@ -12,14 +12,18 @@ def login_view(request):
         form = LoginForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
-            role = form.cleaned_data['role']
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
-            if user is not None and user.role == role:
+            if user is not None:
                 login(request, user)
-                return redirect('stocks_dashboard' if role == 'gestionnaire_stocks' else 'sales_dashboard')
+                if user.role == 'gestionnaire_stocks':
+                    return redirect('stocks_dashboard')
+                elif user.role == 'gestionnaire_ventes':
+                    return redirect('sales_dashboard')
+                else:
+                    messages.error(request, "Rôle utilisateur non reconnu.")
             else:
-                messages.error(request, "Identifiants invalides ou rôle incorrect ou mot de passe incorrect")
+                messages.error(request, "Identifiants invalides ou mot de passe incorrect")
         else:
             messages.error(request, "Le formulaire est invalide.")
     else:
