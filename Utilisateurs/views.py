@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
 def login_view(request):
+    print("Login view was called")
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -37,10 +38,15 @@ def registration_view(request):
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
             user.save()
+            print("User saved successfully!")
             return redirect('login')
+        else:
+            print("Form is invalid")
+            print(form.errors)
     else:
         form = RegistrationForm()
     return render(request, 'register.html', {'form': form})
+
 
 def home_view(request):
     return redirect('login')

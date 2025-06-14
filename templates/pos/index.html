@@ -37,10 +37,14 @@
             {% endif %}
             <h5 class="card-title">{{ medicament.nom }}</h5>
             <p class="card-text">Prix: {{ medicament.prixUnitaire }}</p>
+            {% if medicament.low_stock %}
+            <div class="alert alert-warning py-1 mb-2">
+            Stock faible: {{ medicament.quantite }} restant(s)
+            </div>
+            {% endif %}
             <button
               onclick="addToCart('{{ medicament.id_Medicament }}', '{{ medicament.nom }}', '{{ medicament.prixUnitaire }}')"
-              class="btn btn-primary"
-            >
+              class="btn btn-primary">
               Ajouter au panier
             </button>
           </div>
@@ -141,16 +145,27 @@
   const csrftoken = getCookie("csrftoken");
   let cart = [];
 
-  function addToCart(id, name, price) {
-    cart.push({
-      id: id,
-      name: name,
-      price: parseFloat(price),
-      quantity: 1,
-      total: parseFloat(price),
-    });
-    updateCart();
-  }
+  function addToCart(id, name, price, quantity) {
+    // First check if we have this item in stock
+    fetch(`/api/check-stock/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.available) {
+                // Proceed with adding to cart
+                cart.push({
+                    id: id,
+                    name: name,
+                    price: parseFloat(price),
+                    quantity: 1,
+                    total: parseFloat(price)
+                });
+                updateCart();
+            } else {
+                alert("Ce produit est en rupture de stock!");
+            }
+        });
+}
+
 
   function updateCart() {
     let cartTable = document

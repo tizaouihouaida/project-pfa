@@ -16,7 +16,18 @@ import logging
 from django.db import transaction
 from decimal import Decimal
 from django.core.exceptions import ValidationError
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db import transaction
+from .models import Vente, DetailVente
+from django.http import JsonResponse
 
+def check_stock(request, pk):
+    medicament = get_object_or_404(Medicament, pk=pk)
+    return JsonResponse({
+        'available': medicament.quantite > 0,
+        'quantity': medicament.quantite
+    })
 logger = logging.getLogger(__name__)
 
 @login_required
@@ -26,6 +37,15 @@ def pos_index(request):
     categories = CategorieMedicament.afficheLesCategories()
     medicaments = Medicament.Medicament_disponible()
     return render(request, 'pos/index.html', {'categories': categories, 'medicaments': medicaments, 'username': username})
+
+@login_required
+@role_required('gestionnaire_ventes')
+def pos_view(request):
+    medicaments = Medicament.objects.all()
+    # Add stock warning threshold (e.g., 5 items)
+    for med in medicaments:
+        med.low_stock = med.quantite <= 5
+    return render(request, 'pos.html', {'medicaments': medicaments})
 
 @login_required
 @role_required('gestionnaire_ventes')
@@ -69,6 +89,36 @@ def sales_dashboard(request):
         
     })
 
+@transaction.atomic
+def finaliser_vente(request, pk):
+    vente = get_object_or_404(Vente, pk=pk)
+    
+    # Check if cart is empty
+    if not vente.details.exists():
+        messages.error(request, "Le panier est vide!")
+        return redirect('panier')
+    
+    # Verify stock and calculate total
+    total = 0
+    for detail in vente.details.all():
+        medicament = detail.medicament
+        if detail.quantite > medicament.quantite_stock:
+            messages.error(request, f"Stock insuffisant pour {medicament.nom}")
+            return redirect('panier')
+        total += detail.prix_unitaire * detail.quantite
+    
+    # Update stock and complete sale
+    for detail in vente.details.all():
+        medicament = detail.medicament
+        medicament.quantite_stock -= detail.quantite
+        medicament.save()
+    
+    vente.montant_total = total
+    vente.est_paye = True
+    vente.save()
+    
+    messages.success(request, "Vente finalisée avec succès!")
+    return redirect('recu', pk=vente.pk)
 
 @login_required
 @role_required('gestionnaire_ventes')
