@@ -23,6 +23,7 @@ GestionPharmacie est une application web conçue pour aider les pharmacies à g�
 - Gestion des utilisateurs
 - Rapports et statistiques
 - Interface utilisateur intuitive
+- 
 ## Captures d'écran
   
   ![Capture 4](https://github.com/user-attachments/assets/963b64c0-272f-45ab-b0bc-7585c8545103)
@@ -45,48 +46,4 @@ GestionPharmacie est une application web conçue pour aider les pharmacies à g�
 
   ![Capture 3](https://github.com/user-attachments/assets/15921be7-9424-4327-8d4b-56e7551ce89d)
 
-
-## Installation
-
-Pour installer et configurer le projet, suivez ces étapes :
-
-1. Clonez le dépôt :
-   ```bash
-   git clone https://github.com/GoldenDev74/GestionPharmacie.git
-   cd GestionPharmacie
-2. Créez et activez un environnement virtuel :
-    ```bash
-    python -m venv env
-    source env/bin/activate
-    # Sur Windows,
-    utilisez `env\Scripts\activate`
-3. Installez les dépendances :
-    ```bash
-    pip install -r requirements.txt
-4. Appliquez les migrations :
-   ```bash
-   python manage.py migrate
-5. Insérer des données dans la base de données:
-   copier le contenue du fichier backup.sql dans le logiciel
-   avec laquel vous avez ouvert la base de donnée db.sqlite3
-   de préférence DbBrowser Sqlite et exécuter les requêtes.
-6. Lancez le serveur de développement :
-   ```bash
-   python manage.py runserver
-## Utilisation
-1. Accédez à l'application en ouvrant votre navigateur et en allant à l'adresse http://127.0.0.1:8000/.
-2. Connectez-vous avec les identifiants du superutilisateur que vous avez créés.
-3. Utilisez l'interface pour gérer les stocks et les ventes de la pharmacie.
-## Contribution
-* Nous apprécions les contributions de la communauté. Pour contribuer au projet, suivez ces étapes :
-* Fork le dépôt.
-* Créez une branche pour votre fonctionnalité (git checkout -b feature/nouvelle-fonctionnalité).
-* Committez vos modifications (git commit -am 'Ajout de la nouvelle fonctionnalité').
-* Poussez vers la branche (git push origin feature/nouvelle-fonctionnalité).
-* Ouvrez une Pull Request.
-## Collaborateurs
-- GoldenDev74
-- dollardking
-- Roi12122525
-- JBDEV-stack
 
