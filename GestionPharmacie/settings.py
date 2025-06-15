@@ -112,11 +112,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -142,5 +139,5 @@ AUTH_USER_MODEL = 'Utilisateurs.Utilisateur'
 
 LOGIN_URL = 'login'  # URL de redirection pour les utilisateurs non authentifiés
 
-CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_SECURE = True  # Set to True in production with HTTPS
 SESSION_COOKIE_SECURE = False

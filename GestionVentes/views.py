@@ -21,14 +21,40 @@ from django.contrib import messages
 from django.db import transaction
 from .models import Vente, DetailVente
 from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
-def check_stock(request, pk):
-    medicament = get_object_or_404(Medicament, pk=pk)
-    return JsonResponse({
-        'available': medicament.quantite > 0,
-        'quantity': medicament.quantite
-    })
+
 logger = logging.getLogger(__name__)
+
+@csrf_exempt  # Only if you're having CSRF issues with the AJAX call
+def send_receipt(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            sale_id = data.get('sale_id')
+            client_email = data.get('client_email')
+            
+            # Here you would typically:
+            # 1. Generate the receipt content
+            # 2. Send the email
+            
+            # Example implementation:
+            send_mail(
+                f'Reçu de votre achat #{sale_id}',
+                'Merci pour votre achat chez PNAWKAST!',
+                settings.DEFAULT_FROM_EMAIL,
+                [client_email],
+                fail_silently=False,
+            )
+            
+            return JsonResponse({'status': 'success', 'message': 'Reçu envoyé avec succès'})
+            
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    
+    return JsonResponse({'status': 'error', 'message': 'Méthode non autorisée'}, status=405)
 
 @login_required
 @role_required('gestionnaire_ventes')
@@ -261,7 +287,6 @@ def add_to_cart(request):
         medicament = get_object_or_404(Medicament, id_Medicament=medicament_id)
         return JsonResponse({'status': 'success', 'name': medicament.nom, 'price': str(medicament.prixUnitaire)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
 
 @login_required
 @role_required('gestionnaire_ventes')

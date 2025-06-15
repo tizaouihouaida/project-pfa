@@ -13,7 +13,5 @@ urlpatterns = [
     path('finalize_sale/', views.finalize_sale, name='finalize_sale'),
     path('search_ventes/', views.search_ventes, name='search_ventes'),
     path('check_stock/', views.check_stock, name='check_stock'),
-    path('vente/<int:pk>/finaliser/', views.finaliser_vente, name='finaliser_vente'),
-    path('api/check-stock/<int:pk>/', views.check_stock, name='check_stock'),
-    #path('vente/<int:pk>/recu/', views.recu_vente, name='recu'),
+    path('send_receipt/', views.send_receipt, name='send_receipt'),
 ]
