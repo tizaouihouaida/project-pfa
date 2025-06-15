@@ -1,54 +1,124 @@
 {% load static %}
-<header class="bg-white border-b border-gray-200">
-  <div class="px-4 py-2.5">
+<header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+  <div class="px-4 py-3">
     <div class="flex items-center justify-between">
+      <!-- Bouton sidebar mobile -->
       <div class="flex items-center">
-        <button id="toggleSidebarMobile" class="lg:hidden p-2 text-gray-600 hover:text-gray-900">
+        <button id="toggleSidebarMobile" class="lg:hidden p-2 text-gray-600 hover:text-gray-900 dark:hover:text-gray-100 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
+        <span class="ml-4 text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden md:block">PharmaVision</span>
       </div>
 
-      <div class="flex items-center space-x-3">
-        <div class="relative">
-          <button type="button" class="relative p-2 text-gray-600 hover:text-gray-900" id="notificationDropdown">
+      <!-- Section droite -->
+      <div class="flex items-center space-x-4">
+        <!-- Bouton recherche -->
+        <button class="p-2 text-gray-600 hover:text-gray-900 dark:hover:text-gray-100 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </button>
+
+        <!-- Notifications avec drag & drop -->
+        <div class="relative" x-data="{ open: false, isDragging: false, startY: 0, currentY: 0 }"
+             @mouseleave="open = false"
+             @mousedown="isDragging = true; startY = $event.clientY; currentY = $event.clientY"
+             @mousemove="if(isDragging) { currentY = $event.clientY }"
+             @mouseup="if(isDragging) { isDragging = false; if(Math.abs(currentY - startY) > 50) open = !open }">
+          <button @click="open = !open" class="relative p-2 text-gray-600 hover:text-gray-900 dark:hover:text-gray-100 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
             </svg>
-            <span class="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">3</span>
+            <span class="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full transform hover:scale-110 transition-transform">3</span>
           </button>
+          
+          <!-- Panneau notifications -->
+          <div x-show="open" x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 translate-y-1"
+               x-transition:enter-end="opacity-100 translate-y-0"
+               x-transition:leave="transition ease-in duration-150"
+               x-transition:leave-start="opacity-100 translate-y-0"
+               x-transition:leave-end="opacity-0 translate-y-1"
+               class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
+               style="display: none;">
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
+              <h3 class="font-medium text-gray-900 dark:text-white">Notifications</h3>
+              <button class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Tout marquer comme lu</button>
+            </div>
+            <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto" id="notificationContainer">
+              <!-- Notification exemple (remplacer par une boucle Django) -->
+              <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-start notification-item" draggable="true">
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-600 dark:text-red-400">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Stock critique</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Paracétamol en rupture de stock</p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Il y a 2 heures</p>
+                </div>
+                <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Ajoutez d'autres notifications ici -->
+            </div>
+            <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-center bg-gray-50 dark:bg-gray-700">
+              <a href="{% url 'notifications_index' %}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Voir toutes les notifications</a>
+            </div>
+          </div>
         </div>
 
-        <div class="flex items-center">
-          <div class="relative inline-block text-left">
-            <button type="button" class="flex items-center space-x-3 text-gray-600 hover:text-gray-900" id="userDropdown">
-              <img class="w-8 h-8 rounded-full" src="{% static 'assets/images/profile/user-1.jpg' %}" alt="user photo">
-              <div class="text-left">
-                <span class="block text-sm font-medium text-gray-900">{{ request.user.username }}</span>
-                <span class="block text-xs text-gray-500">GESTIONNAIRE DE STOCKS</span>
-              </div>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
+        <!-- Menu utilisateur -->
+        <div class="relative inline-block text-left" x-data="{ open: false }" @click.away="open = false">
+          <button @click="open = !open" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:hover:text-gray-100 group">
+            <div class="relative">
+              <img class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 group-hover:border-blue-500 transition-colors" src="{% static 'assets/images/profile/user-1.jpg' %}" alt="user photo">
+              <span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border border-white dark:border-gray-800"></span>
+            </div>
+            <div class="text-left hidden md:block">
+              <span class="block text-sm font-medium text-gray-900 dark:text-white">{{ request.user.username }}</span>
+              <span class="block text-xs text-gray-500 dark:text-gray-400">Gestionnaire Stocks</span>
+            </div>
+            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
 
-            <div class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden"
-                 role="menu" aria-orientation="vertical" aria-labelledby="userDropdown" id="userMenu">
-              <div class="py-1" role="none">
-                <a href="{% url 'profil' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                  </svg>
-                  Mon Compte
-                </a>
-                <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                  </svg>
-                  Se Déconnecter
-                </a>
-              </div>
+          <div x-show="open" x-transition:enter="transition ease-out duration-100"
+               x-transition:enter-start="transform opacity-0 scale-95"
+               x-transition:enter-end="transform opacity-100 scale-100"
+               x-transition:leave="transition ease-in duration-75"
+               x-transition:leave-start="transform opacity-100 scale-100"
+               x-transition:leave-end="transform opacity-0 scale-95"
+               class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+               style="display: none;">
+            <div class="py-1" role="none">
+              <a href="{% url 'profil' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Mon profil
+              </a>
+              <a href="{% url 'change_password' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                Changer mot de passe
+              </a>
+              <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+              <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                Déconnexion
+              </a>
             </div>
           </div>
         </div>
@@ -57,27 +127,57 @@
   </div>
 </header>
 
-<script>
-  // Toggle user dropdown
-  const userDropdown = document.getElementById('userDropdown');
-  const userMenu = document.getElementById('userMenu');
-  
-  userDropdown.addEventListener('click', () => {
-    userMenu.classList.toggle('hidden');
-  });
+<!-- Alpine JS pour les interactions -->
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (event) => {
-    if (!userDropdown.contains(event.target)) {
-      userMenu.classList.add('hidden');
-    }
+<script>
+  // Drag & Drop pour les notifications
+  document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('notificationContainer');
+    let draggedItem = null;
+
+    container.querySelectorAll('.notification-item').forEach(item => {
+      item.addEventListener('dragstart', function() {
+        draggedItem = this;
+        setTimeout(() => this.style.opacity = '0.4', 0);
+      });
+
+      item.addEventListener('dragend', function() {
+        this.style.opacity = '1';
+      });
+
+      item.addEventListener('dragover', function(e) {
+        e.preventDefault();
+      });
+
+      item.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+        this.style.backgroundColor = '#f3f4f6';
+      });
+
+      item.addEventListener('dragleave', function() {
+        this.style.backgroundColor = '';
+      });
+
+      item.addEventListener('drop', function() {
+        this.style.backgroundColor = '';
+        if (draggedItem !== this) {
+          const allItems = [...container.querySelectorAll('.notification-item')];
+          const draggedIndex = allItems.indexOf(draggedItem);
+          const targetIndex = allItems.indexOf(this);
+          
+          if (draggedIndex < targetIndex) {
+            this.after(draggedItem);
+          } else {
+            this.before(draggedItem);
+          }
+        }
+      });
+    });
   });
 
   // Toggle mobile sidebar
-  const toggleSidebarMobile = document.getElementById('toggleSidebarMobile');
-  const sidebar = document.querySelector('aside');
-  
-  toggleSidebarMobile.addEventListener('click', () => {
-    sidebar.classList.toggle('-translate-x-full');
+  document.getElementById('toggleSidebarMobile').addEventListener('click', function() {
+    document.querySelector('aside').classList.toggle('-translate-x-full');
   });
 </script>
