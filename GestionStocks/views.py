@@ -102,7 +102,10 @@ def categories_create(request):
         form = CategorieForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('categories_index')  # Redirige vers la liste des catégories
+            messages.success(request, "La catégorie a été créée avec succès!")
+            return redirect('categories_index')
+        else:
+            messages.error(request, "Erreur lors de la création de la catégorie. Veuillez corriger les erreurs.")
     else:
         form = CategorieForm()
     return render(request, 'categories/create.html', {'form': form})
@@ -115,24 +118,29 @@ def categories_edit(request, id):
         form = CategorieForm(request.POST, instance=categorie)
         if form.is_valid():
             form.save()
+            messages.success(request, f"La catégorie {categorie.nom_Categorie} a été modifiée avec succès!")
             return redirect('categories_index')
         else:
+            messages.error(request, "Erreur lors de la modification. Veuillez corriger les erreurs.")
             return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = CategorieForm(instance=categorie)
     return render(request, 'categories/update.html', {'form': form})
+
 
 @login_required
 @role_required('gestionnaire_stocks')
 @require_POST
 def categories_delete(request, id):
     categorie = get_object_or_404(CategorieMedicament, id_Categorie=id)
-    # if request.method == 'POST':
-    #     categorie.cacherCategorie()
-    #     return redirect('categories_index')
-    categorie.cacherCategorie()
+    try:
+        categorie.cacherCategorie()
+        messages.success(request, f"La catégorie {categorie.nom_Categorie} a été supprimée avec succès!")
+    except Exception as e:
+        messages.error(request, f"Erreur lors de la suppression de la catégorie: {str(e)}")
+    
+    return redirect('categories_index')
 
-    return redirect('categories_index')  # Redirige vers la liste des catégories
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -226,10 +234,18 @@ def medicament_update(request, id_Medicament):
 @login_required
 @role_required('gestionnaire_stocks')
 def fournisseurs_index(request):
+    fournisseurs_list = Fournisseur.objects.all()  # Récupérer tous les fournisseurs
     username = request.user.username
-    fournisseurs = Fournisseur.objects.all()
-    form = FournisseurForm()
-    return render(request, 'fournisseurs/index.html', {'fournisseurs': fournisseurs, 'username': username, 'form': form})
+    
+    # Pagination
+    paginator = Paginator(fournisseurs_list, 10)  # 10 fournisseurs par page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'fournisseurs/index.html', {
+        'fournisseurs': page_obj,
+        'username': username
+    })
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -320,39 +336,6 @@ def stocks_index(request):
         'tous_medicaments': tous_medicaments,
         'username': request.user.username
     })
-# @login_required
-# @role_required('gestionnaire_stocks')
-# def stocks_index(request):
-#     stocks = Stock.afficheLesStocks()
-#     medicaments_disponibles = Medicament.medicaments_disponibles_pour_stock()
-#     tous_medicaments = Medicament.medicaments_non_caches()
-#     username = request.user.username
-    
-#     # Pagination
-#     paginator = Paginator(tous_medicaments, 10)  # 10 médicaments par page
-#     page_number = request.GET.get('page')
-#     stocks = paginator.get_page(page_number)
-    
-#     if request.method == 'POST':
-#         form = MedicamentForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             medicament = form.save(commit=False)
-#             medicament.est_vendu = False  # Par défaut, le médicament n'est pas vendu
-#             medicament.save()
-#             return redirect('stocks_index')  # Redirige vers la liste des médicaments
-#     else:
-#         form = MedicamentForm()
-
-#     return render(request, 'stocks/index.html', {
-#         # 'categories': categories,
-#         'stocks': stocks,
-#         'username': username,
-#         'form': form,
-#         'medicaments': medicaments_disponibles,
-#         'tous_medicaments': tous_medicaments,
-
-#     })
-
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -454,11 +437,22 @@ def get_stock_for_update(request, id):
 @login_required
 @role_required('gestionnaire_stocks')
 def commandes_index(request):
+
+    commandes_list = Commande.objects.all()  # Récupérer tous les fournisseurs
     username = request.user.username
-    commandes = Commande.objects.all()
+    
+    # Pagination
+    paginator = Paginator(commandes_list, 10)  # 10 fournisseurs par page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     medicaments = Medicament.objects.filter(est_cachee=False)
     fournisseurs = Fournisseur.objects.all()
-    return render(request, 'commandes/index.html', {'commandes': commandes, 'medicaments': medicaments, 'fournisseurs': fournisseurs, 'username': username})
+    return render(request, 'commandes/index.html', {
+        'commandes': page_obj,
+        'medicaments': medicaments,
+        'fournisseurs': fournisseurs,
+        'username': username
+    })
 
 
 @csrf_protect
@@ -549,9 +543,14 @@ def notifications_index(request):
     last_week = today - timedelta(days=7)
     
     # Récupérer toutes les notifications triées par date
-    notifications = Notification.objects.all().order_by('-date')
+    all_notifications = Notification.objects.all().order_by('-date')
     
-    # Grouper les notifications
+    # Pagination
+    paginator = Paginator(all_notifications, 10)  # 10 notifications par page
+    page_number = request.GET.get('page')
+    notifications = paginator.get_page(page_number)
+    
+    # Grouper les notifications de la page courante
     grouped_notifications = {
         'aujourdhui': [],
         'hier': [],
@@ -559,7 +558,7 @@ def notifications_index(request):
         'plus_ancien': []
     }
     
-    for notif in notifications:
+    for notif in notifications.object_list:  # Notez l'utilisation de object_list ici
         notif_date = notif.date.date()
         if notif_date == today:
             grouped_notifications['aujourdhui'].append(notif)
@@ -572,6 +571,7 @@ def notifications_index(request):
     
     return render(request, 'notifications/index.html', {
         'grouped_notifications': grouped_notifications,
+        'notifications': notifications,  # Objet de pagination pour le template
         'username': request.user.username
     })
 

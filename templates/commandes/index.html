@@ -170,6 +170,43 @@
         </tbody>
       </table>
     </div>
+
+    <div class="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+    <div class="text-sm text-gray-700 dark:text-gray-300">
+        Affichage de <span class="font-medium">{{ commandes.start_index }}</span> à <span class="font-medium">{{ commandes.end_index }}</span> sur <span class="font-medium">{{ commandes.paginator.count }}</span> Commandes
+    </div>
+    <div class="flex space-x-2">
+        {% if commandes.has_previous %}
+            <a href="?page=1" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                &laquo; Première
+            </a>
+            <a href="?page={{ commandes.previous_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Précédente
+            </a>
+        {% endif %}
+
+        {% for num in commandes.paginator.page_range %}
+            {% if commandes.number == num %}
+                <span class="px-3 py-1 border border-blue-500 rounded-md text-sm font-medium text-white bg-blue-600">
+                    {{ num }}
+                </span>
+            {% elif num > commandes.number|add:'-3' and num < commandes.number|add:'3' %}
+                <a href="?page={{ num }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    {{ num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if commandes.has_next %}
+            <a href="?page={{ commandes.next_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Suivante
+            </a>
+            <a href="?page={{ commandes.paginator.num_pages }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Dernière &raquo;
+            </a>
+        {% endif %}
+    </div>
+</div>
   </div>
 </div>
 

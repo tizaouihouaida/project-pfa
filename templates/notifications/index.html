@@ -45,18 +45,7 @@
             {{ notification.date|time:"H:i" }}
           </div>
         </div>
-        <div class="ml-4 flex-shrink-0 flex space-x-2">
-          <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </button>
-          <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-          </button>
-        </div>
+
       </div>
       {% endfor %}
       {% endif %}
@@ -196,38 +185,42 @@
     </div>
 
     <!-- Pagination -->
-    <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-      <div class="flex-1 flex justify-between sm:hidden">
-        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"> Précédent </a>
-        <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"> Suivant </a>
-      </div>
-      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-        <div>
-          <p class="text-sm text-gray-700 dark:text-gray-300">
-            Affichage de <span class="font-medium">1</span> à <span class="font-medium">10</span> sur <span class="font-medium">20</span> résultats
-          </p>
-        </div>
-        <div>
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              <span class="sr-only">Précédent</span>
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-            </a>
-            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> 1 </a>
-            <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> 2 </a>
-            <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> 3 </a>
-            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              <span class="sr-only">Suivant</span>
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </a>
-          </nav>
-        </div>
-      </div>
+ <div class="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+    <div class="text-sm text-gray-700 dark:text-gray-300">
+        Affichage de <span class="font-medium">{{ notifications.start_index }}</span> à <span class="font-medium">{{ notifications.end_index }}</span> sur <span class="font-medium">{{ notifications.paginator.count }}</span> notifications
     </div>
+    <div class="flex space-x-2">
+        {% if notifications.has_previous %}
+            <a href="?page=1" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                &laquo; Première
+            </a>
+            <a href="?page={{ notifications.previous_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Précédente
+            </a>
+        {% endif %}
+
+        {% for num in notifications.paginator.page_range %}
+            {% if notifications.number == num %}
+                <span class="px-3 py-1 border border-blue-500 rounded-md text-sm font-medium text-white bg-blue-600">
+                    {{ num }}
+                </span>
+            {% elif num > notifications.number|add:'-3' and num < notifications.number|add:'3' %}
+                <a href="?page={{ num }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    {{ num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if notifications.has_next %}
+            <a href="?page={{ notifications.next_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Suivante
+            </a>
+            <a href="?page={{ notifications.paginator.num_pages }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Dernière &raquo;
+            </a>
+        {% endif %}
+    </div>
+</div>
   </div>
 </div>
 

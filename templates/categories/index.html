@@ -6,13 +6,26 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <style>
-  .notification {
+    .notification {
     position: fixed;
     top: 20px;
-    right: 20px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+    max-width: 80%;
     z-index: 1000;
-    max-width: 400px;
-    transition: all 0.5s ease;
+    text-align: center;
+  }
+  
+  .alert {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
   }
   
   .category-card {
@@ -40,7 +53,7 @@
 <div id="notificationArea" class="notification">
   {% if messages %}
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center">
+    <div class="alert alert-{{ message.tags }} animate__animated animate__fadeInDown">
       <span>{{ message }}</span>
       <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
     </div>
@@ -129,7 +142,7 @@
      <!-- Pagination -->
 <div class="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
     <div class="text-sm text-gray-700 dark:text-gray-300">
-        Affichage de <span class="font-medium">{{ categories.start_index }}</span> à <span class="font-medium">{{ categories.end_index }}</span> sur <span class="font-medium">{{ categories.paginator.count }}</span> médicaments
+        Affichage de <span class="font-medium">{{ categories.start_index }}</span> à <span class="font-medium">{{ categories.end_index }}</span> sur <span class="font-medium">{{ categories.paginator.count }}</span> Catégories
     </div>
     <div class="flex space-x-2">
         {% if categories.has_previous %}
@@ -317,23 +330,6 @@
 </div>
 
 <script>
-  // Notification handling
-  function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center`;
-    notification.innerHTML = `
-      <span>${message}</span>
-      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
-    `;
-    
-    const notificationArea = document.getElementById('notificationArea');
-    notificationArea.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.classList.add('animate__fadeOutRight');
-      setTimeout(() => notification.remove(), 500);
-    }, 5000);
-  }
 
   // Modal functions
   function openCreateModal() {
@@ -371,6 +367,24 @@
     const form = document.getElementById('editCategoryForm');
     form.action = "{% url 'categories_edit' 0 %}".replace('0', id);
   }
+
+  function showNotification(message, type = 'success') {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} animate__animated animate__fadeInDown mb-3`;
+  notification.innerHTML = `
+    <span class="flex-grow text-center">${message}</span>
+    <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+  `;
+  
+  const notificationArea = document.getElementById('notificationArea');
+  notificationArea.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.classList.remove('animate__fadeInDown');
+    notification.classList.add('animate__fadeOutUp');
+    setTimeout(() => notification.remove(), 500);
+  }, 5000);
+}
 
   // Search functionality
   function searchCategories() {
@@ -426,11 +440,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Auto-close messages after 5 seconds
     setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            alert.classList.add('animate__fadeOutRight');
-            setTimeout(() => alert.remove(), 500);
-        });
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        alert.classList.add('animate__fadeOutRight');
+        setTimeout(() => alert.remove(), 500);
+      });
     }, 5000);
 });
 
