@@ -1,135 +1,234 @@
 {% extends 'layout/base.html' %}
-{% block title %}Notifications{% endblock %}
+{% block title %}Notifications - PharmaVision{% endblock %}
 {% block main_content %}
-<h1 class="text-2xl font-bold mb-4">Notifications</h1>
 
-<div class="space-y-8">
-  {% if grouped_notifications.aujourdhui %}
-  <div>
-    <h2 class="text-lg font-semibold text-gray-700 mb-3">Aujourd'hui</h2>
-    <div class="space-y-4">
+<div class="container mx-auto px-4 py-6">
+  <!-- En-tête avec boutons d'action -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Notifications</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">Gérez vos alertes et activités récentes</p>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+    <!-- Liste des notifications -->
+    <div class="divide-y divide-gray-200 dark:divide-gray-700">
+      {% if grouped_notifications.aujourdhui %}
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/30">
+        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Aujourd'hui</h2>
+      </div>
       {% for notification in grouped_notifications.aujourdhui %}
-      <div
-        class="flex items-center p-4 mb-4 text-sm rounded-lg {% if notification.type == 'peremption' %}text-red-800 bg-red-50{% else %}text-yellow-800 bg-yellow-50{% endif %}"
-        role="alert"
-      >
-        <svg
-          class="flex-shrink-0 inline w-4 h-4 me-3"
-          aria-hidden="true"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path
-            d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
-          />
-        </svg>
-        <span class="sr-only">Info</span>
-        <div>
-          <span class="font-medium">{{ notification.message }}</span>
+      <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-start">
+        <div class="flex-shrink-0 pt-1">
+          <div class="h-10 w-10 rounded-full flex items-center justify-center {% if notification.type == 'peremption' %}bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400{% else %}bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400{% endif %}">
+            {% if notification.type == 'peremption' %}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            {% else %}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {% endif %}
+          </div>
         </div>
-        <span class="text-sm text-gray-500 ml-auto">{{ notification.date|time:"H:i" }}</span>
+        <div class="ml-4 flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ notification.message }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ notification.details|default:"" }}</p>
+          <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
+            <svg class="flex-shrink-0 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {{ notification.date|time:"H:i" }}
+          </div>
+        </div>
+        <div class="ml-4 flex-shrink-0 flex space-x-2">
+          <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </button>
+          <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
       </div>
       {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+      {% endif %}
 
-  {% if grouped_notifications.hier %}
-  <div>
-    <h2 class="text-lg font-semibold text-gray-700 mb-3">Hier</h2>
-    <div class="space-y-4">
+      {% if grouped_notifications.hier %}
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/30">
+        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Hier</h2>
+      </div>
       {% for notification in grouped_notifications.hier %}
-      <div
-        class="flex items-center p-4 mb-4 text-sm rounded-lg {% if notification.type == 'peremption' %}text-red-800 bg-red-50{% else %}text-yellow-800 bg-yellow-50{% endif %}"
-        role="alert"
-      >
-        <svg
-          class="flex-shrink-0 inline w-4 h-4 me-3"
-          aria-hidden="true"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path
-            d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
-          />
-        </svg>
-        <span class="sr-only">Info</span>
-        <div>
-          <span class="font-medium">{{ notification.message }}</span>
+      <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-start">
+        <div class="flex-shrink-0 pt-1">
+          <div class="h-10 w-10 rounded-full flex items-center justify-center {% if notification.type == 'peremption' %}bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400{% else %}bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400{% endif %}">
+            {% if notification.type == 'peremption' %}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            {% else %}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {% endif %}
+          </div>
         </div>
-        <span class="text-sm text-gray-500 ml-auto">{{ notification.date|time:"H:i" }}</span>
+        <div class="ml-4 flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ notification.message }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ notification.details|default:"" }}</p>
+          <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
+            <svg class="flex-shrink-0 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {{ notification.date|time:"H:i" }}
+          </div>
+        </div>
+        <div class="ml-4 flex-shrink-0 flex space-x-2">
+          <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </button>
+          <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
       </div>
       {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+      {% endif %}
 
-  {% if grouped_notifications.cette_semaine %}
-  <div>
-    <h2 class="text-lg font-semibold text-gray-700 mb-3">Cette semaine</h2>
-    <div class="space-y-4">
+      {% if grouped_notifications.cette_semaine %}
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/30">
+        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Cette semaine</h2>
+      </div>
       {% for notification in grouped_notifications.cette_semaine %}
-      <div
-        class="flex items-center p-4 mb-4 text-sm rounded-lg {% if notification.type == 'peremption' %}text-red-800 bg-red-50{% else %}text-yellow-800 bg-yellow-50{% endif %}"
-        role="alert"
-      >
-        <svg
-          class="flex-shrink-0 inline w-4 h-4 me-3"
-          aria-hidden="true"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path
-            d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
-          />
-        </svg>
-        <span class="sr-only">Info</span>
-        <div>
-          <span class="font-medium">{{ notification.message }}</span>
+      <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-start">
+        <div class="flex-shrink-0 pt-1">
+          <div class="h-10 w-10 rounded-full flex items-center justify-center {% if notification.type == 'peremption' %}bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400{% else %}bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400{% endif %}">
+            {% if notification.type == 'peremption' %}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            {% else %}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {% endif %}
+          </div>
         </div>
-        <span class="text-sm text-gray-500 ml-auto">{{ notification.date|date:"l H:i" }}</span>
+        <div class="ml-4 flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ notification.message }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ notification.details|default:"" }}</p>
+          <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
+            <svg class="flex-shrink-0 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {{ notification.date|date:"l H:i" }}
+          </div>
+        </div>
       </div>
       {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+      {% endif %}
 
-  {% if grouped_notifications.plus_ancien %}
-  <div>
-    <h2 class="text-lg font-semibold text-gray-700 mb-3">Plus ancien</h2>
-    <div class="space-y-4">
+      {% if grouped_notifications.plus_ancien %}
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/30">
+        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Plus ancien</h2>
+      </div>
       {% for notification in grouped_notifications.plus_ancien %}
-      <div
-        class="flex items-center p-4 mb-4 text-sm rounded-lg {% if notification.type == 'peremption' %}text-red-800 bg-red-50{% else %}text-yellow-800 bg-yellow-50{% endif %}"
-        role="alert"
-      >
-        <svg
-          class="flex-shrink-0 inline w-4 h-4 me-3"
-          aria-hidden="true"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path
-            d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
-          />
-        </svg>
-        <span class="sr-only">Info</span>
-        <div>
-          <span class="font-medium">{{ notification.message }}</span>
+      <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-start">
+        <div class="flex-shrink-0 pt-1">
+          <div class="h-10 w-10 rounded-full flex items-center justify-center {% if notification.type == 'peremption' %}bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400{% else %}bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400{% endif %}">
+            {% if notification.type == 'peremption' %}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            {% else %}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {% endif %}
+          </div>
         </div>
-        <span class="text-sm text-gray-500 ml-auto">{{ notification.date|date:"d/m/Y H:i" }}</span>
+        <div class="ml-4 flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ notification.message }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ notification.details|default:"" }}</p>
+          <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
+            <svg class="flex-shrink-0 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {{ notification.date|date:"d/m/Y H:i" }}
+          </div>
+        </div>
+        <div class="ml-4 flex-shrink-0 flex space-x-2">
+          <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </button>
+          <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
       </div>
       {% endfor %}
+      {% endif %}
+
+      {% if not grouped_notifications.aujourdhui and not grouped_notifications.hier and not grouped_notifications.cette_semaine and not grouped_notifications.plus_ancien %}
+      <div class="px-6 py-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucune notification</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Vous n'avez aucune notification pour le moment.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <div class="flex-1 flex justify-between sm:hidden">
+        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"> Précédent </a>
+        <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"> Suivant </a>
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            Affichage de <span class="font-medium">1</span> à <span class="font-medium">10</span> sur <span class="font-medium">20</span> résultats
+          </p>
+        </div>
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              <span class="sr-only">Précédent</span>
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            </a>
+            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> 1 </a>
+            <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> 2 </a>
+            <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> 3 </a>
+            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              <span class="sr-only">Suivant</span>
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </nav>
+        </div>
+      </div>
     </div>
   </div>
-  {% endif %}
-
-  {% if not grouped_notifications.aujourdhui and not grouped_notifications.hier and not grouped_notifications.cette_semaine and not grouped_notifications.plus_ancien %}
-  <p class="text-gray-500">Aucune notification</p>
-  {% endif %}
 </div>
+
 {% endblock %}

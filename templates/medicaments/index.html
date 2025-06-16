@@ -84,7 +84,6 @@
   <div class="flex flex-col md:flex-row items-center justify-between mb-8">
     <div class="flex items-center mb-4 md:mb-0">
       <h1 class="text-3xl font-bold text-gray-800 dark:text-white mr-4">Gestion des Médicaments</h1>
-      <img src="{% static 'assets/images/profile/medicament.png' %}" alt="Médicaments" class="w-16 h-16">
     </div>
     
     <div class="flex items-center space-x-4">
@@ -171,6 +170,45 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination -->
+<div class="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+    <div class="text-sm text-gray-700 dark:text-gray-300">
+        Affichage de <span class="font-medium">{{ medicaments.start_index }}</span> à <span class="font-medium">{{ medicaments.end_index }}</span> sur <span class="font-medium">{{ medicaments.paginator.count }}</span> médicaments
+    </div>
+    <div class="flex space-x-2">
+        {% if medicaments.has_previous %}
+            <a href="?page=1" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                &laquo; Première
+            </a>
+            <a href="?page={{ medicaments.previous_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Précédente
+            </a>
+        {% endif %}
+
+        {% for num in medicaments.paginator.page_range %}
+            {% if medicaments.number == num %}
+                <span class="px-3 py-1 border border-blue-500 rounded-md text-sm font-medium text-white bg-blue-600">
+                    {{ num }}
+                </span>
+            {% elif num > medicaments.number|add:'-3' and num < medicaments.number|add:'3' %}
+                <a href="?page={{ num }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    {{ num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if medicaments.has_next %}
+            <a href="?page={{ medicaments.next_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Suivante
+            </a>
+            <a href="?page={{ medicaments.paginator.num_pages }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Dernière &raquo;
+            </a>
+        {% endif %}
+    </div>
+</div>
+    
   </div>
 </div>
 
@@ -400,6 +438,7 @@
         </form>
       </div>
     </div>
+    
   </div>
 </div>
 
@@ -472,41 +511,40 @@
     const form = document.getElementById('editMedicamentForm');
     form.action = "{% url 'medicament_update' 0 %}".replace('0', id);
   }
-
   // Search functionality
-  document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const tableBody = document.getElementById('medicamentTableBody');
 
     searchInput.addEventListener('keyup', function() {
-      const searchTerm = this.value.toLowerCase();
-      const rows = tableBody.getElementsByTagName('tr');
+        const searchTerm = this.value.toLowerCase();
+        const rows = tableBody.getElementsByTagName('tr');
 
-      Array.from(rows).forEach((row) => {
-        const nomCell = row.getElementsByTagName('td')[1];
-        const categorieCell = row.getElementsByTagName('td')[3];
+        Array.from(rows).forEach((row) => {
+            const nomCell = row.getElementsByTagName('td')[1];
+            const categorieCell = row.getElementsByTagName('td')[3];
 
-        if (nomCell && categorieCell) {
-          const nom = nomCell.textContent.toLowerCase();
-          const categorie = categorieCell.textContent.toLowerCase();
+            if (nomCell && categorieCell) {
+                const nom = nomCell.textContent.toLowerCase();
+                const categorie = categorieCell.textContent.toLowerCase();
 
-          if (nom.includes(searchTerm) || categorie.includes(searchTerm)) {
-            row.style.display = '';
-          } else {
-            row.style.display = 'none';
-          }
-        }
-      });
+                if (nom.includes(searchTerm) || categorie.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
     });
 
     // Auto-close messages after 5 seconds
     setTimeout(() => {
-      const alerts = document.querySelectorAll('.alert');
-      alerts.forEach(alert => {
-        alert.classList.add('animate__fadeOutRight');
-        setTimeout(() => alert.remove(), 500);
-      });
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.classList.add('animate__fadeOutRight');
+            setTimeout(() => alert.remove(), 500);
+        });
     }, 5000);
-  });
+});
 </script>
 {% endblock %}

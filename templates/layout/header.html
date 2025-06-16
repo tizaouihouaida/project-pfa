@@ -22,16 +22,36 @@
         </button>
 
         <!-- Notifications avec drag & drop -->
-        <div class="relative" x-data="{ open: false, isDragging: false, startY: 0, currentY: 0 }"
+        <div class="relative" x-data="{ 
+          open: false, 
+          isDragging: false, 
+          startY: 0, 
+          currentY: 0,
+          unreadCount: 3, // Valeur initiale - à remplacer par la valeur réelle
+          markAsRead: function() {
+            this.unreadCount = 0;
+            // Ici vous pouvez ajouter un appel AJAX pour marquer comme lu côté serveur
+          }
+        }"
              @mouseleave="open = false"
              @mousedown="isDragging = true; startY = $event.clientY; currentY = $event.clientY"
              @mousemove="if(isDragging) { currentY = $event.clientY }"
-             @mouseup="if(isDragging) { isDragging = false; if(Math.abs(currentY - startY) > 50) open = !open }">
-          <button @click="open = !open" class="relative p-2 text-gray-600 hover:text-gray-900 dark:hover:text-gray-100 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+             @mouseup="if(isDragging) { 
+               isDragging = false; 
+               if(Math.abs(currentY - startY) > 50) {
+                 open = !open;
+                 if(open) markAsRead();
+               }
+             }">
+          <button @click="open = !open; if(open) markAsRead()" class="relative p-2 text-gray-600 hover:text-gray-900 dark:hover:text-gray-100 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
             </svg>
-            <span class="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full transform hover:scale-110 transition-transform">3</span>
+            <!-- Badge conditionnel -->
+            <template x-if="unreadCount > 0">
+              <span class="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full transform hover:scale-110 transition-transform" 
+                    x-text="unreadCount"></span>
+            </template>
           </button>
           
           <!-- Panneau notifications -->
@@ -45,10 +65,12 @@
                style="display: none;">
             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
               <h3 class="font-medium text-gray-900 dark:text-white">Notifications</h3>
-              <button class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Tout marquer comme lu</button>
+              <button @click="markAsRead" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                Tout marquer comme lu
+              </button>
             </div>
             <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto" id="notificationContainer">
-              <!-- Notification exemple (remplacer par une boucle Django) -->
+              <!-- Notification exemple -->
               <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-start notification-item" draggable="true">
                 <div class="flex-shrink-0 h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-600 dark:text-red-400">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,8 +88,6 @@
                   </svg>
                 </button>
               </div>
-              
-              <!-- Ajoutez d'autres notifications ici -->
             </div>
             <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-center bg-gray-50 dark:bg-gray-700">
               <a href="{% url 'notifications_index' %}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Voir toutes les notifications</a>
@@ -136,48 +156,50 @@
     const container = document.getElementById('notificationContainer');
     let draggedItem = null;
 
-    container.querySelectorAll('.notification-item').forEach(item => {
-      item.addEventListener('dragstart', function() {
-        draggedItem = this;
-        setTimeout(() => this.style.opacity = '0.4', 0);
-      });
+    if (container) {
+      container.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('dragstart', function() {
+          draggedItem = this;
+          setTimeout(() => this.style.opacity = '0.4', 0);
+        });
 
-      item.addEventListener('dragend', function() {
-        this.style.opacity = '1';
-      });
+        item.addEventListener('dragend', function() {
+          this.style.opacity = '1';
+        });
 
-      item.addEventListener('dragover', function(e) {
-        e.preventDefault();
-      });
+        item.addEventListener('dragover', function(e) {
+          e.preventDefault();
+        });
 
-      item.addEventListener('dragenter', function(e) {
-        e.preventDefault();
-        this.style.backgroundColor = '#f3f4f6';
-      });
+        item.addEventListener('dragenter', function(e) {
+          e.preventDefault();
+          this.style.backgroundColor = '#f3f4f6';
+        });
 
-      item.addEventListener('dragleave', function() {
-        this.style.backgroundColor = '';
-      });
+        item.addEventListener('dragleave', function() {
+          this.style.backgroundColor = '';
+        });
 
-      item.addEventListener('drop', function() {
-        this.style.backgroundColor = '';
-        if (draggedItem !== this) {
-          const allItems = [...container.querySelectorAll('.notification-item')];
-          const draggedIndex = allItems.indexOf(draggedItem);
-          const targetIndex = allItems.indexOf(this);
-          
-          if (draggedIndex < targetIndex) {
-            this.after(draggedItem);
-          } else {
-            this.before(draggedItem);
+        item.addEventListener('drop', function() {
+          this.style.backgroundColor = '';
+          if (draggedItem !== this) {
+            const allItems = [...container.querySelectorAll('.notification-item')];
+            const draggedIndex = allItems.indexOf(draggedItem);
+            const targetIndex = allItems.indexOf(this);
+            
+            if (draggedIndex < targetIndex) {
+              this.after(draggedItem);
+            } else {
+              this.before(draggedItem);
+            }
           }
-        }
+        });
       });
-    });
-  });
+    }
 
-  // Toggle mobile sidebar
-  document.getElementById('toggleSidebarMobile').addEventListener('click', function() {
-    document.querySelector('aside').classList.toggle('-translate-x-full');
+    // Toggle mobile sidebar
+    document.getElementById('toggleSidebarMobile').addEventListener('click', function() {
+      document.querySelector('aside').classList.toggle('-translate-x-full');
+    });
   });
 </script>

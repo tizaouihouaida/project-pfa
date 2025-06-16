@@ -125,6 +125,44 @@
         </tbody>
       </table>
     </div>
+
+     <!-- Pagination -->
+<div class="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+    <div class="text-sm text-gray-700 dark:text-gray-300">
+        Affichage de <span class="font-medium">{{ categories.start_index }}</span> à <span class="font-medium">{{ categories.end_index }}</span> sur <span class="font-medium">{{ categories.paginator.count }}</span> médicaments
+    </div>
+    <div class="flex space-x-2">
+        {% if categories.has_previous %}
+            <a href="?page=1" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                &laquo; Première
+            </a>
+            <a href="?page={{ categories.previous_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Précédente
+            </a>
+        {% endif %}
+
+        {% for num in categories.paginator.page_range %}
+            {% if categories.number == num %}
+                <span class="px-3 py-1 border border-blue-500 rounded-md text-sm font-medium text-white bg-blue-600">
+                    {{ num }}
+                </span>
+            {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
+                <a href="?page={{ num }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    {{ num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if categories.has_next %}
+            <a href="?page={{ categories.next_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Suivante
+            </a>
+            <a href="?page={{ categories.paginator.num_pages }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Dernière &raquo;
+            </a>
+        {% endif %}
+    </div>
+</div>
   </div>
 </div>
 
@@ -360,14 +398,42 @@
   }
 
   // Auto-close messages after 5 seconds
-  document.addEventListener('DOMContentLoaded', function() {
+   // Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('medicamentTableBody');
+
+    searchInput.addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = tableBody.getElementsByTagName('tr');
+
+        Array.from(rows).forEach((row) => {
+            const nomCell = row.getElementsByTagName('td')[1];
+            const categorieCell = row.getElementsByTagName('td')[3];
+
+            if (nomCell && categorieCell) {
+                const nom = nomCell.textContent.toLowerCase();
+                const categorie = categorieCell.textContent.toLowerCase();
+
+                if (nom.includes(searchTerm) || categorie.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    });
+
+    // Auto-close messages after 5 seconds
     setTimeout(() => {
-      const alerts = document.querySelectorAll('.alert');
-      alerts.forEach(alert => {
-        alert.classList.add('animate__fadeOutRight');
-        setTimeout(() => alert.remove(), 500);
-      });
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.classList.add('animate__fadeOutRight');
+            setTimeout(() => alert.remove(), 500);
+        });
     }, 5000);
-  });
+});
+
+
 </script>
 {% endblock %}

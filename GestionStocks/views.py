@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 import os
 from django.conf import settings
 from datetime import timedelta
-
+from django.core.paginator import Paginator  # Ajoutez cette ligne en haut du fichier
 @login_required
 @role_required('gestionnaire_stocks')  # Vérifie que l'utilisateur est un gestionnaire de stocks
 def stocks_dashboard(request):
@@ -66,13 +66,34 @@ def stocks_dashboard(request):
     
     return render(request, 'stocks_dashboard.html', context)
 
- # Assurez-vous que ce template existe
 @login_required
 @role_required('gestionnaire_stocks')
 def categories_index(request):
+    categories_list = CategorieMedicament.afficheLesCategories()  # Récupérer les médicaments disponibles
+    categories = CategorieMedicament.afficheLesCategories()  # Récupérer toutes les catégories
     username = request.user.username
-    categories = CategorieMedicament.afficheLesCategories() # Récupérer les catégories visibles
-    return render(request, 'categories/index.html', {'categories': categories, 'username': username,})
+    
+    # Pagination
+    paginator = Paginator(categories_list, 10)  # 10 médicaments par page
+    page_number = request.GET.get('page')
+    categories = paginator.get_page(page_number)
+    
+    if request.method == 'POST':
+        form = MedicamentForm(request.POST, request.FILES)
+        if form.is_valid():
+            medicament = form.save(commit=False)
+            medicament.est_vendu = False  # Par défaut, le médicament n'est pas vendu
+            medicament.save()
+            return redirect('categories_index')  # Redirige vers la liste des médicaments
+    else:
+        form = MedicamentForm()
+
+    return render(request, 'categories/index.html', {
+        # 'categories': categories,
+        'categories': categories,
+        'username': username,
+        'form': form,
+    })
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -113,13 +134,18 @@ def categories_delete(request, id):
 
     return redirect('categories_index')  # Redirige vers la liste des catégories
 
-
 @login_required
 @role_required('gestionnaire_stocks')
 def medicaments_index(request):
-    medicaments = Medicament.afficheLesMedicaments()  # Récupérer les médicaments disponibles
+    medicaments_list = Medicament.afficheLesMedicaments()  # Récupérer les médicaments disponibles
     categories = CategorieMedicament.afficheLesCategories()  # Récupérer toutes les catégories
     username = request.user.username
+    
+    # Pagination
+    paginator = Paginator(medicaments_list, 10)  # 10 médicaments par page
+    page_number = request.GET.get('page')
+    medicaments = paginator.get_page(page_number)
+    
     if request.method == 'POST':
         form = MedicamentForm(request.POST, request.FILES)
         if form.is_valid():
@@ -136,6 +162,7 @@ def medicaments_index(request):
         'username': username,
         'form': form,
     })
+
 
 @login_required
 @role_required('gestionnaire_stocks')
@@ -277,16 +304,54 @@ def livrer_commande(request, id):
 @login_required
 @role_required('gestionnaire_stocks')
 def stocks_index(request):
-    stocks = Stock.afficheLesStocks()
+    # Récupération des données
+    stocks_list = Stock.afficheLesStocks()  # Convertir en liste pour la pagination
     medicaments_disponibles = Medicament.medicaments_disponibles_pour_stock()
     tous_medicaments = Medicament.medicaments_non_caches()
     
+    # Pagination des stocks - 10 éléments par page
+    paginator = Paginator(stocks_list, 10)
+    page_number = request.GET.get('page')
+    stocks = paginator.get_page(page_number)
+    
     return render(request, 'stocks/index.html', {
-        'stocks': stocks,
+        'stocks': stocks,  # Utilisez l'objet paginé
         'medicaments': medicaments_disponibles,
         'tous_medicaments': tous_medicaments,
         'username': request.user.username
     })
+# @login_required
+# @role_required('gestionnaire_stocks')
+# def stocks_index(request):
+#     stocks = Stock.afficheLesStocks()
+#     medicaments_disponibles = Medicament.medicaments_disponibles_pour_stock()
+#     tous_medicaments = Medicament.medicaments_non_caches()
+#     username = request.user.username
+    
+#     # Pagination
+#     paginator = Paginator(tous_medicaments, 10)  # 10 médicaments par page
+#     page_number = request.GET.get('page')
+#     stocks = paginator.get_page(page_number)
+    
+#     if request.method == 'POST':
+#         form = MedicamentForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             medicament = form.save(commit=False)
+#             medicament.est_vendu = False  # Par défaut, le médicament n'est pas vendu
+#             medicament.save()
+#             return redirect('stocks_index')  # Redirige vers la liste des médicaments
+#     else:
+#         form = MedicamentForm()
+
+#     return render(request, 'stocks/index.html', {
+#         # 'categories': categories,
+#         'stocks': stocks,
+#         'username': username,
+#         'form': form,
+#         'medicaments': medicaments_disponibles,
+#         'tous_medicaments': tous_medicaments,
+
+#     })
 
 
 @login_required
