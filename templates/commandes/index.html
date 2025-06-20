@@ -553,7 +553,7 @@
       quantite: 10
     };
     
-    document.getElementById('updateForm').action = `/commandes/update/${pk}/`;
+document.getElementById('updateForm').action = `/stocks/commandes/update/${pk}/`;
     document.getElementById('update_medicament').value = commande.medicament_id;
     document.getElementById('update_fournisseur').value = commande.fournisseur_id;
     document.getElementById('update_quantite').value = commande.quantite;
@@ -566,7 +566,7 @@
   }
 
   function openDeleteModal(pk) {
-    document.getElementById('deleteForm').action = `/commandes/delete/${pk}/`;
+    document.getElementById('deleteForm').action = `/stocks/commandes/delete/${pk}/`;
     document.getElementById('deleteModal').classList.remove('hidden');
   }
 
@@ -575,7 +575,7 @@
   }
 
   function openChangeStatusModal(pk) {
-    document.getElementById('changeStatusForm').action = `/commandes/change-status/${pk}/`;
+    document.getElementById('changeStatusForm').action = `/stocks/commandes/change_status/${pk}/`;
     document.getElementById('changeStatusModal').classList.remove('hidden');
   }
 

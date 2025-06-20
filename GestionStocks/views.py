@@ -437,24 +437,24 @@ def get_stock_for_update(request, id):
 @login_required
 @role_required('gestionnaire_stocks')
 def commandes_index(request):
-
-    commandes_list = Commande.objects.all()  # Récupérer tous les fournisseurs
+    commandes_list = Commande.objects.all()
     username = request.user.username
     
-    # Pagination
-    paginator = Paginator(commandes_list, 10)  # 10 fournisseurs par page
+    paginator = Paginator(commandes_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
     medicaments = Medicament.objects.filter(est_cachee=False)
     fournisseurs = Fournisseur.objects.all()
+    
     return render(request, 'commandes/index.html', {
         'commandes': page_obj,
         'medicaments': medicaments,
         'fournisseurs': fournisseurs,
         'username': username
     })
-
-
+@login_required
+@role_required('gestionnaire_stocks')
 @csrf_protect
 def commandes_create(request):
     if request.method == 'POST':
@@ -462,38 +462,42 @@ def commandes_create(request):
         if form.is_valid():
             form.save()
             return redirect('commandes_index')
+    else:
+        form = CommandeForm()
+
     medicaments = Medicament.objects.filter(est_cachee=False)
     fournisseurs = Fournisseur.objects.all()
-    return render(request, 'commandes/index.html', {'medicaments': medicaments, 'fournisseurs': fournisseurs})
+    return render(request, 'commandes/create.html', {
+        'form': form,
+        'medicaments': medicaments,
+        'fournisseurs': fournisseurs
+    })
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Commande, Medicament, Fournisseur
 
-
-@login_required
-@role_required('gestionnaire_stocks')
 def commandes_update(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
+
     if request.method == 'POST':
-        form = CommandeForm(request.POST, instance=commande)
-        if form.is_valid():
-            fournisseur = form.save(commit=False)
-            fournisseur.modifierCommande(
-                medicament=form.cleaned_data['medicament'],
-                fournisseur=form.cleaned_data['fournisseur'],
-                quantite_commande=form.cleaned_data['quantite_commande'],
-                date_commande=form.cleaned_data['date_commande'],
-                statut=form.cleaned_data['statut']
-            )
-            return redirect('commandes_index')
-    else:
-        form = CommandeForm(instance=fournisseur)
-    
-    commandes = Commande.objects.all()
-    return render(request, 'commandes/index.html', {
-        'commandes': commandes,
-        'username': request.user.username,
-        'form': form
+        medicament_id = request.POST.get('medicament')
+        fournisseur_id = request.POST.get('fournisseur')
+        quantite = request.POST.get('quantite_commande')
+
+        commande.medicament_id = medicament_id
+        commande.fournisseur_id = fournisseur_id
+        commande.quantite_commande = quantite
+        commande.save()
+        return redirect('commandes_index')  # ou l'URL de ta liste de commandes
+
+    medicaments = Medicament.objects.all()
+    fournisseurs = Fournisseur.objects.all()
+
+    return render(request, 'commande_update.html', {
+        'commande': commande,
+        'medicaments': medicaments,
+        'fournisseurs': fournisseurs
     })
 
-    
 @login_required
 @role_required('gestionnaire_stocks')
 @require_POST
@@ -501,8 +505,6 @@ def commandes_delete(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     commande.supprimerCommande()
     return redirect('commandes_index')
-
-
 @login_required
 @role_required('gestionnaire_stocks')
 @require_POST
@@ -533,6 +535,7 @@ def commandes_change_status(request, pk):
     except Exception as e:
         messages.error(request, f"Une erreur est survenue : {str(e)}")
         return redirect('commandes_index')
+    
 
 @login_required
 @role_required('gestionnaire_stocks')
