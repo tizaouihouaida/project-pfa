@@ -20,9 +20,9 @@ class CategorieMedicament(models.Model):
         self.save()
 
     def cacherCategorie(self):
-        self.est_cachee = True
-        self.save()
-        Medicament.objects.filter(id_Categorie=self).update(est_cachee=True)
+    #   self.est_cachee = True
+        self.delete()
+# Medicament.objects.filter(id_Categorie=self).update(est_cachee=True)
 
     @staticmethod
     def afficheLesCategories():
@@ -56,8 +56,8 @@ class Medicament(models.Model):
         self.save()
 
     def cacherMedicament(self):
-        self.est_cachee = True
-        self.save()
+        # self.est_cachee = True
+        self.delete()
 
     @staticmethod
     def afficheLesMedicaments():
@@ -317,7 +317,20 @@ class Commande(models.Model):
     quantite_commande = models.FloatField(null=True, blank=True)
     date_commande = models.DateTimeField(auto_now_add=True)
     statut = models.CharField(max_length=50, choices=[('en_attente', 'En attente'), ('livrée', 'Livrée')])
-
+    def modifierCommande(self, medicament=None, fournisseur=None, quantite_commande=None, date_commande=None, statut=None):
+        if medicament:
+            self.medicament = medicament
+        if fournisseur:
+            self.fournisseur = fournisseur
+        if quantite_commande:
+            self.quantite_commande = quantite_commande
+        if date_commande:
+            self.date_commande = date_commande
+        if statut:
+            self.statut = statut
+        self.save()
+    def supprimerCommande(self):
+        self.delete()
     def __str__(self):
         return f"Commande de {self.medicament.nom} auprès de {self.fournisseur.nom}"
 

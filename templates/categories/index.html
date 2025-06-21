@@ -1,281 +1,373 @@
 {% extends 'layout/base.html' %}
-{% block title %}Catégories{% endblock %}
+{% load static %}
+
+{% block title %}Gestion des Catégories{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<style>
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+    transition: all 0.5s ease;
+  }
+  
+  .category-card {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .action-btn {
+    transition: all 0.2s ease;
+  }
+  
+  .action-btn:hover {
+    transform: scale(1.05);
+  }
+</style>
+{% endblock %}
+
 {% block main_content %}
-<h1 class="text-2xl font-bold mb-4 text-center">Gestion  des Catégories de Médicaments</h1>
-<div class="flex justify-between items-center mb-4">
-  <input
-    type="text"
-    id="search"
-    placeholder="Rechercher une catégorie..."
-    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-    onkeyup="searchCategories()"
-  />
-  <button
-    onclick="openCreateModal()"
-    class="focus:outline-none text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-  >
-    Ajouter une Catégorie
-  </button>
-</div>
-
-<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-  <thead class="bg-gray-400 font-serif">
-    <tr>
-      <th class="py-2 px-4 border-b text-black text-base">N°</th>
-      <th class="py-2 px-4 border-b text-black text-base">Nom</th>
-      <th class="py-2 px-4 border-b text-black text-base">Description</th>
-      <th class="py-2 px-4 border-b text-black text-center text-base">Actions</th>
-    </tr>
-  </thead>
-  <tbody id="categoryTableBody">
-    {% for category in categories %}
-    <tr class="hover:bg-gray-300">
-      <td class="py-2 px-4 border-b">{{ forloop.counter }}</td>
-      <td class="py-2 px-4 border-b">{{ category.nom_Categorie }}</td>
-      <td class="py-2 px-4 border-b">{{ category.description }}</td>
-      <td class="py-2 px-4 border-b flex items-center justify-center flex-row">
-        {% load static %}
-        <button
-          onclick="openEditModal({{ category.id_Categorie }}, '{{ category.nom_Categorie|escapejs }}', '{{ category.description|escapejs }}')"
-          class="bg-yellow-500 text-white px-1.5 py-1 rounded editStockBtn "
-        >
-          <svg
-            class="w-6 h-6 text-gray-800 dark:text-black"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
-            />
-          </svg>
-        </button>
-        <button
-          onclick="confirmDelete({{ category.id_Categorie }}, '{{ category.nom_Categorie|escapejs }}')"
-          class="ml-3 bg-red-500 text-white px-1.5 py-1 rounded deleteStockBtn "
-        >
-          <svg
-            class="w-6 h-6 text-gray-800 dark:text-black"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-      </td>
-    </tr>
+<!-- Notifications -->
+<div id="notificationArea" class="notification">
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+    </div>
     {% endfor %}
-  </tbody>
-</table>
+  {% endif %}
+</div>
 
-<!-- Modal pour ajouter une catégorie -->
-<div
-  id="createCategoryModal"
-  class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
->
-  <div class="bg-white p-4 rounded w-96">
-    <h2 class="text-lg font-bold">Ajouter une Catégorie</h2>
-    <form
-      id="createCategoryForm"
-      method="post"
-      action="{% url 'categories_create' %}"
-    >
-      {% csrf_token %}
-      <div class="mb-4">
-        <label for="nom_Categorie" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-900 rounded">Nom</label>
+<div class="container mx-auto px-4 py-8">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-4 md:mb-0">Gestion des Catégories</h1>
+    
+    <div class="flex items-center space-x-4">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
         <input
           type="text"
-          name="nom_Categorie"
-          id="nom_Categorie"
-          class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-          required
+          id="search"
+          placeholder="Rechercher..."
+          class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          onkeyup="searchCategories()"
         />
       </div>
-      <div class="mb-4">
-        <label for="description" class="block mb-2 text-sm font-medium text-gray-900">Description</label>
-        <textarea
-          name="description"
-          id="description"
-          rows="4" 
-          class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        ></textarea>
-      </div>
-      <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-        Ajouter
-      </button>
+      
       <button
-        type="button"
-        onclick="closeCreateModal()"
-        class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700"
+        onclick="openCreateModal()"
+        class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
       >
-        Annuler
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        <span>Nouvelle Catégorie</span>
       </button>
-    </form>
+    </div>
+  </div>
+
+  <!-- Categories Table -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">#</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nom</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="categoryTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          {% for category in categories %}
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ forloop.counter }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ category.nom_Categorie }}</td>
+            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{{ category.description|truncatechars:50 }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <button
+                  onclick="openEditModal({{ category.id_Categorie }}, '{{ category.nom_Categorie|escapejs }}', '{{ category.description|escapejs }}')"
+                  class="action-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-gray-600"
+                  title="Modifier"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button
+                  onclick="confirmDelete({{ category.id_Categorie }}, '{{ category.nom_Categorie|escapejs }}')"
+                  class="action-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-50 dark:hover:bg-gray-600"
+                  title="Supprimer"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- Modal pour éditer une catégorie -->
-<div
-  id="editCategoryModal"
-  class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
->
-  <div class="bg-white p-4 rounded w-96">
-    <h2 class="text-lg font-bold">Modifier une Catégorie</h2>
-    <form
-      id="editCategoryForm"
-      method="post"
-      action="{% url 'categories_edit' 0 %}"
-      onsubmit="updateFormAction()"
-    >
-      {% csrf_token %}
-      <input type="hidden" name="id_Categorie" id="editCategoryId" />
-      <div class="mb-4">
-        <label for="editNom" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-900 rounded">Nom</label>
-        <input
-          type="text"
-          name="nom_Categorie"
-          id="editNom"
-          class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-          required
-        />
+<!-- Create Category Modal -->
+<div id="createCategoryModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Nouvelle Catégorie</h2>
+        <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
-      <div class="mb-4">
-        <label for="editDescription" class="block mb-2 text-sm font-medium text-gray-900">Description</label>
-        <textarea
-          name="description"
-          id="editDescription"
-          rows="4" 
-          class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        ></textarea>
-      </div>
-      <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-        Mettre à jour
-      </button>
-      <button
-        type="button"
-        onclick="closeEditModal()"
-        class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700"
-      >
-        Annuler
-      </button>
-    </form>
-  </div>
-</div>
-
-<!-- Modal de confirmation de suppression -->
-<div
-  class="modal fade"
-  id="deleteConfirmationModal"
-  tabindex="-1"
-  aria-labelledby="deleteConfirmationModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteConfirmationModalLabel" style="font-size: 24px; font-weight: bold;">
-          Confirmer la Suppression
-        </h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="modal-body"style="font-size: 18px; font-weight: bold;">
-        <p id="deleteConfirmationMessage"></p>
-      </div>
-      <div class="modal-footer d-flex justify-content-center align-items-center">
-        <form id="deleteForm" method="post" action="" class="d-flex">
-          {% csrf_token %}
-          <button type="button" class="btn btn-outline-primary me-2" data-bs-dismiss="modal">
-            Non
+      
+      <form id="createCategoryForm" method="post" action="{% url 'categories_create' %}">
+        {% csrf_token %}
+        <div class="mb-4">
+          <label for="nom_Categorie" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom de la catégorie *</label>
+          <input
+            type="text"
+            name="nom_Categorie"
+            id="nom_Categorie"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            required
+          />
+        </div>
+        
+        <div class="mb-6">
+          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+          <textarea
+            name="description"
+            id="description"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+          ></textarea>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button
+            type="button"
+            onclick="closeCreateModal()"
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Annuler
           </button>
-          <button type="submit" class="btn btn-outline-danger">Oui</button>
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div id="editCategoryModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Modifier Catégorie</h2>
+        <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <form id="editCategoryForm" method="post" action="{% url 'categories_edit' 0 %}" onsubmit="updateFormAction()">
+        {% csrf_token %}
+        <input type="hidden" name="id_Categorie" id="editCategoryId" />
+        
+        <div class="mb-4">
+          <label for="editNom" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom de la catégorie *</label>
+          <input
+            type="text"
+            name="nom_Categorie"
+            id="editNom"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            required
+          />
+        </div>
+        
+        <div class="mb-6">
+          <label for="editDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+          <textarea
+            name="description"
+            id="editDescription"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+          ></textarea>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button
+            type="button"
+            onclick="closeEditModal()"
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Mettre à jour
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmationModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Confirmer la suppression</h2>
+        <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <p id="deleteConfirmationMessage" class="mb-6 text-gray-600 dark:text-gray-300"></p>
+      
+      <div class="flex justify-end space-x-3">
+        <button
+          onclick="closeDeleteModal()"
+          class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Annuler
+        </button>
+        <form id="deleteForm" method="post" action="">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            Confirmer
+          </button>
         </form>
       </div>
-
     </div>
   </div>
 </div>
 
 <script>
+  // Notification handling
+  function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center`;
+    notification.innerHTML = `
+      <span>${message}</span>
+      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+    `;
+    
+    const notificationArea = document.getElementById('notificationArea');
+    notificationArea.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.classList.add('animate__fadeOutRight');
+      setTimeout(() => notification.remove(), 500);
+    }, 5000);
+  }
+
+  // Modal functions
   function openCreateModal() {
-    document.getElementById("createCategoryModal").classList.remove("hidden");
-  }
-
-  function confirmDelete(id, nom) {
-    document.getElementById(
-      "deleteConfirmationMessage"
-    ).innerText = `Êtes-vous sûr de vouloir supprimer la catégorie "${nom}" ?`;
-    document.getElementById("deleteForm").action = "{% url 'categories_delete' 0 %}".replace("0", id);
-    var myModal = new bootstrap.Modal(
-      document.getElementById("deleteConfirmationModal")
-    );
-    myModal.show();
-  }
-
-  function closeDeleteModal() {
-    document.getElementById("deleteConfirmationModal").classList.add("hidden");
+    document.getElementById('createCategoryModal').classList.remove('hidden');
   }
 
   function closeCreateModal() {
-    document.getElementById("createCategoryModal").classList.add("hidden");
+    document.getElementById('createCategoryModal').classList.add('hidden');
   }
 
   function openEditModal(id, nom, description) {
-    document.getElementById("editCategoryId").value = id;
-    document.getElementById("editNom").value = nom;
-    document.getElementById("editDescription").value = description;
-    document.getElementById("editCategoryModal").classList.remove("hidden");
+    document.getElementById('editCategoryId').value = id;
+    document.getElementById('editNom').value = nom;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editCategoryModal').classList.remove('hidden');
   }
 
   function closeEditModal() {
-    document.getElementById("editCategoryModal").classList.add("hidden");
+    document.getElementById('editCategoryModal').classList.add('hidden');
+  }
+
+  function confirmDelete(id, nom) {
+    const message = `Êtes-vous sûr de vouloir supprimer la catégorie "${nom}" ? Cette action est irréversible.`;
+    document.getElementById('deleteConfirmationMessage').textContent = message;
+    document.getElementById('deleteForm').action = "{% url 'categories_delete' 0 %}".replace('0', id);
+    document.getElementById('deleteConfirmationModal').classList.remove('hidden');
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteConfirmationModal').classList.add('hidden');
   }
 
   function updateFormAction() {
-    const id = document.getElementById("editCategoryId").value;
-    const form = document.getElementById("editCategoryForm");
-    form.action = "{% url 'categories_edit' 0 %}".replace("0", id);
+    const id = document.getElementById('editCategoryId').value;
+    const form = document.getElementById('editCategoryForm');
+    form.action = "{% url 'categories_edit' 0 %}".replace('0', id);
   }
 
+  // Search functionality
   function searchCategories() {
-    const input = document.getElementById("search");
+    const input = document.getElementById('search');
     const filter = input.value.toLowerCase();
-    const table = document.getElementById("categoryTableBody");
-    const rows = table.getElementsByTagName("tr");
+    const table = document.getElementById('categoryTableBody');
+    const rows = table.getElementsByTagName('tr');
 
     for (let i = 0; i < rows.length; i++) {
-      const cells = rows[i].getElementsByTagName("td");
+      const cells = rows[i].getElementsByTagName('td');
       let found = false;
+      
       for (let j = 0; j < cells.length; j++) {
         if (cells[j]) {
           const txtValue = cells[j].textContent || cells[j].innerText;
-          if (txtValue.toLowerCase().indexOf(filter) > -1) {
+          if (txtValue.toLowerCase().includes(filter)) {
             found = true;
             break;
           }
         }
       }
-      rows[i].style.display = found ? "" : "none";
+      
+      rows[i].style.display = found ? '' : 'none';
     }
   }
+
+  // Auto-close messages after 5 seconds
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        alert.classList.add('animate__fadeOutRight');
+        setTimeout(() => alert.remove(), 500);
+      });
+    }, 5000);
+  });
 </script>
 {% endblock %}

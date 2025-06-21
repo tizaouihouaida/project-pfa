@@ -1,483 +1,450 @@
-<!-- templates/commandes/index.html -->
-{% extends 'layout/base.html' %} {% block title %}Commandes{% endblock %}
-{%block main_content %}
-<h1 class="text-2xl font-bold mb-4 text-center">Gestions des Commandes</h1>
+{% extends 'layout/base.html' %}
+{% load static %}
 
-<div class="flex justify-between items-center mb-4">
-  <input
-    type="text"
-    id="searchInput"
-    placeholder="Rechercher une commande..."
-    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-  />
-  <button
-    onclick="openCreateModal()"
-     class="focus:outline-none text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-  >
-    Nouvelle Commande
-  </button>
-</div>
+{% block title %}Gestion des Commandes{% endblock %}
 
-{% if messages %}
-<div class="messages mb-4">
-  {% for message in messages %}
-  <div
-    class="p-4 {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} rounded"
-  >
-    {{ message }}
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<style>
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+    transition: all 0.5s ease;
+  }
+  
+  .commande-card {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .commande-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .status-en_attente {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  
+  .status-en_cours {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+  
+  .status-livree {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+  
+  .action-btn {
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  
+  .action-btn:hover {
+    transform: scale(1.1);
+  }
+</style>
+{% endblock %}
 
-<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-  <thead class="bg-gray-400 font-serif">
-    <tr>
-      <th class="py-2 px-4 border-b text-black text-base">Médicament</th>
-      <th class="py-2 px-4 border-b text-black text-base">Fournisseur</th>
-      <th class="py-2 px-4 border-b text-black text-base">Quantité</th>
-      <th class="py-2 px-4 border-b text-black text-base">Statut</th>
-      <th class="py-2 px-4 border-b text-black text-base">Date</th>
-      <th class="py-2 px-4 border-b text-black text-base">Actions</th>
-    </tr>
-  </thead>
-  <tbody id="commandeTableBody">
-    {% for commande in commandes %}
-    <tr class="hover:bg-gray-300" data-commande-id="{{ commande.pk }}">
-      <td class="py-2 px-4 border-b text-base">{{ commande.medicament.nom }}</td>
-      <td class="py-2 px-4 border-b text-base">{{ commande.fournisseur.nom }}</td>
-      <td class="py-2 px-4 border-b text-base">{{ commande.quantite_commande }}</td>
-      {% if commande.statut == 'en_attente' %}
-      <td class="py-2 px-4 border-b text-blue-500 text-base" data-status="en_attente">{{ commande.statut }}</td>
-      {% elif commande.statut == 'livrée' %}
-      <td class="py-2 px-4 border-b text-red-500 text-base" data-status="livrée">{{ commande.statut }}</td>
-      {% else %}
-      <td class="py-2 px-4 border-b text-yellow-500 text-base" data-status="en_cours">{{ commande.statut }}</td>
-      {% endif %}
-      <td class="py-2 px-4 border-b text-base">{{ commande.date_commande }}</td>
-      <td class="py-2 px-4 border-b flex items-center justify-center flex-row">
-        <button
-          class="bg-yellow-500 text-white px-1.5 py-1 rounded editStockBtn "
-          onclick="openUpdateModal('{{ commande.pk }}')"
-        >
-          <svg
-            class="w-6 h-6 text-gray-800 dark:text-black"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>
-          </svg>
-        </button>
-        <button
-          class="ml-3 bg-red-500 text-white px-1.5 py-1 rounded deleteStockBtn "
-          onclick="openDeleteModal({{ commande.pk }})"
-        >
-          <svg
-            class="w-6 h-6 text-gray-800 dark:text-black"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-        <button
-          class=" ml-3 bg-green-500 text-white rounded h-10 px-1.5 py-1"
-          onclick="openChangeStatusModal('{{ commande.pk }}')"
-        >
-          <svg class="w-6 h-6 text-gray-800 dark:text-black" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>
-          </svg>
-
-        </button>
-      </td>
-    </tr>
+{% block main_content %}
+<!-- Notifications -->
+<div id="notificationArea" class="notification">
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+    </div>
     {% endfor %}
-  </tbody>
-</table>
+  {% endif %}
+</div>
 
-<!-- Create Modal -->
-<div
-  id="createModal"
-  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
-  style="z-index: 1000"
->
-  <div
-    class="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white"
-  >
-    <h2 class="text-xl font-bold mb-4">Passer commande</h2>
-    <form action="{% url 'commandes_create' %}" method="post">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label
-          class="block text-gray-700 text-sm font-bold mb-2"
-          for="medicament_search"
-        >Rechercher un médicament</label>
-        <div class="search-container">
-          <input
-            type="text"
-            id="medicament_search"
-            class="search-input shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            placeholder="Tapez pour rechercher..."
-            required
-          />
-          <div id="medicament_results" class="search-results max-h-32 overflow-y-auto hidden border rounded p-2">
-            <!-- Les résultats de recherche seront insérés ici -->
-          </div>
-          <input type="hidden" name="medicament" id="medicament_select" required>
+<div class="container mx-auto px-4 py-8">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-4 md:mb-0">Gestion des Commandes</h1>
+    
+    <div class="flex items-center space-x-4">
+      <div class="relative w-full md:w-64">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
         </div>
-      </div>
-
-      <div class="mb-4">
-        <label
-          class="block text-gray-700 text-sm font-bold mb-2"
-          for="fournisseur_search"
-        >Rechercher un fournisseur</label>
-        <div class="search-container">
-          <input
-            type="text"
-            id="fournisseur_search"
-            class="search-input shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            placeholder="Tapez pour rechercher..."
-            required
-          />
-          <div id="fournisseur_results" class="search-results max-h-32 overflow-y-auto hidden border rounded p-2">
-            <!-- Les résultats de recherche seront insérés ici -->
-          </div>
-          <input type="hidden" name="fournisseur" id="fournisseur_select" required>
-        </div>
-      </div>
-
-      <div class="mb-4">
-        <label
-          class="block text-gray-700 text-sm font-bold mb-2"
-          for="quantite_commande"
-        >Quantité</label>
         <input
-          type="number"
-          name="quantite_commande"
-          id="quantite_commande"
-          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          step="0.01"
-          required
+          type="text"
+          id="searchInput"
+          placeholder="Rechercher..."
+          class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
         />
       </div>
+      
+      <button
+        onclick="openCreateModal()"
+        class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        <span>Nouvelle Commande</span>
+      </button>
+    </div>
+  </div>
 
-      <div class="mb-4">
-        <label
-          class="block text-gray-700 text-sm font-bold mb-2"
-          for="statut"
-        >Statut</label>
-        <select
-          name="statut"
-          id="statut"
-          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          required
-        >
-          <option value="en_attente">En attente</option>
-          <option value="livrée">Livrée</option>
-        </select>
+  <!-- Commandes Table -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Médicament</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fournisseur</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Quantité</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Statut</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="commandeTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          {% for commande in commandes %}
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150" data-commande-id="{{ commande.pk }}">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ commande.medicament.nom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ commande.fournisseur.nom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ commande.quantite_commande }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+              <span class="status-badge status-{{ commande.statut|lower|cut:' ' }}">
+                {{ commande.statut }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ commande.date_commande|date:"d/m/Y H:i" }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <button
+                  onclick="openUpdateModal('{{ commande.pk }}')"
+                  class="action-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-600"
+                  title="Modifier"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button
+                  onclick="openDeleteModal('{{ commande.pk }}')"
+                  class="action-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-gray-600"
+                  title="Supprimer"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+                <button
+                  onclick="openChangeStatusModal('{{ commande.pk }}')"
+                  class="action-btn text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600"
+                  title="Changer statut"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Create Commande Modal -->
+<div id="createModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Nouvelle Commande</h2>
+        <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
+      
+      <form action="{% url 'commandes_create' %}" method="post">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="medicament_search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Médicament *</label>
+            <div class="search-container relative">
+              <input
+                type="text"
+                id="medicament_search"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Rechercher un médicament..."
+                required
+              />
+              <div id="medicament_results" class="search-results absolute z-10 hidden w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                <!-- Les résultats seront insérés ici -->
+              </div>
+              <input type="hidden" name="medicament" id="medicament_select" required>
+            </div>
+          </div>
+          
+          <div>
+            <label for="fournisseur_search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fournisseur *</label>
+            <div class="search-container relative">
+              <input
+                type="text"
+                id="fournisseur_search"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Rechercher un fournisseur..."
+                required
+              />
+              <div id="fournisseur_results" class="search-results absolute z-10 hidden w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                <!-- Les résultats seront insérés ici -->
+              </div>
+              <input type="hidden" name="fournisseur" id="fournisseur_select" required>
+            </div>
+          </div>
+          
+          <div>
+            <label for="quantite_commande" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantité *</label>
+            <input
+              type="number"
+              name="quantite_commande"
+              id="quantite_commande"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              step="0.01"
+              min="1"
+              required
+            />
+          </div>
+          
+          <div>
+            <label for="statut" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Statut *</label>
+            <select
+              name="statut"
+              id="statut"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            >
+              <option value="en_attente">En attente</option>
+              <option value="en_cours">En cours</option>
+              <option value="livree">Livrée</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6">
+          <button
+            type="button"
+            onclick="closeCreateModal()"
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Créer la commande
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-      <div class="flex justify-end space-x-4">
-        <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded" onclick="closeCreateModal()">
+<!-- Update Commande Modal -->
+<div id="updateModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Modifier Commande</h2>
+        <button onclick="closeUpdateModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <form id="updateForm" method="post">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div>
+            <label for="update_medicament" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Médicament</label>
+            <select
+              name="medicament"
+              id="update_medicament"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            >
+              {% for med in medicaments %}
+              <option value="{{ med.id_Medicament }}">{{ med.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div>
+            <label for="update_fournisseur" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fournisseur</label>
+            <select
+              name="fournisseur"
+              id="update_fournisseur"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            >
+              {% for four in fournisseurs %}
+              <option value="{{ four.id }}">{{ four.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div>
+            <label for="update_quantite" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantité</label>
+            <input
+              type="number"
+              name="quantite_commande"
+              id="update_quantite"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              step="0.01"
+              min="1"
+            />
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6">
+          <button
+            type="button"
+            onclick="closeUpdateModal()"
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Mettre à jour
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Confirmer la suppression</h2>
+        <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <p class="mb-6 text-gray-600 dark:text-gray-300">Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.</p>
+      
+      <div class="flex justify-end space-x-3">
+        <button
+          onclick="closeDeleteModal()"
+          class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
           Annuler
         </button>
-        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
-          Créer
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Update Modal -->
-<div
-  id="updateModal"
-  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
-  style="z-index: 1000"
->
-  <div
-    class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
-  >
-    <h2 class="text-xl font-bold mb-4">Modifier commande</h2>
-    <form id="updateForm" method="post">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label
-          class="block text-gray-700 text-sm font-bold mb-2"
-          for="medicament"
-          >Médicament</label
-        >
-        <div class="select-container">
-          <select
-            name="medicament"
-            id="medicament"
-            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        <form id="deleteForm" method="post" action="">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           >
-            {% for med in medicaments %}
-            <option value="{{ med.id_Medicament }}">{{ med.nom }}</option>
-            {% endfor %}
-          </select>
-        </div>
+            Supprimer
+          </button>
+        </form>
       </div>
-      <div class="mb-4">
-        <label
-          class="block text-gray-700 text-sm font-bold mb-2"
-          for="fournisseur"
-          >Fournisseur</label
-        >
-        <div class="select-container">
-          <select
-            name="fournisseur"
-            id="fournisseur"
-            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          >
-            {% for four in fournisseurs %}
-            <option value="{{ four.id }}">{{ four.nom }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-      <div class="mb-4">
-        <label
-          class="block text-gray-700 text-sm font-bold mb-2"
-          for="quantite_commande"
-          >Quantité</label
-        >
-        <input
-          type="number"
-          name="quantite_commande"
-          id="quantite_commande"
-          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          step="0.01"
-        />
-      </div>
-
-      <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
-        Mettre à jour
-      </button>
-    </form>
-    <button
-      id="closeUpdateModalBtn"
-      class="absolute top-0 right-0 mt-4 mr-4 text-gray-600"
-    >
-      <svg
-        class="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M6 18L18 6M6 6l12 12"
-        ></path>
-      </svg>
-    </button>
-  </div>
-</div>
-
-<!-- Delete Modal -->
-<div
-  id="deleteModal"
-  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
-  style="z-index: 1000"
->
-  <div
-    class="relative top-10 mx-auto p-5 border w-1/3 shadow-lg rounded-md bg-white"
-  >
-    <h2 class="text-2xl font-bold mb-4" style="font-size: 24px; font-weight: bold;">Supprimer commande</h2>
-    <p style="font-size: 18px; font-weight: bold;">Êtes-vous sûr de vouloir supprimer cette commande ?</p>
-    <form id="deleteForm" method="post">
-      {% csrf_token %}
-      <div class="flex justify-center">
-        <button
-          id="closeDeleteModalBtn1"
-          type="button"
-          class="mt-5 bg-blue-500 text-white px-4 py-2 rounded mr-2"
-        >
-          Non
-        </button>
-        <button
-          type="submit"
-          class="mt-5 bg-red-500 text-white px-4 py-2 rounded"
-        >
-          Oui
-        </button>
-      </div>
-    </form>
-    <button
-      id="closeDeleteModalBtn"
-      class="absolute top-0 right-0 mt-4 mr-4 text-gray-600"
-    >
-      <svg
-        class="w-6 h-6 text-gray-800 dark:text-gray-900"
-        aria-hidden="true"
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M6 18 17.94 6M18 18 6.06 6"
-        />
-      </svg>
-    </button>
+    </div>
   </div>
 </div>
 
 <!-- Change Status Modal -->
-<div
-  id="changeStatusModal"
-  class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
-  style="z-index: 1000"
->
-  <div
-    class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
-  >
-    <h2 class="text-xl font-bold mb-4">Changer Statut</h2>
-    <form id="changeStatusForm" method="post">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="statut"
-          >Statut</label
-        >
-        <select
-          name="statut"
-          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-        >
-          <option value="en_attente">En attente</option>
-          <option value="livrée">Livrée</option>
-        </select>
+<div id="changeStatusModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Changer le statut</h2>
+        <button onclick="closeChangeStatusModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
-      <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">
-        Changer Statut
-      </button>
-    </form>
-    <button
-      onclick="closeChangeStatusModal()"
-      class="absolute top-0 right-0 mt-4 mr-4 text-gray-600"
-    >
-      <svg
-        class="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M6 18L18 6M6 6l12 12"
-        />
-      </svg>
-    </button>
+      
+      <form id="changeStatusForm" method="post" action="">
+        {% csrf_token %}
+        <div class="mb-4">
+          <label for="new_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nouveau statut</label>
+          <select
+            name="statut"
+            id="new_status"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="en_attente">En attente</option>
+            <option value="en_cours">En cours</option>
+            <option value="livree">Livrée</option>
+          </select>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button
+            type="button"
+            onclick="closeChangeStatusModal()"
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            Mettre à jour
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
-<style>
-  .search-results {
-    position: absolute;
-    width: 100%;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.375rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    z-index: 50;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-
-  .search-results ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .search-results li {
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .search-results li:hover {
-    background-color: #f3f4f6;
-  }
-
-  .search-container {
-    position: relative;
-  }
-
-  .search-input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.375rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .search-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  .select-container {
-    position: relative;
-  }
-
-  select {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.375rem;
-    background-color: white;
-    cursor: pointer;
-  }
-
-  select:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-</style>
-
 <script>
+  // Initialisation des données
   let medicaments = [
     {% for med in medicaments %}
-      { id: {{ med.pk }}, nom: "{{ med.nom }}" },
+      { id: {{ med.id_Medicament }}, nom: "{{ med.nom }}" },
     {% endfor %}
   ];
 
   let fournisseurs = [
     {% for four in fournisseurs %}
-      { id: {{ four.pk }}, nom: "{{ four.nom }}" },
+      { id: {{ four.id }}, nom: "{{ four.nom }}" },
     {% endfor %}
   ];
 
+  // Fonction pour configurer la recherche
   function setupSearch(searchId, hiddenInputId, resultsId, items) {
     const searchInput = document.getElementById(searchId);
     const hiddenInput = document.getElementById(hiddenInputId);
@@ -487,20 +454,17 @@
       const searchValue = e.target.value.trim().toLowerCase();
       
       if (searchValue.length > 0) {
-        // Filtrer les éléments
         const filteredItems = items.filter(item => 
           item.nom.toLowerCase().includes(searchValue)
         );
         
         if (filteredItems.length > 0) {
-          // Créer la liste des résultats
           resultsDiv.innerHTML = '';
           const ul = document.createElement('ul');
-          ul.className = 'space-y-1';
           
           filteredItems.forEach(item => {
             const li = document.createElement('li');
-            li.className = 'cursor-pointer hover:bg-gray-100 p-2 rounded';
+            li.className = 'px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer';
             li.textContent = item.nom;
             li.onclick = function() {
               searchInput.value = item.nom;
@@ -527,105 +491,106 @@
         resultsDiv.classList.add('hidden');
       }
     });
-
-    // Empêcher la soumission si aucun élément n'est sélectionné
-    searchInput.closest('form').addEventListener('submit', function(e) {
-      if (!hiddenInput.value) {
-        e.preventDefault();
-        alert('Veuillez sélectionner un élément dans la liste');
-      }
-    });
   }
 
-  // Initialiser la recherche pour les médicaments et les fournisseurs
-  document.addEventListener('DOMContentLoaded', function() {
-    setupSearch('medicament_search', 'medicament_select', 'medicament_results', medicaments);
-    setupSearch('fournisseur_search', 'fournisseur_select', 'fournisseur_results', fournisseurs);
-  });
-
+  // Fonctions pour les modals
   function openCreateModal() {
-    document.getElementById("createModal").classList.remove("hidden");
-    // Réinitialiser le formulaire
-    document.getElementById("medicament_search").value = '';
-    document.getElementById("medicament_select").value = '';
-    document.getElementById("fournisseur_search").value = '';
-    document.getElementById("fournisseur_select").value = '';
-    document.getElementById("quantite_commande").value = '';
-    document.getElementById("statut").value = 'en_attente';
+    document.getElementById('createModal').classList.remove('hidden');
+    document.getElementById('medicament_search').value = '';
+    document.getElementById('medicament_select').value = '';
+    document.getElementById('fournisseur_search').value = '';
+    document.getElementById('fournisseur_select').value = '';
+    document.getElementById('quantite_commande').value = '';
+    document.getElementById('statut').value = 'en_attente';
   }
 
   function closeCreateModal() {
-    document.getElementById("createModal").classList.add("hidden");
+    document.getElementById('createModal').classList.add('hidden');
   }
 
   function openUpdateModal(pk) {
-    document.getElementById("updateModal").classList.remove("hidden");
-    document.getElementById("updateForm").action = "/commandes/update/" + pk + "/";
+    // Récupérer les données de la commande (simulé ici)
+    const commande = {
+      medicament_id: 1,
+      fournisseur_id: 1,
+      quantite: 10
+    };
+    
+    document.getElementById('updateForm').action = `/commandes/update/${pk}/`;
+    document.getElementById('update_medicament').value = commande.medicament_id;
+    document.getElementById('update_fournisseur').value = commande.fournisseur_id;
+    document.getElementById('update_quantite').value = commande.quantite;
+    
+    document.getElementById('updateModal').classList.remove('hidden');
   }
 
   function closeUpdateModal() {
-    document.getElementById("updateModal").classList.add("hidden");
+    document.getElementById('updateModal').classList.add('hidden');
   }
 
   function openDeleteModal(pk) {
-    document.getElementById("deleteModal").classList.remove("hidden");
-    document.getElementById("deleteForm").action = "/commandes/delete/" + pk + "/";
+    document.getElementById('deleteForm').action = `/commandes/delete/${pk}/`;
+    document.getElementById('deleteModal').classList.remove('hidden');
   }
 
   function closeDeleteModal() {
-    document.getElementById("deleteModal").classList.add("hidden");
+    document.getElementById('deleteModal').classList.add('hidden');
   }
 
   function openChangeStatusModal(pk) {
-    document.getElementById("changeStatusModal").classList.remove("hidden");
-    document.getElementById("changeStatusForm").action = "{% url 'commandes_change_status' 999999 %}".replace('999999', pk);
+    document.getElementById('changeStatusForm').action = `/commandes/change-status/${pk}/`;
+    document.getElementById('changeStatusModal').classList.remove('hidden');
   }
 
   function closeChangeStatusModal() {
-    document.getElementById("changeStatusModal").classList.add("hidden");
+    document.getElementById('changeStatusModal').classList.add('hidden');
   }
 
-  // Ajouter un gestionnaire d'événements pour le formulaire de changement de statut
-  document.getElementById('changeStatusForm').addEventListener('submit', function(e) {
-    const statusSelect = this.querySelector('select[name="statut"]');
-    const newStatus = statusSelect.value;
-    
-    if (!newStatus) {
-      e.preventDefault();
-      alert('Veuillez sélectionner un statut');
-      return;
-    }
-  });
-
-  // Fermer le modal quand on clique en dehors
-  document.getElementById('changeStatusModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeChangeStatusModal();
-    }
-  });
-
-  // Fonction de recherche pour le tableau des commandes
+  // Fonction de recherche pour le tableau
   document.getElementById('searchInput').addEventListener('keyup', function() {
     const searchValue = this.value.toLowerCase();
-    const rows = document.getElementById('commandeTableBody').getElementsByTagName('tr');
+    const rows = document.querySelectorAll('#commandeTableBody tr');
+    
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      let shouldShow = false;
+      
+      cells.forEach(cell => {
+        if (cell.textContent.toLowerCase().includes(searchValue)) {
+          shouldShow = true;
+        }
+      });
+      
+      row.style.display = shouldShow ? '' : 'none';
+    });
+  });
 
-    for (let row of rows) {
-      const medicament = row.cells[0].textContent.toLowerCase();
-      const fournisseur = row.cells[1].textContent.toLowerCase();
-      const quantite = row.cells[2].textContent.toLowerCase();
-      const statut = row.cells[3].textContent.toLowerCase();
-      const date = row.cells[4].textContent.toLowerCase();
-
-      if (medicament.includes(searchValue) || 
-          fournisseur.includes(searchValue) || 
-          quantite.includes(searchValue) || 
-          statut.includes(searchValue) || 
-          date.includes(searchValue)) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
+  // Initialisation au chargement
+  document.addEventListener('DOMContentLoaded', function() {
+    setupSearch('medicament_search', 'medicament_select', 'medicament_results', medicaments);
+    setupSearch('fournisseur_search', 'fournisseur_select', 'fournisseur_results', fournisseurs);
+    
+    // Fermer les modals quand on clique en dehors
+    const modals = ['createModal', 'updateModal', 'deleteModal', 'changeStatusModal'];
+    modals.forEach(modalId => {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === this) {
+            this.classList.add('hidden');
+          }
+        });
       }
-    }
+    });
+    
+    // Auto-close notifications
+    setTimeout(() => {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        alert.classList.add('animate__fadeOutRight');
+        setTimeout(() => alert.remove(), 500);
+      });
+    }, 5000);
   });
 </script>
 {% endblock %}

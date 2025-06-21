@@ -1,412 +1,512 @@
-{% extends 'layout/base.html' %} {% block title %}Médicaments{% endblock %}
-{%block main_content %}
+{% extends 'layout/base.html' %}
+{% load static %}
 
-<div class="flex flex-row h-[130px] justify-center">
-  <h1 class="text-2xl font-bold mb-4 pt-[65px]">Gestion des Médicaments</h1>
-  {% load static %}
-  <img
-    src="{% static 'assets\images\profile\medicament.png' %}"
-    alt=""
-    width="200"
-    height="200"
-    class="ml-28"
-  />
-</div>
-<div class="flex justify-between items-center mb-4">
-  <input
-    type="text"
-    id="searchInput"
-    placeholder="Rechercher un médicament..."
-    class="block w-1/3 h-10 p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-  />
-  <button
-    onclick="openCreateModal()"
-    class="focus:outline-none text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-  >
-    Ajouter un Médicament
-  </button>
-</div>
+{% block title %}Gestion des Médicaments{% endblock %}
 
-<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-  <thead class="bg-gray-400">
-    <tr>
-      <th class="py-2 px-4 border-b text-black font-bold">Image</th>
-      <th class="py-2 px-4 border-b text-black font-bold">Nom</th>
-      <th class="py-2 px-4 border-b text-black font-bold">Prix Unitaire</th>
-      <th class="py-2 px-4 border-b text-black font-bold">Catégorie</th>
-      <th class="py-2 px-4 border-b text-black text-center font-bold">Actions</th>
-    </tr>
-  </thead>
-  <tbody id="medicamentTableBody">
-    {% for medicament in medicaments %}
-    <tr class="hover:bg-gray-300">
-      <td class="py-2 px-4 border-b">
-        {% if medicament.image %}
-        <img
-          src="{{ medicament.image.url }}"
-          alt="{{ medicament.nom }}"
-          class="w-20 h-20 rounded-full"
-        />
-        {% else %} Pas d'image {% endif %}
-      </td>
-      <td class="py-2 px-4 border-b">{{ medicament.nom }}</td>
-      <td class="py-2 px-4 border-b">{{ medicament.prixUnitaire }}</td>
-      <td class="py-2 px-4 border-b">{{ medicament.id_Categorie.nom_Categorie }}</td>
-      <td class="py-2 px-4 border-b flex items-center justify-center flex-row mt-4">
-        {% load static %}
-        <button
-          onclick="openEditModal({{ medicament.id_Medicament }}, '{{ medicament.nom|escapejs }}', '{{ medicament.description|escapejs }}', '{{ medicament.prixUnitaire }}', '{{ medicament.image.url }}', '{{ medicament.id_Categorie.id_Categorie }}')"
-          class="bg-yellow-500 text-white px-1.5 py-1 rounded editStockBtn "
-        >
-          <svg
-            class="w-6 h-6 text-gray-800 dark:text-black"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
-            />
-          </svg>
-        </button>
-        <button
-          onclick="confirmDeleteMedicament({{ medicament.id_Medicament }}, '{{ medicament.nom|escapejs }}')"
-          class="ml-3 bg-red-500 text-white px-1.5 py-1 rounded deleteStockBtn "
-        >
-         <svg
-            class="w-6 h-6 text-gray-800 dark:text-black"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-      </td>
-    </tr>
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<style>
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+    transition: all 0.5s ease;
+  }
+  
+  .medicament-card {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .medicament-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .action-btn {
+    transition: all 0.2s ease;
+  }
+  
+  .action-btn:hover {
+    transform: scale(1.05);
+  }
+  
+  .medicament-image-container {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .medicament-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+  }
+  
+  .no-image {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    color: #6b7280;
+    font-size: 12px;
+    text-align: center;
+    padding: 5px;
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<!-- Notifications -->
+<div id="notificationArea" class="notification">
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+    </div>
     {% endfor %}
-  </tbody>
-</table>
+  {% endif %}
+</div>
 
-<!-- Modal pour ajouter un médicament -->
-<div
-  id="createMedicamentModal"
-  class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
->
-  <div class="bg-white p-4 rounded w-96">
-    <h2 class="text-lg font-bold">Ajouter un Médicament</h2>
-    <form
-      method="post"
-      enctype="multipart/form-data"
-      action="{% url 'medicament_create' %}"
-    >
-      {% csrf_token %}
-      <div class="grid grid-cols-2 gap-4">
-        <div class="mb-4">
-          <label for="nom" class="block">Nom</label>
-          <input
-            type="text"
-            name="nom"
-            id="nom"
-            class="border p-2 rounded w-full"
-            required
-          />
+<div class="container mx-auto px-4 py-8">
+  <!-- Header with title and image -->
+  <div class="flex flex-col md:flex-row items-center justify-between mb-8">
+    <div class="flex items-center mb-4 md:mb-0">
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white mr-4">Gestion des Médicaments</h1>
+      <img src="{% static 'assets/images/profile/medicament.png' %}" alt="Médicaments" class="w-16 h-16">
+    </div>
+    
+    <div class="flex items-center space-x-4">
+      <div class="relative w-full md:w-64">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
         </div>
-        <div class="mb-4">
-          <label for="id_Categorie" class="block">Catégorie</label>
-          <select
-            name="id_Categorie"
-            id="id_Categorie"
-            class="border p-2 rounded w-full"
-            required
-          >
-            <option value="">Sélectionnez une catégorie</option>
-            {% for categorie in categories %}
-            <option value="{{ categorie.id_Categorie }}">
-              {{ categorie.nom_Categorie }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="mb-4">
-          <label for="description" class="block">Description</label>
-          <textarea
-            name="description"
-            id="description"
-            class="border p-2 rounded w-full"
-            required
-          ></textarea>
-        </div>
-        <div class="mb-4">
-          <label for="prixUnitaire" class="block">Prix Unitaire</label>
-          <input
-            type="number"
-            name="prixUnitaire"
-            id="prixUnitaire"
-            class="border p-2 rounded w-full"
-            required
-          />
-        </div>
-      </div>
-      <div class="mb-4">
-        <label for="image" class="block">Image</label>
         <input
-          type="file"
-          name="image"
-          id="image"
-          class="border p-2 rounded w-full"
-          required
+          type="text"
+          id="searchInput"
+          placeholder="Rechercher..."
+          class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
         />
       </div>
-      <button type="submit" class="bg-blue-500 text-white p-2 rounded">
-        Ajouter
-      </button>
+      
       <button
-        type="button"
-        onclick="closeCreateModal()"
-        class="bg-gray-300 p-2 rounded"
+        onclick="openCreateModal()"
+        class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
       >
-        Annuler
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        <span>Ajouter</span>
       </button>
-    </form>
+    </div>
+  </div>
+
+  <!-- Medicaments Table -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nom</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Prix</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Catégorie</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="medicamentTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          {% for medicament in medicaments %}
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if medicament.image %}
+                <div class="medicament-image-container">
+                  <img src="{{ medicament.image.url }}" alt="{{ medicament.nom }}" class="medicament-image">
+                </div>
+              {% else %}
+                <div class="no-image">
+                  Pas d'image
+                </div>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ medicament.nom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ medicament.prixUnitaire }} €</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ medicament.id_Categorie.nom_Categorie }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <button
+                  onclick="openEditModal({{ medicament.id_Medicament }}, '{{ medicament.nom|escapejs }}', '{{ medicament.description|escapejs }}', '{{ medicament.prixUnitaire }}', '{{ medicament.image.url|default:'' }}', '{{ medicament.id_Categorie.id_Categorie }}')"
+                  class="action-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-gray-600"
+                  title="Modifier"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button
+                  onclick="confirmDeleteMedicament({{ medicament.id_Medicament }}, '{{ medicament.nom|escapejs }}')"
+                  class="action-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-50 dark:hover:bg-gray-600"
+                  title="Supprimer"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- Modal pour éditer un médicament -->
-<div
-  id="editMedicamentModal"
-  class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
->
-  <div class="bg-white p-4 rounded w-96">
-    <h2 class="text-lg font-bold">Éditer un Médicament</h2>
-    <form
-      id="editMedicamentForm"
-      method="post"
-      enctype="multipart/form-data"
-      action="{% url 'medicament_update' 0 %}"
-      onsubmit="updateFormAction()"
-    >
-      {% csrf_token %}
-      <input type="hidden" name="id_Medicament" id="editMedicamentId" />
-      <div class="grid grid-cols-2 gap-4">
-        <div class="mb-4">
-          <label for="editNom" class="block">Nom</label>
-          <input
-            type="text"
-            name="nom"
-            id="editNom"
-            class="border p-2 rounded w-full"
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label for="editCategorie" class="block">Catégorie</label>
-          <select
-            name="id_Categorie"
-            id="editCategorie"
-            class="border p-2 rounded w-full"
-            required
-          >
-            {% for category in categories %}
-            <option value="{{ category.id_Categorie }}">
-              {{ category.nom_Categorie }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="mb-4">
-          <label for="editDescription" class="block">Description</label>
-          <textarea
-            name="description"
-            id="editDescription"
-            class="border p-2 rounded w-full"
-          ></textarea>
-        </div>
-        <div class="mb-4">
-          <label for="editPrixUnitaire" class="block">Prix Unitaire</label>
-          <input
-            type="number"
-            name="prixUnitaire"
-            id="editPrixUnitaire"
-            class="border p-2 rounded w-full"
-            required
-          />
-        </div>
+<!-- Create Medicament Modal -->
+<div id="createMedicamentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Nouveau Médicament</h2>
+        <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
-      <div class="mb-4">
-        <label for="editImage" class="block"
-          >Image (laisser vide si pas de changement)</label
-        >
-        <input
-          type="file"
-          name="image"
-          id="editImage"
-          class="border p-2 rounded w-full"
-        />
-      </div>
-      <button type="submit" class="bg-blue-500 text-white p-2 rounded">
-        Mettre à jour
-      </button>
-      <button
-        type="button"
-        onclick="closeEditModal()"
-        class="bg-gray-300 p-2 rounded"
-      >
-        Annuler
-      </button>
-    </form>
-  </div>
-</div>
-
-<!-- Modal de confirmation de suppression -->
-<div
-  class="modal fade"
-  id="deleteMedicamentConfirmationModal"
-  tabindex="-1"
-  aria-labelledby="deleteMedicamentConfirmationModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-lg"> <!-- Ajout de la classe modal-lg pour élargir le modal -->
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteMedicamentConfirmationModalLabel" style="font-size: 24px; font-weight: bold;">
-          Confirmer la Suppression
-        </h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="modal-body" style="font-size: 18px; font-weight: bold;">
-        <p id="deleteMedicamentConfirmationMessage"></p>
-      </div>
-      <div class="modal-footer d-flex justify-content-center align-items-center">
-        <form id="deleteMedicamentForm" method="post" action="" class="d-flex">
-          {% csrf_token %}
+      
+      <form method="post" enctype="multipart/form-data" action="{% url 'medicament_create' %}">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="mb-4">
+            <label for="nom" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom *</label>
+            <input
+              type="text"
+              name="nom"
+              id="nom"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            />
+          </div>
+          
+          <div class="mb-4">
+            <label for="id_Categorie" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Catégorie *</label>
+            <select
+              name="id_Categorie"
+              id="id_Categorie"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            >
+              <option value="">Sélectionnez une catégorie</option>
+              {% for categorie in categories %}
+              <option value="{{ categorie.id_Categorie }}">{{ categorie.nom_Categorie }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="mb-4">
+            <label for="prixUnitaire" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix Unitaire *</label>
+            <input
+              type="number"
+              step="0.01"
+              name="prixUnitaire"
+              id="prixUnitaire"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            />
+          </div>
+          
+          <div class="mb-4">
+            <label for="image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Image *</label>
+            <input
+              type="file"
+              name="image"
+              id="image"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            />
+          </div>
+          
+          <div class="mb-4 md:col-span-2">
+            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+            <textarea
+              name="description"
+              id="description"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            ></textarea>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6">
           <button
             type="button"
-            class="btn btn-outline-primary me-2"
-            data-bs-dismiss="modal"
+            onclick="closeCreateModal()"
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            Non
+            Annuler
           </button>
-          <button type="submit" class="btn btn-outline-danger">Oui</button>
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Medicament Modal -->
+<div id="editMedicamentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Modifier Médicament</h2>
+        <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <form id="editMedicamentForm" method="post" enctype="multipart/form-data" action="{% url 'medicament_update' 0 %}" onsubmit="updateFormAction()">
+        {% csrf_token %}
+        <input type="hidden" name="id_Medicament" id="editMedicamentId" />
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="mb-4">
+            <label for="editNom" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom *</label>
+            <input
+              type="text"
+              name="nom"
+              id="editNom"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            />
+          </div>
+          
+          <div class="mb-4">
+            <label for="editCategorie" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Catégorie *</label>
+            <select
+              name="id_Categorie"
+              id="editCategorie"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            >
+              {% for category in categories %}
+              <option value="{{ category.id_Categorie }}">{{ category.nom_Categorie }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="mb-4">
+            <label for="editPrixUnitaire" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix Unitaire *</label>
+            <input
+              type="number"
+              step="0.01"
+              name="prixUnitaire"
+              id="editPrixUnitaire"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            />
+          </div>
+          
+          <div class="mb-4">
+            <label for="editImage" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Image</label>
+            <input
+              type="file"
+              name="image"
+              id="editImage"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            />
+            <div id="currentImageContainer" class="mt-2"></div>
+          </div>
+          
+          <div class="mb-4 md:col-span-2">
+            <label for="editDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+            <textarea
+              name="description"
+              id="editDescription"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            ></textarea>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6">
+          <button
+            type="button"
+            onclick="closeEditModal()"
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Mettre à jour
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteMedicamentConfirmationModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Confirmer la suppression</h2>
+        <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <p id="deleteMedicamentConfirmationMessage" class="mb-6 text-gray-600 dark:text-gray-300"></p>
+      
+      <div class="flex justify-end space-x-3">
+        <button
+          onclick="closeDeleteModal()"
+          class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Annuler
+        </button>
+        <form id="deleteMedicamentForm" method="post" action="">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            Confirmer
+          </button>
         </form>
       </div>
     </div>
   </div>
 </div>
 
-
 <script>
+  // Notification handling
+  function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center`;
+    notification.innerHTML = `
+      <span>${message}</span>
+      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+    `;
+    
+    const notificationArea = document.getElementById('notificationArea');
+    notificationArea.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.classList.add('animate__fadeOutRight');
+      setTimeout(() => notification.remove(), 500);
+    }, 5000);
+  }
+
+  // Modal functions
   function openCreateModal() {
-    document.getElementById("createMedicamentModal").classList.remove("hidden");
+    document.getElementById('createMedicamentModal').classList.remove('hidden');
   }
 
   function closeCreateModal() {
-    document.getElementById("createMedicamentModal").classList.add("hidden");
+    document.getElementById('createMedicamentModal').classList.add('hidden');
   }
 
-  function openEditModal(
-    id,
-    nom,
-    description,
-    prixUnitaire,
-    imageUrl,
-    id_Categorie
-  ) {
-    document.getElementById("editMedicamentId").value = id;
-    document.getElementById("editNom").value = nom;
-    document.getElementById("editDescription").value = description;
-    document.getElementById("editPrixUnitaire").value = prixUnitaire;
-    document.getElementById("editCategorie").value = id_Categorie;
-    document.getElementById("editMedicamentModal").classList.remove("hidden");
+  function openEditModal(id, nom, description, prixUnitaire, imageUrl, id_Categorie) {
+    document.getElementById('editMedicamentId').value = id;
+    document.getElementById('editNom').value = nom;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editPrixUnitaire').value = prixUnitaire;
+    document.getElementById('editCategorie').value = id_Categorie;
+    
+    // Show current image if exists
+    const imageContainer = document.getElementById('currentImageContainer');
+    imageContainer.innerHTML = '';
+    
+    if (imageUrl) {
+      imageContainer.innerHTML = `
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Image actuelle:</p>
+        <img src="${imageUrl}" alt="Current image" class="medicament-image">
+      `;
+    }
+    
+    document.getElementById('editMedicamentModal').classList.remove('hidden');
   }
 
   function closeEditModal() {
-    document.getElementById("editMedicamentModal").classList.add("hidden");
+    document.getElementById('editMedicamentModal').classList.add('hidden');
   }
 
   function confirmDeleteMedicament(id, nom) {
-    document.getElementById(
-      "deleteMedicamentConfirmationMessage"
-    ).innerText = `Êtes-vous sûr de vouloir supprimer le médicament "${nom}" ?`;
-    document.getElementById("deleteMedicamentForm").action =
-      "{% url 'medicament_hide' 0 %}".replace("0", id);
-    var myModal = new bootstrap.Modal(
-      document.getElementById("deleteMedicamentConfirmationModal")
-    );
-    myModal.show();
+    const message = `Êtes-vous sûr de vouloir supprimer le médicament "${nom}" ? Cette action est irréversible.`;
+    document.getElementById('deleteMedicamentConfirmationMessage').textContent = message;
+    document.getElementById('deleteMedicamentForm').action = "{% url 'medicament_hide' 0 %}".replace('0', id);
+    document.getElementById('deleteMedicamentConfirmationModal').classList.remove('hidden');
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteMedicamentConfirmationModal').classList.add('hidden');
   }
 
   function updateFormAction() {
-    const id = document.getElementById("editMedicamentId").value;
-    const form = document.getElementById("editMedicamentForm");
-    form.action = "{% url 'medicament_update' 0 %}".replace("0", id);
+    const id = document.getElementById('editMedicamentId').value;
+    const form = document.getElementById('editMedicamentForm');
+    form.action = "{% url 'medicament_update' 0 %}".replace('0', id);
   }
 
-  function searchMedicaments() {
-    const input = document.getElementById("search");
-    const filter = input.value.toLowerCase();
-    const table = document.getElementById("medicamentTableBody");
-    const rows = table.getElementsByTagName("tr");
+  // Search functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('medicamentTableBody');
 
-    for (let i = 0; i < rows.length; i++) {
-      const cells = rows[i].getElementsByTagName("td");
-      let found = false;
-      for (let j = 0; j < cells.length; j++) {
-        if (cells[j]) {
-          const txtValue = cells[j].textContent || cells[j].innerText;
-          if (txtValue.toLowerCase().indexOf(filter) > -1) {
-            found = true;
-            break;
-          }
-        }
-      }
-      rows[i].style.display = found ? "" : "none";
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("searchInput");
-    const tableBody = document.getElementById("medicamentTableBody");
-
-    searchInput.addEventListener("keyup", function () {
+    searchInput.addEventListener('keyup', function() {
       const searchTerm = this.value.toLowerCase();
-      const rows = tableBody.getElementsByTagName("tr");
+      const rows = tableBody.getElementsByTagName('tr');
 
       Array.from(rows).forEach((row) => {
-        const nomCell = row.getElementsByTagName("td")[1]; // Index 1 pour la colonne "Nom"
-        const categorieCell = row.getElementsByTagName("td")[3]; // Index 3 pour la colonne "Catégorie"
+        const nomCell = row.getElementsByTagName('td')[1];
+        const categorieCell = row.getElementsByTagName('td')[3];
 
         if (nomCell && categorieCell) {
           const nom = nomCell.textContent.toLowerCase();
           const categorie = categorieCell.textContent.toLowerCase();
 
           if (nom.includes(searchTerm) || categorie.includes(searchTerm)) {
-            row.style.display = "";
+            row.style.display = '';
           } else {
-            row.style.display = "none";
+            row.style.display = 'none';
           }
         }
       });
     });
+
+    // Auto-close messages after 5 seconds
+    setTimeout(() => {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        alert.classList.add('animate__fadeOutRight');
+        setTimeout(() => alert.remove(), 500);
+      });
+    }, 5000);
   });
 </script>
 {% endblock %}

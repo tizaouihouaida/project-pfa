@@ -94,20 +94,23 @@ def categories_edit(request, id):
         form = CategorieForm(request.POST, instance=categorie)
         if form.is_valid():
             form.save()
-            return JsonResponse({'success': True})
+            return redirect('categories_index')
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = CategorieForm(instance=categorie)
-    return render(request, 'categories/index.html', {'form': form})
+    return render(request, 'categories/update.html', {'form': form})
 
 @login_required
 @role_required('gestionnaire_stocks')
+@require_POST
 def categories_delete(request, id):
     categorie = get_object_or_404(CategorieMedicament, id_Categorie=id)
-    if request.method == 'POST':
-        categorie.cacherCategorie()
-        return redirect('categories_index')
+    # if request.method == 'POST':
+    #     categorie.cacherCategorie()
+    #     return redirect('categories_index')
+    categorie.cacherCategorie()
+
     return redirect('categories_index')  # Redirige vers la liste des catégories
 
 
@@ -154,10 +157,10 @@ def medicament_list(request):
 @role_required('gestionnaire_stocks')
 def medicament_hide(request, id):
     medicament = get_object_or_404(Medicament, id_Medicament=id)
-    if request.method == 'POST':
-        medicament.cacherMedicament()
-        return redirect('medicaments_index')
+    # if request.method == 'POST':
+    medicament.cacherMedicament()
     return redirect('medicaments_index')
+    # return redirect('medicaments_index')
 
 
 @login_required
@@ -409,37 +412,26 @@ def commandes_create(request):
 @role_required('gestionnaire_stocks')
 def commandes_update(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-    
-    # Pour les requêtes AJAX
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        try:
-            data = {
-                'success': True,
-                'commande': {
-                    'id': commande.pk,
-                    'medicament': commande.medicament.id_Medicament,
-                    'fournisseur': commande.fournisseur.id,
-                    'quantite_commande': float(commande.quantite_commande),
-                    'statut': commande.statut
-                }
-            }
-            return JsonResponse(data)
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
-    # Pour les requêtes POST normales
     if request.method == 'POST':
         form = CommandeForm(request.POST, instance=commande)
         if form.is_valid():
-            form.save()
+            fournisseur = form.save(commit=False)
+            fournisseur.modifierCommande(
+                medicament=form.cleaned_data['medicament'],
+                fournisseur=form.cleaned_data['fournisseur'],
+                quantite_commande=form.cleaned_data['quantite_commande'],
+                date_commande=form.cleaned_data['date_commande'],
+                statut=form.cleaned_data['statut']
+            )
             return redirect('commandes_index')
-
-    medicaments = Medicament.objects.filter(est_cachee=False)
-    fournisseurs = Fournisseur.objects.all()
+    else:
+        form = CommandeForm(instance=fournisseur)
+    
+    commandes = Commande.objects.all()
     return render(request, 'commandes/index.html', {
-        'commande': commande,
-        'medicaments': medicaments,
-        'fournisseurs': fournisseurs
+        'commandes': commandes,
+        'username': request.user.username,
+        'form': form
     })
 
     
@@ -448,7 +440,7 @@ def commandes_update(request, pk):
 @require_POST
 def commandes_delete(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-    commande.delete()
+    commande.supprimerCommande()
     return redirect('commandes_index')
 
 
