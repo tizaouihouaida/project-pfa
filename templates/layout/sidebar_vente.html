@@ -1,74 +1,52 @@
 {% load static %}
-<aside class="left-sidebar fixed top-0 left-0 z-40 w-72 h-screen transition-transform">
-  <div class="h-full px-4 py-6 overflow-y-auto bg-white border-r border-gray-200">
-    <div class="brand-logo flex items-center justify-between mb-8">
-      <a href="" class="text-nowrap logo-img">
-        {% load static %}
-        <img src="{% static 'assets/images/logos/logo_1.png' %}" width="180" alt="" class="h-16 w-auto" />
+<aside class="fixed top-0 left-0 z-40 w-72 h-screen transition-transform bg-gradient-to-b from-blue-50 to-white dark:from-gray-800 dark:to-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-xl">
+  <div class="h-full px-4 py-6 overflow-y-auto flex flex-col">
+    <div class="flex items-center justify-between mb-8 px-2">
+      <a href="{% url 'sales_dashboard' %}" class="flex items-center space-x-3">
+        <img src="{% static 'assets/images/logos/logo_1.png' %}" class="h-15 w-auto" alt="Logo" />
       </a>
-      <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
-        <i class="ti ti-x fs-8"></i>
-      </div>
+      <button type="button" class="lg:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors" id="sidebarCollapse">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
     </div>
 
-    <nav class="sidebar-nav space-y-2">
-      <ul id="sidebarnav">
-        <li class="nav-small-cap mb-4">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Acceuil</span>
-        </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link flex items-center px-2 py-2.5 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group" 
-             href="{% url 'sales_dashboard' %}" 
-             aria-expanded="false">
-            <span class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white">
-              <i class="ti ti-layout-dashboard"></i>
-            </span>
-            <span class="hide-menu ml-4 text-base font-medium">Dashboard</span>
-          </a>
-        </li>
+    <nav class="flex-1 space-y-1">
+      <div class="px-2">
+        <p class="px-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Navigation</p>
+      </div>
 
-        <li class="nav-small-cap mb-4">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Fonctionnalités</span>
-        </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group"
-             href="{% url 'ventes_index' %}"
-             aria-expanded="false">
-            <span class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white">
-              <i class="ti ti-shopping-cart"></i>
-            </span>
-            <span class="hide-menu ml-4 text-base font-medium">Rapport des ventes</span>
-          </a>
-        </li>
+      <a href="{% url 'sales_dashboard' %}" class="flex items-center px-3 py-3 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-blue-100 dark:hover:bg-gray-700 group transition-all duration-200">
+        <div class="p-2 mr-3 rounded-lg bg-blue-100 dark:bg-gray-600 text-blue-600 dark:text-blue-400 group-hover:bg-blue-200 dark:group-hover:bg-gray-600 transition-colors">
+          <i class="ti ti-layout-dashboard"></i>
+        </div>
+        <span class="text-sm font-medium">Dashboard</span>
+      </a>
 
-        <li class="sidebar-item">
-          <a class="sidebar-link flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-blue-500 hover:text-white group"
-             href="{% url 'pos_index' %}"
-             aria-expanded="false">
-            <span class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white">
-              <i class="ti ti-device-analytics"></i>
-            </span>
-            <span class="hide-menu ml-4 text-base font-medium">Point de vente</span>
-          </a>
-        </li>
+      <div class="px-2 pt-6">
+        <p class="px-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Fonctionnalités</p>
+      </div>
 
-        <li class="nav-small-cap mb-4">
-          <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-          <span class="hide-menu px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">GESTIONNAIRE DE VENTES</span>
-        </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-red-500 hover:text-white group"
-             href="{% url 'logout' %}"
-             aria-expanded="false">
-            <span class="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-white">
-              <i class="ti ti-login"></i>
-            </span>
-            <span class="hide-menu ml-4 text-base font-medium">Se Deconnecter</span>
-          </a>
-        </li>
-      </ul>
+      <a href="{% url 'ventes_index' %}" class="flex items-center px-3 py-3 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-blue-100 dark:hover:bg-gray-700 group transition-all duration-200">
+        <div class="p-2 mr-3 rounded-lg bg-purple-100 dark:bg-gray-600 text-purple-600 dark:text-purple-400 group-hover:bg-purple-200 dark:group-hover:bg-gray-600 transition-colors">
+          <i class="ti ti-shopping-cart"></i>
+        </div>
+        <span class="text-sm font-medium">Rapport des ventes</span>
+      </a>
+
+      <a href="{% url 'pos_index' %}" class="flex items-center px-3 py-3 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-blue-100 dark:hover:bg-gray-700 group transition-all duration-200">
+        <div class="p-2 mr-3 rounded-lg bg-amber-100 dark:bg-gray-600 text-amber-600 dark:text-amber-400 group-hover:bg-amber-200 dark:group-hover:bg-gray-600 transition-colors">
+          <i class="ti ti-device-analytics"></i>
+        </div>
+        <span class="text-sm font-medium">Point de vente</span>
+      </a>
     </nav>
   </div>
 </aside>
+
+<script>
+  document.getElementById('sidebarCollapse').addEventListener('click', function() {
+    document.querySelector('aside').classList.toggle('-translate-x-full');
+  });
+</script>
