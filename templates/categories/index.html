@@ -6,13 +6,26 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <style>
-  .notification {
+    .notification {
     position: fixed;
     top: 20px;
-    right: 20px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+    max-width: 80%;
     z-index: 1000;
-    max-width: 400px;
-    transition: all 0.5s ease;
+    text-align: center;
+  }
+  
+  .alert {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
   }
   
   .category-card {
@@ -40,7 +53,7 @@
 <div id="notificationArea" class="notification">
   {% if messages %}
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center">
+    <div class="alert alert-{{ message.tags }} animate__animated animate__fadeInDown">
       <span>{{ message }}</span>
       <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
     </div>
@@ -125,6 +138,44 @@
         </tbody>
       </table>
     </div>
+
+     <!-- Pagination -->
+<div class="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+    <div class="text-sm text-gray-700 dark:text-gray-300">
+        Affichage de <span class="font-medium">{{ categories.start_index }}</span> à <span class="font-medium">{{ categories.end_index }}</span> sur <span class="font-medium">{{ categories.paginator.count }}</span> Catégories
+    </div>
+    <div class="flex space-x-2">
+        {% if categories.has_previous %}
+            <a href="?page=1" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                &laquo; Première
+            </a>
+            <a href="?page={{ categories.previous_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Précédente
+            </a>
+        {% endif %}
+
+        {% for num in categories.paginator.page_range %}
+            {% if categories.number == num %}
+                <span class="px-3 py-1 border border-blue-500 rounded-md text-sm font-medium text-white bg-blue-600">
+                    {{ num }}
+                </span>
+            {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
+                <a href="?page={{ num }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    {{ num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if categories.has_next %}
+            <a href="?page={{ categories.next_page_number }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Suivante
+            </a>
+            <a href="?page={{ categories.paginator.num_pages }}" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Dernière &raquo;
+            </a>
+        {% endif %}
+    </div>
+</div>
   </div>
 </div>
 
@@ -279,23 +330,6 @@
 </div>
 
 <script>
-  // Notification handling
-  function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center`;
-    notification.innerHTML = `
-      <span>${message}</span>
-      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
-    `;
-    
-    const notificationArea = document.getElementById('notificationArea');
-    notificationArea.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.classList.add('animate__fadeOutRight');
-      setTimeout(() => notification.remove(), 500);
-    }, 5000);
-  }
 
   // Modal functions
   function openCreateModal() {
@@ -334,6 +368,24 @@
     form.action = "{% url 'categories_edit' 0 %}".replace('0', id);
   }
 
+  function showNotification(message, type = 'success') {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} animate__animated animate__fadeInDown mb-3`;
+  notification.innerHTML = `
+    <span class="flex-grow text-center">${message}</span>
+    <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+  `;
+  
+  const notificationArea = document.getElementById('notificationArea');
+  notificationArea.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.classList.remove('animate__fadeInDown');
+    notification.classList.add('animate__fadeOutUp');
+    setTimeout(() => notification.remove(), 500);
+  }, 5000);
+}
+
   // Search functionality
   function searchCategories() {
     const input = document.getElementById('search');
@@ -360,7 +412,33 @@
   }
 
   // Auto-close messages after 5 seconds
-  document.addEventListener('DOMContentLoaded', function() {
+   // Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('medicamentTableBody');
+
+    searchInput.addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = tableBody.getElementsByTagName('tr');
+
+        Array.from(rows).forEach((row) => {
+            const nomCell = row.getElementsByTagName('td')[1];
+            const categorieCell = row.getElementsByTagName('td')[3];
+
+            if (nomCell && categorieCell) {
+                const nom = nomCell.textContent.toLowerCase();
+                const categorie = categorieCell.textContent.toLowerCase();
+
+                if (nom.includes(searchTerm) || categorie.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    });
+
+    // Auto-close messages after 5 seconds
     setTimeout(() => {
       const alerts = document.querySelectorAll('.alert');
       alerts.forEach(alert => {
@@ -368,6 +446,8 @@
         setTimeout(() => alert.remove(), 500);
       });
     }, 5000);
-  });
+});
+
+
 </script>
 {% endblock %}
