@@ -4,7 +4,17 @@
 {% block title %}Gestion des Stocks{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <style>
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+    transition: all 0.5s ease;
+  }
+  
   .medicament-image-container {
     width: 50px;
     height: 50px;
@@ -53,10 +63,30 @@
     background-color: #f3f4f6;
     transform: scale(1.1);
   }
+  
+  .expired {
+    background-color: #ffebee;
+  }
+  
+  .low-stock {
+    background-color: #fff8e1;
+  }
 </style>
 {% endblock %}
 
 {% block main_content %}
+<!-- Notifications -->
+<div id="notificationArea" class="notification">
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+    </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
 <div class="container mx-auto px-4 py-6">
   <!-- En-tête avec titre et bouton -->
   <div class="flex flex-col md:flex-row justify-between items-center mb-6">
@@ -106,7 +136,7 @@
       </thead>
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
         {% for stock in stocks %}
-        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors {% if stock.is_expired %}expired{% elif stock.is_low_stock %}low-stock{% endif %}">
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
             {{ stock.medicament.nom }}
           </td>
@@ -120,7 +150,11 @@
             {{ stock.seuil_alerte }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            {% if stock.medicament.est_vendu %}
+            {% if stock.is_expired %}
+              <span class="status-unavailable">Expiré</span>
+            {% elif stock.is_low_stock %}
+              <span class="status-unavailable">Stock faible</span>
+            {% elif stock.medicament.est_vendu %}
               <span class="status-available">Disponible</span>
             {% else %}
               <span class="status-unavailable">Indisponible</span>
@@ -140,6 +174,7 @@
               <button
                 class="text-red-600 dark:text-red-400 action-btn deleteStockBtn"
                 data-id="{{ stock.id_Stock }}"
+                data-name="{{ stock.medicament.nom }}"
                 title="Supprimer"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +189,7 @@
     </table>
   </div>
 
-
+  <!-- Pagination -->
   <div class="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
     <div class="text-sm text-gray-700 dark:text-gray-300">
         Affichage de <span class="font-medium">{{ stocks.start_index }}</span> à <span class="font-medium">{{ stocks.end_index }}</span> sur <span class="font-medium">{{ stocks.paginator.count }}</span> Stocks
@@ -190,12 +225,12 @@
             </a>
         {% endif %}
     </div>
-</div>
+  </div>
 </div>
 
 <!-- Modal de création -->
 <div id="createStockModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
     <div class="p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold text-gray-800 dark:text-white">Nouveau Stock</h2>
@@ -277,7 +312,7 @@
 
 <!-- Modal de modification -->
 <div id="updateStockModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
     <div class="p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold text-gray-800 dark:text-white">Modifier Stock</h2>
@@ -359,7 +394,61 @@
   </div>
 </div>
 
+<!-- Modal de confirmation de suppression -->
+<div id="deleteStockConfirmationModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md animate__animated animate__fadeIn">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Confirmer la suppression</h2>
+        <button id="closeDeleteStockModal" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <p id="deleteStockConfirmationMessage" class="mb-6 text-gray-600 dark:text-gray-300"></p>
+      
+      <div class="flex justify-end space-x-3">
+        <button
+          id="cancelDeleteStockBtn"
+          class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Annuler
+        </button>
+        <form id="deleteStockForm" method="post" action="">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            Confirmer
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+  // Notification handling
+  function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center`;
+    notification.innerHTML = `
+      <span>${message}</span>
+      <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+    `;
+    
+    const notificationArea = document.getElementById('notificationArea');
+    notificationArea.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.classList.add('animate__fadeOutRight');
+      setTimeout(() => notification.remove(), 500);
+    }, 5000);
+  }
+
   // Gestion des modals
   document.getElementById('createStockBtn').addEventListener('click', () => {
     document.getElementById('createStockModal').classList.remove('hidden');
@@ -373,26 +462,29 @@
     document.getElementById('updateStockModal').classList.add('hidden');
   });
 
-  // Gestion de la suppression
+  document.getElementById('closeDeleteStockModal').addEventListener('click', () => {
+    document.getElementById('deleteStockConfirmationModal').classList.add('hidden');
+  });
+
+  document.getElementById('cancelDeleteStockBtn').addEventListener('click', () => {
+    document.getElementById('deleteStockConfirmationModal').classList.add('hidden');
+  });
+
+  // Gestion de la suppression avec confirmation modale
   document.querySelectorAll('.deleteStockBtn').forEach(btn => {
     btn.addEventListener('click', function() {
       const stockId = this.getAttribute('data-id');
-      if(confirm('Voulez-vous vraiment supprimer ce stock ?')) {
-        fetch(`{% url 'stocks_delete' 0 %}`.replace('0', stockId), {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if(data.success) {
-            location.reload();
-          } else {
-            alert('Erreur: ' + (data.error || 'Échec de la suppression'));
-          }
-        });
-      }
+      const stockName = this.getAttribute('data-name');
+      
+      // Mettre à jour le message de confirmation
+      document.getElementById('deleteStockConfirmationMessage').textContent = 
+        `Êtes-vous sûr de vouloir supprimer le stock pour le médicament "${stockName}" ? Cette action est irréversible.`;
+      
+      // Mettre à jour l'action du formulaire
+      document.getElementById('deleteStockForm').action = `{% url 'stocks_delete' 0 %}`.replace('0', stockId);
+      
+      // Afficher la modal de confirmation
+      document.getElementById('deleteStockConfirmationModal').classList.remove('hidden');
     });
   });
 
@@ -438,7 +530,7 @@
           
           document.getElementById('updateStockModal').classList.remove('hidden');
         } else {
-          alert('Erreur: ' + (data.error || 'Données introuvables'));
+          showNotification('Erreur: ' + (data.error || 'Données introuvables'), 'error');
         }
       });
     });
@@ -459,9 +551,10 @@
     .then(response => response.json())
     .then(data => {
       if(data.success) {
-        location.reload();
+        showNotification('Stock créé avec succès', 'success');
+        setTimeout(() => location.reload(), 1500);
       } else {
-        alert('Erreur: ' + (data.error || 'Échec de la création'));
+        showNotification('Erreur: ' + (data.error || 'Échec de la création'), 'error');
       }
     });
   });
@@ -481,11 +574,21 @@
     .then(response => response.json())
     .then(data => {
       if(data.success) {
-        location.reload();
+        showNotification('Stock mis à jour avec succès', 'success');
+        setTimeout(() => location.reload(), 1500);
       } else {
-        alert('Erreur: ' + (data.error || 'Échec de la mise à jour'));
+        showNotification('Erreur: ' + (data.error || 'Échec de la mise à jour'), 'error');
       }
     });
   });
+
+  // Auto-close messages after 5 seconds
+  setTimeout(() => {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+      alert.classList.add('animate__fadeOutRight');
+      setTimeout(() => alert.remove(), 500);
+    });
+  }, 5000);
 </script>
 {% endblock %}
