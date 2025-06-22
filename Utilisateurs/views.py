@@ -96,11 +96,11 @@ def change_password(request):
                 user.set_password(new_password)
                 user.save()
                 update_session_auth_hash(request, user)
-                return redirect('profil')
+                return redirect('change_password    ')
             else:
                 messages.error(request, "Mot de passe actuel incorrect.")
 
-    return render(request, 'profile.html', {'user': request.user})
+    return render(request, 'change_password.html', {'user': request.user})
 
 @login_required
 def profile_vente(request):

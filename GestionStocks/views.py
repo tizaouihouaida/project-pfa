@@ -145,91 +145,113 @@ def categories_delete(request, id):
 @login_required
 @role_required('gestionnaire_stocks')
 def medicaments_index(request):
-    medicaments_list = Medicament.afficheLesMedicaments()  # Récupérer les médicaments disponibles
-    categories = CategorieMedicament.afficheLesCategories()  # Récupérer toutes les catégories
+    """
+    Displays the list of medicines with pagination and handles initial form display.
+    Messages from other views will be displayed here.
+    """
+    medicaments_list = Medicament.objects.filter(est_cachee=False) # Only show active medicines
+    categories = CategorieMedicament.objects.all()
     username = request.user.username
     
-    # Pagination
-    paginator = Paginator(medicaments_list, 10)  # 10 médicaments par page
+    paginator = Paginator(medicaments_list, 10)  # 10 medicines per page
     page_number = request.GET.get('page')
     medicaments = paginator.get_page(page_number)
     
-    if request.method == 'POST':
-        form = MedicamentForm(request.POST, request.FILES)
-        if form.is_valid():
-            medicament = form.save(commit=False)
-            medicament.est_vendu = False  # Par défaut, le médicament n'est pas vendu
-            medicament.save()
-            return redirect('medicaments_index')  # Redirige vers la liste des médicaments
-    else:
-        form = MedicamentForm()
-
     return render(request, 'medicaments/index.html', {
         'medicaments': medicaments,
         'categories': categories,
         'username': username,
-        'form': form,
     })
 
 
 @login_required
 @role_required('gestionnaire_stocks')
 def medicament_create(request):
+    """
+    Handles the creation of a new medicine. Redirects to the index with a message.
+    """
     if request.method == 'POST':
         form = MedicamentForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            return redirect('medicaments_index')  # Redirige vers la liste des médicaments
+            try:
+                medicament = form.save(commit=False)
+                medicament.est_vendu = False  # Default value for new medicine
+                medicament.est_cachee = False # Default value for new medicine
+                medicament.save()
+                messages.success(request, '**Succès !** Le médicament a été ajouté avec succès.')
+            except Exception as e:
+                messages.error(request, f"**Erreur !** Impossible d'ajouter le médicament : {e}")
+            return redirect('medicaments_index')
+        else:
+            # Form is not valid, add errors to messages
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"**Erreur de champ ({field}) :** {error}")
+            messages.error(request, "**Erreur !** Veuillez corriger les erreurs du formulaire pour ajouter le médicament.")
+            return redirect('medicaments_index') # Redirect even on error to show messages
     else:
-        form = MedicamentForm()
-    return render(request, 'medicaments/create.html', {'form': form})
+        # If it's a GET request, just redirect to the index page (form is in modal)
+        return redirect('medicaments_index')
 
-def medicament_list(request):
-    medicaments = Medicament.objects.all()
-    return render(request, 'medicament_list.html', {'medicaments': medicaments})
 
 @login_required
 @role_required('gestionnaire_stocks')
 def medicament_hide(request, id):
-    medicament = get_object_or_404(Medicament, id_Medicament=id)
-    # if request.method == 'POST':
-    medicament.cacherMedicament()
+    """
+    Sets a medicine as 'hidden' (soft delete). Redirects to the index with a message.
+    """
+    try:
+        medicament = get_object_or_404(Medicament, id_Medicament=id)
+        if request.method == 'POST': # It's good practice to handle deletions via POST
+            medicament.est_cachee = True # Update the flag to hide
+            medicament.save()
+            messages.success(request, f'**Succès !** Le médicament "{medicament.nom}" a été masqué.')
+        else:
+            messages.warning(request, 'Méthode non autorisée pour cette action.')
+    except Medicament.DoesNotExist:
+        messages.error(request, "**Erreur !** Médicament introuvable.")
+    except Exception as e:
+        messages.error(request, f"**Erreur !** Impossible de masquer le médicament : {e}")
     return redirect('medicaments_index')
-    # return redirect('medicaments_index')
 
 
 @login_required
 @role_required('gestionnaire_stocks')
 def medicament_update(request, id_Medicament):
+    """
+    Handles updating an existing medicine. Redirects to the index with a message.
+    """
     medicament = get_object_or_404(Medicament, id_Medicament=id_Medicament)
 
     if request.method == 'POST':
-        # Mettre à jour uniquement les champs qui ont été modifiés
-        if 'nom' in request.POST:
-            medicament.nom = request.POST.get('nom')
-        if 'description' in request.POST:
-            medicament.description = request.POST.get('description')
-        if 'prixUnitaire' in request.POST:
-            medicament.prixUnitaire = request.POST.get('prixUnitaire')
-        if 'est_vendu' in request.POST:
-            medicament.est_vendu = request.POST.get('est_vendu', False)
-        
-        # Mettre à jour la catégorie si elle est fournie
-        if 'id_Categorie' in request.POST:
-            medicament.id_Categorie_id = request.POST.get('id_Categorie')  # Mettre à jour la catégorie
+        # Using the form to handle update for cleaner code and validation
+        form = MedicamentForm(request.POST, request.FILES, instance=medicament)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, f'**Succès !** Le médicament "{medicament.nom}" a été mis à jour.')
+            except Exception as e:
+                messages.error(request, f"**Erreur !** Impossible de mettre à jour le médicament : {e}")
+            return redirect('medicaments_index')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"**Erreur de champ ({field}) :** {error}")
+            messages.error(request, "**Erreur !** Veuillez corriger les erreurs du formulaire pour mettre à jour le médicament.")
+            return redirect('medicaments_index')
+    else:
+        # For GET request to update, if you have a separate update page, you'd render it.
+        # But since we're using a modal, we redirect to the index.
+        return redirect('medicaments_index')
 
-        image = request.FILES.get('image')
 
-        # Si une nouvelle image est téléchargée, mettez à jour le champ image
-        if image:
-            medicament.image = image  # Mettre à jour l'image
-
-        medicament.save()  # Enregistrer les modifications
-        return redirect('medicaments_index')  # Rediriger vers la liste des médicaments
-
-    categories = CategorieMedicament.objects.all()  # Récupérer toutes les catégories pour le formulaire
-    return render(request, 'medicaments/update.html', {'medicament': medicament, 'categories': categories})
-
+def medicament_list(request):
+    """
+    This view seems redundant if medicaments_index is the main list display.
+    Consider removing it if not explicitly used for another purpose.
+    """
+    medicaments = Medicament.objects.all()
+    return render(request, 'medicament_list.html', {'medicaments': medicaments})
 
 @login_required
 @role_required('gestionnaire_stocks')

@@ -9,7 +9,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
-        <span class="ml-4 text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden md:block">PharmaVision</span>
+        <span class="ml-4 text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden md:block">PHARMAFLOW</span>
       </div>
 
       <!-- Section droite -->
@@ -27,7 +27,6 @@
           isDragging: false, 
           startY: 0, 
           currentY: 0,
-          unreadCount: 3, // Valeur initiale - à remplacer par la valeur réelle
           markAsRead: function() {
             this.unreadCount = 0;
             // Ici vous pouvez ajouter un appel AJAX pour marquer comme lu côté serveur
@@ -80,7 +79,6 @@
                 <div class="ml-3 flex-1">
                   <p class="text-sm font-medium text-gray-900 dark:text-white">Stock critique</p>
                   <p class="text-sm text-gray-500 dark:text-gray-400">Paracétamol en rupture de stock</p>
-                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Il y a 2 heures</p>
                 </div>
                 <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-2">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
