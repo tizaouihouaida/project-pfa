@@ -73,8 +73,8 @@
       </tfoot>
     </table>
     <button onclick="checkout()" class="btn btn-primary">
-      Finaliser la vente
-    </button>
+  Finaliser la vente
+</button>
   </div>
 </div>
 
@@ -279,47 +279,51 @@ function checkout() {
   }
 
   function showReceipt(total) {
-    let receipt = `
-      <div class="text-center mb-4">
-        <h3>Reçu de Vente</h3>
-        <p>Date: ${new Date().toLocaleDateString()}</p>
-      </div>
-      <table class="table table-bordered">
-        <thead>
-          <tr>
-            <th>Produit</th>
-            <th>Prix unitaire</th>
-            <th>Quantité</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    cart.forEach((item) => {
-      receipt += `
+  let receipt = `
+    <div class="text-center mb-4">
+      <h3>Reçu de Vente</h3>
+      <p>Date: ${new Date().toLocaleDateString()}</p>
+    </div>
+    <table class="table table-bordered">
+      <thead>
         <tr>
-          <td>${item.name}</td>
-          <td>${item.price.toFixed(2)}</td>
-          <td>${item.quantity}</td>
-          <td>${item.total.toFixed(2)}</td>
+          <th>Produit</th>
+          <th>Prix unitaire</th>
+          <th>Quantité</th>
+          <th>Total</th>
         </tr>
-      `;
-    });
+      </thead>
+      <tbody>
+  `;
+  cart.forEach((item) => {
     receipt += `
-        <tr>
-          <td colspan="3"><strong>Total</strong></td>
-          <td><strong>${total.toFixed(2)}</strong></td>
-        </tr>
-        </tbody>
-      </table>
-      <p class="text-center mt-4">Merci pour votre achat!</p>
+      <tr>
+        <td>${item.name}</td>
+        <td>${item.price.toFixed(2)}</td>
+        <td>${item.quantity}</td>
+        <td>${item.total.toFixed(2)}</td>
+      </tr>
     `;
-    document.getElementById("receiptBody").innerHTML = receipt;
-    $("#receiptModal").modal("show");
-  }
+  });
+  receipt += `
+      <tr>
+        <td colspan="3"><strong>Total</strong></td>
+        <td><strong>${total.toFixed(2)}</strong></td>
+      </tr>
+      </tbody>
+    </table>
+    <p class="text-center mt-4">Merci pour votre achat!</p>
+  `;
+  document.getElementById("receiptBody").innerHTML = receipt;
+
+  // Show Bootstrap 5 modal
+  const modal = new bootstrap.Modal(document.getElementById("receiptModal"));
+  modal.show();
+}
+
 
   function closeModal() {
-    $("#receiptModal").modal("hide");
+    $("#receiptModal").modal("show");
   }
 </script>
 <style>
