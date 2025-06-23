@@ -1,385 +1,751 @@
-{% extends 'layout/base_vente.html' %} {% block title %}POS{% endblock %}
-{%block main_content %}
-<div class="row">
-  <div class="col-md-7">
-    <h2>Médicaments disponibles</h2>
-    <input
-      type="text"
-      id="search-bar"
-      class="form-control mb-3"
-      placeholder="Rechercher un médicament..."
-      onkeyup="searchMedicaments()"
-    />
-    <div class="medicaments row" id="medicaments-list">
-      {% for medicament in medicaments %}
-      <div class="medicament col-md-4 mb-4">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            {% if medicament.image %}
-            <img
-              src="{{ medicament.image.url }}"
-              alt="{{ medicament.nom }}"
-              class="img-fluid mb-2 justify-center ml-8"
-              style="max-height: 90px"
-            />
-            {% else %}
-            <div
-              class="bg-gray-200 mb-2"
-              style="
-                height: 150px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              "
-            >
-              Pas d'image
-            </div>
-            {% endif %}
-            <h5 class="card-title">{{ medicament.nom }}</h5>
-            <p class="card-text">Prix: {{ medicament.prixUnitaire }}</p>
-            <button
-              onclick="addToCart('{{ medicament.id_Medicament }}', '{{ medicament.nom }}', '{{ medicament.prixUnitaire }}')"
-              class="btn btn-primary"
-            >
-              Ajouter au panier
-            </button>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  <div class="col-md-4">
-    <h2>Panier</h2>
-    <table id="cart-items" class="table">
-      <thead>
-        <tr>
-          <th>Produit</th>
-          <th>Unit Price</th>
-          <th>Quantity</th>
-          <th>Total</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Les éléments du panier seront ajoutés ici -->
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3">Total</td>
-          <td id="total">0.00</td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
-    <button onclick="checkout()" class="btn btn-primary">
-  Finaliser la vente
-</button>
-  </div>
-</div>
-
-<!-- Modal for Receipt -->
-<div
-  class="modal fade"
-  id="receiptModal"
-  tabindex="-1"
-  role="dialog"
-  aria-labelledby="receiptModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="receiptModalLabel">Reçu de vente</h5>
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-          onclick="closeModal()"
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body" id="receiptBody">
-        <!-- Receipt content will be inserted here -->
-      </div>
-      <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          data-dismiss="modal"
-          aria-label="Close"
-          onclick="closeModal()"
-        >
-          Fermer
-        </button>
-        <button type="button" class="btn btn-primary" onclick="window.print()">
-          Imprimer
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === name + "=") {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
+{% extends 'layout/base_vente.html' %} {% block title %}POS{% endblock %} {%block main_content %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS - Point de Vente</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar-cart {
+            background: #f8f9fa;
+            border-left: 3px solid #007bff;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
         }
-      }
-    }
-    return cookieValue;
-  }
-
-  const csrftoken = getCookie("csrftoken");
-  let cart = [];
-
-  function addToCart(id, name, price) {
-    cart.push({
-      id: id,
-      name: name,
-      price: parseFloat(price),
-      quantity: 1,
-      total: parseFloat(price),
-    });
-    updateCart();
-  }
-
-  function updateCart() {
-    let cartTable = document
-      .getElementById("cart-items")
-      .getElementsByTagName("tbody")[0];
-    cartTable.innerHTML = "";
-    let total = 0;
-    cart.forEach((item) => {
-      let row = cartTable.insertRow();
-      row.insertCell(0).innerText = item.name;
-      row.insertCell(1).innerText = item.price.toFixed(2);
-
-      // Cellule pour la quantité avec les boutons + et -
-      let quantityCell = row.insertCell(2);
-      quantityCell.innerHTML = `
-        <div class="d-flex align-items-center">
-          <button class="btn btn-sm btn-outline-secondary me-2 decrement-btn" data-id="${
-            item.id
-          }" ${item.quantity <= 1 ? "disabled" : ""}>-</button>
-          <span class="mx-2">${item.quantity}</span>
-          <button class="btn btn-sm btn-outline-secondary ms-2 increment-btn" data-id="${
-            item.id
-          }">+</button>
-        </div>
-      `;
-
-      row.insertCell(3).innerText = item.total.toFixed(2);
-      let actionCell = row.insertCell(4);
-      actionCell.innerHTML = `
-        <button class="btn btn-danger delete-btn" data-id="${item.id}">
-          <svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
-          </svg>
-        </button>
-      `;
-      total += item.total;
-    });
-    document.getElementById("total").innerText = total.toFixed(2);
-
-    // Ajouter les écouteurs d'événements après avoir créé les éléments
-    attachQuantityHandlers();
-  }
-
-  // Fonction pour attacher les gestionnaires d'événements aux boutons
-  function attachQuantityHandlers() {
-    // Gestionnaires pour les boutons d'incrémentation
-    document.querySelectorAll(".increment-btn").forEach((button) => {
-      button.addEventListener("click", function () {
-        const id = this.getAttribute("data-id");
-        const item = cart.find((item) => item.id === id);
-        if (item) {
-          item.quantity += 1;
-          item.total = item.price * item.quantity;
-          updateCart();
+        
+        .cart-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 1rem;
+            margin: -1rem -1rem 1rem -1rem;
         }
-      });
-    });
-
-    // Gestionnaires pour les boutons de décrémentation
-    document.querySelectorAll(".decrement-btn").forEach((button) => {
-      button.addEventListener("click", function () {
-        const id = this.getAttribute("data-id");
-        const item = cart.find((item) => item.id === id);
-        if (item && item.quantity > 1) {
-          item.quantity -= 1;
-          item.total = item.price * item.quantity;
-          updateCart();
+        
+        .cart-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
         }
-      });
-    });
-
-    // Gestionnaires pour les boutons de suppression
-    document.querySelectorAll(".delete-btn").forEach((button) => {
-      button.addEventListener("click", function () {
-        const id = this.getAttribute("data-id");
-        removeFromCart(id);
-      });
-    });
-  }
-
-  function removeFromCart(id) {
-    cart = cart.filter((item) => item.id !== id);
-    updateCart();
-  }
-
-function checkout() {
-    if (cart.length === 0) {
-        alert("Votre panier est vide.");
-        return;
-    }
-    console.log("Finalizing sale with cart:", cart);
-    $.post(
-        "{% url 'finalize_sale' %}",
-        { cart: JSON.stringify(cart), csrfmiddlewaretoken: csrftoken },
-        function (data) {
-            if (data.status === "success") {
-                showReceipt(data.total);
-                cart = [];
-                updateCart();
-            } else {
-                alert(data.message);
+        
+        .cart-item:hover {
+            box-shadow: 0 2px 10px rgba(0,123,255,0.1);
+            transform: translateY(-1px);
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .product-card {
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .stock-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+        
+        .stock-high {
+            background: #28a745;
+        }
+        
+        .stock-medium {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .stock-low {
+            background: #dc3545;
+        }
+        
+        .stock-out {
+            background: #6c757d;
+        }
+        
+        .cart-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .checkout-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .search-input {
+            padding-left: 45px;
+            border-radius: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        
+        .empty-cart {
+            text-align: center;
+            color: #6c757d;
+            padding: 2rem;
+        }
+        
+        .category-filters {
+            margin-bottom: 1.5rem;
+        }
+        
+        .category-btn {
+            margin: 0.25rem;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            border: 2px solid #007bff;
+            background: white;
+            color: #007bff;
+            transition: all 0.3s ease;
+        }
+        
+        .category-btn.active,
+        .category-btn:hover {
+            background: #007bff;
+            color: white;
+        }
+        
+        .product-image {
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .price-tag {
+            background: #007bff;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-cart {
+                position: relative;
+                height: auto;
             }
         }
-    ).fail(function(jqXHR, textStatus, errorThrown) {
-        console.error("Error finalizing sale: ", textStatus, errorThrown);
-        alert("Une erreur est survenue lors de la finalisation de la vente.");
-    });
-}
-
-
-
-
-
-  function searchMedicaments() {
-    const searchQuery = document
-      .getElementById("search-bar")
-      .value.toLowerCase();
-    const medicaments = document.querySelectorAll(".medicament");
-
-    medicaments.forEach((medicament) => {
-      const name = medicament
-        .querySelector(".card-title")
-        .innerText.toLowerCase();
-      medicament.style.display = name.includes(searchQuery) ? "block" : "none";
-    });
-  }
-
-  function showReceipt(total) {
-  let receipt = `
-    <div class="text-center mb-4">
-      <h3>Reçu de Vente</h3>
-      <p>Date: ${new Date().toLocaleDateString()}</p>
+        
+        .cart-counter {
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Products Section -->
+            <div class="col-lg-8 col-md-7">
+                <div class="p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-pills me-2"></i>Médicaments disponibles</h2>
+                        <div class="d-flex align-items-center">
+                            <span class="me-2">Total produits: <span id="total-products" class="fw-bold text-primary">0</span></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input
+                            type="text"
+                            id="search-bar"
+                            class="form-control search-input"
+                            placeholder="Rechercher un médicament..."
+                        />
+                    </div>
+                    
+                    <!-- Category Filters -->
+                    <div class="category-filters">
+                        <button class="btn category-btn active" data-category="all">Tous</button>
+                        <button class="btn category-btn" data-category="antibiotiques">Antibiotiques</button>
+                        <button class="btn category-btn" data-category="analgesiques">Analgésiques</button>
+                        <button class="btn category-btn" data-category="vitamines">Vitamines</button>
+                        <button class="btn category-btn" data-category="autres">Autres</button>
+                    </div>
+                    
+                    <!-- Products Grid -->
+                    <div class="row" id="products-grid">
+                        <!-- Products will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cart Sidebar -->
+            <div class="col-lg-4 col-md-5">
+                <div class="sidebar-cart p-3">
+                    <div class="cart-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Panier</h4>
+                            <div class="position-relative">
+                                <i class="fas fa-shopping-bag fa-lg"></i>
+                                <span id="cart-counter" class="cart-counter">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cart Items -->
+                    <div id="cart-items-container">
+                        <div id="empty-cart" class="empty-cart">
+                            <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                            <p>Votre panier est vide</p>
+                            <small class="text-muted">Ajoutez des médicaments pour commencer</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Cart Summary -->
+                    <div id="cart-summary" class="cart-summary mt-3" style="display: none;">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Sous-total:</span>
+                            <span id="subtotal">0.00 €</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>TVA (20%):</span>
+                            <span id="tax">0.00 €</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Total:</strong>
+                            <strong id="total">0.00 €</strong>
+                        </div>
+                        
+                        <button id="checkout-btn" class="btn checkout-btn btn-success w-100">
+                            <i class="fas fa-credit-card me-2"></i>Finaliser la vente
+                        </button>
+                        
+                        <button class="btn btn-outline-danger w-100 mt-2" onclick="clearCart()">
+                            <i class="fas fa-trash me-2"></i>Vider le panier
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <table class="table table-bordered">
-      <thead>
-        <tr>
-          <th>Produit</th>
-          <th>Prix unitaire</th>
-          <th>Quantité</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-  cart.forEach((item) => {
-    receipt += `
-      <tr>
-        <td>${item.name}</td>
-        <td>${item.price.toFixed(2)}</td>
-        <td>${item.quantity}</td>
-        <td>${item.total.toFixed(2)}</td>
-      </tr>
-    `;
-  });
-  receipt += `
-      <tr>
-        <td colspan="3"><strong>Total</strong></td>
-        <td><strong>${total.toFixed(2)}</strong></td>
-      </tr>
-      </tbody>
-    </table>
-    <p class="text-center mt-4">Merci pour votre achat!</p>
-  `;
-  document.getElementById("receiptBody").innerHTML = receipt;
 
-  // Show Bootstrap 5 modal
-  const modal = new bootstrap.Modal(document.getElementById("receiptModal"));
-  modal.show();
-}
+    <!-- Receipt Modal -->
+    <div class="modal fade" id="receiptModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Reçu de vente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="receiptBody">
+                    <!-- Receipt content will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Fermer
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimer
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="sendReceipt()">
+                        <i class="fas fa-envelope me-2"></i>Envoyer par email
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notification-toast" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="fas fa-info-circle text-primary me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-message">
+                <!-- Toast message will be inserted here -->
+            </div>
+        </div>
+    </div>
 
-  function closeModal() {
-    $("#receiptModal").modal("show");
-  }
-</script>
-<style>
-  @media print {
-    body * {
-      visibility: hidden;
-    }
-    #receiptModal,
-    #receiptModal * {
-      visibility: visible;
-    }
-    #receiptModal {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: auto;
-      box-shadow: none;
-      padding: 20px;
-      margin: 0;
-    }
-    .modal-dialog {
-      width: 100%;
-      margin: 0;
-    }
-    .modal-content {
-      border: none;
-      box-shadow: none;
-    }
-    .modal-header,
-    .modal-footer {
-      display: none;
-    }
-  }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sample data - replace with your Django template data
+        const sampleProducts = [
+            {
+                id: 1,
+                name: "Paracétamol 500mg",
+                price: 5.50,
+                stock: 25,
+                category: "analgesiques",
+                image: "https://via.placeholder.com/150x120/007bff/ffffff?text=Med1",
+                description: "Antalgique et antipyrétique"
+            },
+            {
+                id: 2,
+                name: "Amoxicilline 1g",
+                price: 12.30,
+                stock: 8,
+                category: "antibiotiques",
+                image: "https://via.placeholder.com/150x120/28a745/ffffff?text=Med2",
+                description: "Antibiotique à large spectre"
+            },
+            {
+                id: 3,
+                name: "Vitamine C 1000mg",
+                price: 8.90,
+                stock: 0,
+                category: "vitamines",
+                image: "https://via.placeholder.com/150x120/ffc107/000000?text=Med3",
+                description: "Complément vitaminique"
+            },
+            {
+                id: 4,
+                name: "Ibuprofène 400mg",
+                price: 7.25,
+                stock: 15,
+                category: "analgesiques",
+                image: "https://via.placeholder.com/150x120/dc3545/ffffff?text=Med4",
+                description: "Anti-inflammatoire non stéroïdien"
+            },
+            {
+                id: 5,
+                name: "Doliprane 1000mg",
+                price: 6.80,
+                stock: 3,
+                category: "analgesiques",
+                image: "https://via.placeholder.com/150x120/6f42c1/ffffff?text=Med5",
+                description: "Paracétamol dosé à 1000mg"
+            }
+        ];
 
-  .btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    border-radius: 0.2rem;
-  }
+        let cart = JSON.parse(localStorage.getItem('pos_cart')) || [];
+        let products = sampleProducts;
+        let filteredProducts = products;
 
-  .me-2 {
-    margin-right: 0.5rem;
-  }
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProducts();
+            updateCart();
+            setupEventListeners();
+        });
 
-  .ms-2 {
-    margin-left: 0.5rem;
-  }
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('search-bar').addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                filteredProducts = products.filter(product => 
+                    product.name.toLowerCase().includes(query) ||
+                    product.description.toLowerCase().includes(query)
+                );
+                renderProducts();
+            });
 
-  .d-flex {
-    display: flex;
-  }
+            // Category filters
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const category = this.dataset.category;
+                    if (category === 'all') {
+                        filteredProducts = products;
+                    } else {
+                        filteredProducts = products.filter(product => product.category === category);
+                    }
+                    renderProducts();
+                });
+            });
 
-  .align-items-center {
-    align-items: center;
-  }
-</style>
+            // Checkout button
+            document.getElementById('checkout-btn').addEventListener('click', checkout);
+        }
+
+        function getStockStatus(stock) {
+            if (stock === 0) return { class: 'stock-out', text: 'Rupture', icon: 'fa-times' };
+            if (stock <= 5) return { class: 'stock-low', text: `${stock} restants`, icon: 'fa-exclamation-triangle' };
+            if (stock <= 15) return { class: 'stock-medium', text: `${stock} en stock`, icon: 'fa-exclamation' };
+            return { class: 'stock-high', text: `${stock} disponibles`, icon: 'fa-check' };
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            document.getElementById('total-products').textContent = filteredProducts.length;
+            
+            if (filteredProducts.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">Aucun produit trouvé</h4>
+                        <p class="text-muted">Essayez de modifier votre recherche</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filteredProducts.map(product => {
+                const stockStatus = getStockStatus(product.stock);
+                const isOutOfStock = product.stock === 0;
+                
+                return `
+                    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                        <div class="card product-card ${isOutOfStock ? 'opacity-75' : ''}">
+                            <div class="position-relative">
+                                <img src="${product.image}" alt="${product.name}" class="card-img-top product-image">
+                                <span class="badge ${stockStatus.class} stock-badge">
+                                    <i class="fas ${stockStatus.icon} me-1"></i>${stockStatus.text}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-title">${product.name}</h6>
+                                <p class="card-text text-muted small">${product.description}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="price-tag">${product.price.toFixed(2)} €</span>
+                                    <button 
+                                        class="btn btn-primary btn-sm ${isOutOfStock ? 'disabled' : ''}" 
+                                        onclick="addToCart(${product.id})"
+                                        ${isOutOfStock ? 'disabled' : ''}
+                                    >
+                                        <i class="fas fa-plus me-1"></i>Ajouter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product || product.stock === 0) {
+                showToast('Produit non disponible', 'error');
+                return;
+            }
+
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                if (existingItem.quantity >= product.stock) {
+                    showToast(`Stock insuffisant. Seulement ${product.stock} disponibles`, 'warning');
+                    return;
+                }
+                existingItem.quantity += 1;
+                existingItem.total = existingItem.quantity * existingItem.price;
+            } else {
+                cart.push({
+                    id: productId,
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1,
+                    total: product.price,
+                    maxStock: product.stock
+                });
+            }
+
+            updateCart();
+            saveCart();
+            showToast(`${product.name} ajouté au panier`, 'success');
+        }
+
+        function updateCart() {
+            const container = document.getElementById('cart-items-container');
+            const emptyCart = document.getElementById('empty-cart');
+            const summary = document.getElementById('cart-summary');
+            const counter = document.getElementById('cart-counter');
+
+            if (cart.length === 0) {
+                emptyCart.style.display = 'block';
+                summary.style.display = 'none';
+                counter.textContent = '0';
+                return;
+            }
+
+            emptyCart.style.display = 'none';
+            summary.style.display = 'block';
+            counter.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            const cartHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${item.name}</h6>
+                            <small class="text-muted">${item.price.toFixed(2)} € / unité</small>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeFromCart(${item.id})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="quantity-controls">
+                            <button class="btn btn-outline-secondary quantity-btn" onclick="updateQuantity(${item.id}, -1)" ${item.quantity <= 1 ? 'disabled' : ''}>
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <span class="mx-2 fw-bold">${item.quantity}</span>
+                            <button class="btn btn-outline-secondary quantity-btn" onclick="updateQuantity(${item.id}, 1)" ${item.quantity >= item.maxStock ? 'disabled' : ''}>
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <strong class="text-primary">${item.total.toFixed(2)} €</strong>
+                    </div>
+                    ${item.quantity >= item.maxStock ? '<small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Stock maximum atteint</small>' : ''}
+                </div>
+            `).join('');
+
+            container.innerHTML = cartHTML;
+
+            // Update summary
+            const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
+            const tax = subtotal * 0.2;
+            const total = subtotal + tax;
+
+            document.getElementById('subtotal').textContent = subtotal.toFixed(2) + ' €';
+            document.getElementById('tax').textContent = tax.toFixed(2) + ' €';
+            document.getElementById('total').textContent = total.toFixed(2) + ' €';
+        }
+
+        function updateQuantity(productId, change) {
+            const item = cart.find(item => item.id === productId);
+            if (!item) return;
+
+            const newQuantity = item.quantity + change;
+            
+            if (newQuantity <= 0) {
+                removeFromCart(productId);
+                return;
+            }
+
+            if (newQuantity > item.maxStock) {
+                showToast(`Stock insuffisant. Maximum ${item.maxStock} disponibles`, 'warning');
+                return;
+            }
+
+            item.quantity = newQuantity;
+            item.total = item.quantity * item.price;
+            
+            updateCart();
+            saveCart();
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCart();
+            saveCart();
+            showToast('Produit retiré du panier', 'info');
+        }
+
+        function clearCart() {
+            if (cart.length === 0) return;
+            
+            if (confirm('Êtes-vous sûr de vouloir vider le panier ?')) {
+                cart = [];
+                updateCart();
+                saveCart();
+                showToast('Panier vidé', 'info');
+            }
+        }
+
+        function saveCart() {
+            localStorage.setItem('pos_cart', JSON.stringify(cart));
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                showToast('Votre panier est vide', 'warning');
+                return;
+            }
+
+            // Simulate sale finalization
+            const total = cart.reduce((sum, item) => sum + item.total, 0) * 1.2; // Include tax
+            
+            showReceipt(total);
+            
+            // Clear cart after successful checkout
+            cart = [];
+            updateCart();
+            saveCart();
+            
+            showToast('Vente finalisée avec succès!', 'success');
+        }
+
+        function showReceipt(total) {
+            const receiptDate = new Date().toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            let receipt = `
+                <div class="text-center mb-4">
+                    <h3 class="text-primary">🏥 PNAWKAST Pharmacie</h3>
+                    <p class="mb-1">123 Avenue de la Santé, Tunis</p>
+                    <p class="mb-1">Tél: +216 71 123 456</p>
+                    <hr>
+                    <h4>Reçu de Vente</h4>
+                    <p class="text-muted">Date: ${receiptDate}</p>
+                </div>
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produit</th>
+                            <th>Prix unitaire</th>
+                            <th>Quantité</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            cart.forEach(item => {
+                receipt += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.price.toFixed(2)} €</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.total.toFixed(2)} €</td>
+                    </tr>
+                `;
+            });
+
+            const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
+            const tax = subtotal * 0.2;
+
+            receipt += `
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Sous-total</strong></td>
+                            <td><strong>${subtotal.toFixed(2)} €</strong></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"><strong>TVA (20%)</strong></td>
+                            <td><strong>${tax.toFixed(2)} €</strong></td>
+                        </tr>
+                        <tr class="table-success">
+                            <td colspan="3"><strong>Total</strong></td>
+                            <td><strong>${total.toFixed(2)} €</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="text-center mt-4">
+                    <p class="text-primary">Merci pour votre visite!</p>
+                    <small class="text-muted">Conservez ce reçu pour tout échange ou remboursement</small>
+                </div>
+            `;
+
+            document.getElementById('receiptBody').innerHTML = receipt;
+            
+            const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+            modal.show();
+        }
+
+        function sendReceipt() {
+            const email = prompt('Entrez l\'adresse email du client:');
+            if (email && email.includes('@')) {
+                // Simulate sending email
+                setTimeout(() => {
+                    showToast('Reçu envoyé par email avec succès!', 'success');
+                }, 1000);
+                showToast('Envoi du reçu en cours...', 'info');
+            } else if (email) {
+                showToast('Adresse email invalide', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('notification-toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            // Set message and type-specific styling
+            toastMessage.textContent = message;
+            
+            // Remove existing type classes
+            toast.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+            
+            // Add appropriate class based on type
+            switch(type) {
+                case 'success':
+                    toast.classList.add('bg-success', 'text-white');
+                    break;
+                case 'error':
+                    toast.classList.add('bg-danger', 'text-white');
+                    break;
+                case 'warning':
+                    toast.classList.add('bg-warning', 'text-dark');
+                    break;
+                default:
+                    toast.classList.add('bg-info', 'text-white');
+            }
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+    </script>
+</body>
+</html>
 {% endblock %}
