@@ -1,41 +1,31 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.template.loader import render_to_string  # Importer render_to_string
+from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from .models import Vente, DetailVente
-from GestionStocks.models import Medicament, CategorieMedicament, Stock, Notification  # Importez depuis GestionStocks
-from .forms import VenteForm, DetailVenteForm
+from .models import Vente, DetailVente, Ordonnance, LigneOrdonnance
+from GestionStocks.models import Medicament, CategorieMedicament, Stock, Notification
+from .forms import VenteForm, DetailVenteForm, OrdonnanceForm, LigneOrdonnanceForm
 from Utilisateurs.decorators import role_required
-from django.db.models import Sum, DecimalField, IntegerField
+from django.db.models import Sum, DecimalField, IntegerField, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import timedelta
-from django.views.generic import DetailView  # Add this import
-from django.views.generic import CreateView  # Also add this if using CreateView
+from django.views.generic import DetailView, CreateView
 from django.urls import reverse_lazy
-from .models import Ordonnance, LigneOrdonnance, Medicament  # Ensure all models are imported
-from .forms import OrdonnanceForm, LigneOrdonnanceForm
-from django.db.models import Q
 import json
 import logging
 from django.db import transaction
 from decimal import Decimal
 from django.core.exceptions import ValidationError
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db import transaction
-from .models import Vente, DetailVente
-from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from .models import Ordonnance
-from .forms import OrdonnanceForm, LigneOrdonnanceForm
-from django.urls import reverse_lazy
+from django.forms import inlineformset_factory
 
 logger = logging.getLogger(__name__)
 
-@csrf_exempt  # Only if you're having CSRF issues with the AJAX call
+@csrf_exempt
 def send_receipt(request):
     if request.method == 'POST':
         try:
@@ -43,11 +33,6 @@ def send_receipt(request):
             sale_id = data.get('sale_id')
             client_email = data.get('client_email')
             
-            # Here you would typically:
-            # 1. Generate the receipt content
-            # 2. Send the email
-            
-            # Example implementation:
             send_mail(
                 f'Reçu de votre achat #{sale_id}',
                 'Merci pour votre achat chez PNAWKAST!',
@@ -57,10 +42,8 @@ def send_receipt(request):
             )
             
             return JsonResponse({'status': 'success', 'message': 'Reçu envoyé avec succès'})
-            
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-    
     return JsonResponse({'status': 'error', 'message': 'Méthode non autorisée'}, status=405)
 
 @login_required
@@ -69,38 +52,16 @@ def pos_index(request):
     username = request.user.username
     categories = CategorieMedicament.afficheLesCategories()
     medicaments = Medicament.Medicament_disponible()
-    return render(request, 'pos/index.html', {'categories': categories, 'medicaments': medicaments, 'username': username})
+    return render(request, 'pos/index.html', {
+        'categories': categories,
+        'medicaments': medicaments,
+        'username': username
+    })
 
-from django.views.generic import CreateView, DetailView
-from django.urls import reverse_lazy
-from .models import Ordonnance
-from .forms import OrdonnanceForm
-
-class CreateOrdonnanceView(CreateView):
-    model = Ordonnance
-    form_class = OrdonnanceForm
-    template_name = 'ordonnance/create.html'
-    success_url = reverse_lazy('liste_ordonnances')  # Make sure this URL name exists
-
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-class OrdonnanceDetailView(DetailView):
-    model = Ordonnance
-    template_name = 'ordonnance/detail.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['lignes'] = self.object.ligneordonnance_set.all()
-        context['ligne_form'] = LigneOrdonnanceForm(initial={'ordonnance': self.object})
-        return context
-    
 @login_required
 @role_required('gestionnaire_ventes')
 def pos_view(request):
     medicaments = Medicament.objects.all()
-    # Add stock warning threshold (e.g., 5 items)
     for med in medicaments:
         med.low_stock = med.quantite <= 5
     return render(request, 'pos.html', {'medicaments': medicaments})
@@ -129,34 +90,26 @@ def sales_dashboard(request):
     )
 
     top_sale = ventes.order_by('-totalVente').first()
-
     top_sales = ventes.values('dateVente', 'totalVente').order_by('dateVente')
-
-    # Sérialiser les données en JSON
-    top_sales_json = json.dumps(list(top_sales), default=str)
-    medicament_stats_json = json.dumps(list(medicament_stats), default=str)
 
     return render(request, 'sales_dashboard.html', {
         'ventes': ventes,
         'total_revenue': total_revenue,
         'top_medicament': top_medicament,
-        'medicament_stats': medicament_stats_json,  # Passer les données sérialisées
-        'top_sales': top_sales_json,  # Passer les données sérialisées
+        'medicament_stats': json.dumps(list(medicament_stats), default=str),
+        'top_sales': json.dumps(list(top_sales), default=str),
         'top_sale': top_sale,
         'username': username,
-        
     })
 
 @transaction.atomic
 def finaliser_vente(request, pk):
     vente = get_object_or_404(Vente, pk=pk)
     
-    # Check if cart is empty
     if not vente.details.exists():
         messages.error(request, "Le panier est vide!")
         return redirect('panier')
     
-    # Verify stock and calculate total
     total = 0
     for detail in vente.details.all():
         medicament = detail.medicament
@@ -165,7 +118,6 @@ def finaliser_vente(request, pk):
             return redirect('panier')
         total += detail.prix_unitaire * detail.quantite
     
-    # Update stock and complete sale
     for detail in vente.details.all():
         medicament = detail.medicament
         medicament.quantite_stock -= detail.quantite
@@ -184,8 +136,10 @@ def ventes_index(request):
     username = request.user.username
     today = timezone.now().date()
     ventes = Vente.objects.filter(dateVente__date=today)
-    return render(request, 'ventes/index.html', {'ventes': ventes, 'username': username})
-
+    return render(request, 'ventes/index.html', {
+        'ventes': ventes,
+        'username': username
+    })
 
 @login_required
 @role_required('gestionnaire_ventes')
@@ -199,7 +153,6 @@ def search_ventes(request):
         ).values('id_Vente', 'id_User__username', 'dateVente', 'totalVente')
         return JsonResponse({'ventes': list(ventes)})
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
-
 
 @login_required
 @role_required('gestionnaire_ventes')
@@ -220,50 +173,11 @@ def vente_detail(request, id):
             })
             total_html += float(detail.sousTotal)
         
-        # Créer le contenu HTML pour le modal
-        modal_content = f"""
-        <div class="container">
-            <div class="row mb-3">
-                <div class="col">
-                    <strong>Numéro de vente:</strong> {vente.id_Vente}
-                </div>
-                <div class="col">
-                    <strong>Date:</strong> {vente.dateVente.strftime("%d/%m/%Y %H:%M")}
-                </div>
-            </div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Médicament</th>
-                        <th>Quantité</th>
-                        <th>Prix unitaire</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-        """
-        
-        for detail in details_list:
-            modal_content += f"""
-                    <tr>
-                        <td>{detail['medicament']}</td>
-                        <td>{detail['quantite']}</td>
-                        <td>{detail['prix_unitaire']:.2f}</td>
-                        <td>{detail['total']:.2f}</td>
-                    </tr>
-            """
-        
-        modal_content += f"""
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3" class="text-right"><strong>Total</strong></td>
-                        <td><strong>{total_html:.2f}</strong></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        """
+        modal_content = render_to_string('includes/vente_modal.html', {
+            'vente': vente,
+            'details': details_list,
+            'total_html': total_html
+        })
         
         return JsonResponse({
             'modal_content': modal_content,
@@ -273,15 +187,12 @@ def vente_detail(request, id):
             'details': details_list
         })
     except Vente.DoesNotExist:
-        return JsonResponse({
-            'error': 'Vente non trouvée'
-        }, status=404)
+        return JsonResponse({'error': 'Vente non trouvée'}, status=404)
     except Exception as e:
         logger.error(f"Erreur dans la vue vente_detail : {e}")
         return JsonResponse({
             'error': 'Une erreur est survenue lors de la récupération des détails de la vente.'
         }, status=500)
-
 
 @login_required
 @role_required('gestionnaire_ventes')
@@ -296,7 +207,6 @@ def filter_by_category(request):
         return JsonResponse({'medicaments': list(medicaments)})
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
-
 @login_required
 @role_required('gestionnaire_ventes')
 def search_medicaments(request):
@@ -310,14 +220,17 @@ def search_medicaments(request):
         return JsonResponse({'medicaments': list(medicaments)})
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
-
 @login_required
 @role_required('gestionnaire_ventes')
 def add_to_cart(request):
     if request.method == 'POST':
         medicament_id = request.POST.get('medicament_id')
         medicament = get_object_or_404(Medicament, id_Medicament=medicament_id)
-        return JsonResponse({'status': 'success', 'name': medicament.nom, 'price': str(medicament.prixUnitaire)})
+        return JsonResponse({
+            'status': 'success',
+            'name': medicament.nom,
+            'price': str(medicament.prixUnitaire)
+        })
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
 @login_required
@@ -340,7 +253,7 @@ def check_stock(request):
                 return JsonResponse({
                     'status': 'warning',
                     'available': True,
-                    'message': f'Stock insuffisant. Seuls {stock.quantite} unités sont disponibles. Voulez-vous continuer avec cette quantité ?',
+                    'message': f'Stock insuffisant. Seuls {stock.quantite} unités sont disponibles.',
                     'stock': stock.quantite,
                     'can_sell': stock.quantite
                 })
@@ -361,7 +274,6 @@ def check_stock(request):
                 'can_sell': 0
             })
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
 
 @login_required
 @role_required('gestionnaire_ventes')
@@ -388,10 +300,8 @@ def finalize_sale(request):
                 stock = Stock.objects.select_for_update().get(medicament=medicament)
                 
                 if stock.quantite >= item['quantity']:
-                    # Calculer le sous-total pour ce médicament
                     sous_total = Decimal(str(item['quantity'])) * Decimal(str(item['price']))
                     
-                    # Créer le détail de la vente
                     DetailVente.objects.create(
                         id_Vente=vente,
                         id_Medicaments=medicament,
@@ -399,10 +309,7 @@ def finalize_sale(request):
                         sousTotal=sous_total
                     )
                     
-                    # Mettre à jour le total
                     total_vente += sous_total
-                    
-                    # Mettre à jour le stock
                     stock.quantite -= item['quantity']
                     stock.save()
                     
@@ -415,10 +322,8 @@ def finalize_sale(request):
                             type_notification="alerte_stock"
                         )
                 else:
-                    # Annuler la transaction si le stock est insuffisant
                     raise ValidationError(f"Stock insuffisant pour {medicament.nom}")
 
-            # Mettre à jour le total de la vente
             vente.totalVente = total_vente
             vente.save()
             
@@ -430,22 +335,15 @@ def finalize_sale(request):
             })
             
     except ValidationError as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        })
+        return JsonResponse({'status': 'error', 'message': str(e)})
     except json.JSONDecodeError:
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Format de panier invalide'
-        })
+        return JsonResponse({'status': 'error', 'message': 'Format de panier invalide'})
     except Exception as e:
         logger.error(f"Erreur lors de la finalisation de la vente: {str(e)}")
         return JsonResponse({
             'status': 'error',
             'message': 'Une erreur est survenue lors de la finalisation de la vente'
         })
-
 
 @login_required
 def check_auth(request):
@@ -454,22 +352,52 @@ def check_auth(request):
         'username': request.user.username if request.user.is_authenticated else None
     })
 
+# Ordonnance Views
+LigneOrdonnanceFormSet = inlineformset_factory(
+    Ordonnance,
+    LigneOrdonnance,
+    form=LigneOrdonnanceForm,
+    extra=1,
+    can_delete=False,
+    fields=['medicament', 'posologie', 'duree', 'quantite']
+)
+
+class CreateOrdonnanceView(CreateView):
     model = Ordonnance
     form_class = OrdonnanceForm
-    template_name = 'ordonnance/create.html'
+    template_name = 'ventes/ordonnance/create.html'
     success_url = reverse_lazy('liste_ordonnances')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['ligne_ordonnance_formset'] = LigneOrdonnanceFormSet(self.request.POST)
+        else:
+            context['ligne_ordonnance_formset'] = LigneOrdonnanceFormSet()
+        return context
+
     def form_valid(self, form):
-        # Add current user to the prescription
+        context = self.get_context_data()
+        formset = context['ligne_ordonnance_formset']
         form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        
+        if formset.is_valid():
+            self.object = form.save()
+            formset.instance = self.object
+            formset.save()
+            return super().form_valid(form)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
 
 class OrdonnanceDetailView(DetailView):
     model = Ordonnance
-    template_name = 'ordonnance/detail.html'
+    template_name = 'ventes/ordonnance/detail.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['lignes'] = self.object.ligneordonnance_set.all()
-        context['ligne_form'] = LigneOrdonnanceForm(initial={'ordonnance': self.object})
         return context
+
+def liste_ordonnances(request):
+    ordonnances = Ordonnance.objects.all().order_by('-date_prescription')
+    return render(request, 'ventes/ordonnance/list.html', {'ordonnances': ordonnances})
