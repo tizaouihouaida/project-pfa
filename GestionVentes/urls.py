@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.urls import path
+from .views import CreateOrdonnanceView, OrdonnanceDetailView, liste_ordonnances
 
 urlpatterns = [
     path('', views.sales_dashboard, name='sales_dashboard'),  # URL racine pour le dashboard
@@ -14,4 +16,7 @@ urlpatterns = [
     path('search_ventes/', views.search_ventes, name='search_ventes'),
     path('check_stock/', views.check_stock, name='check_stock'),
     path('send_receipt/', views.send_receipt, name='send_receipt'),
+    path('ordonnances/', liste_ordonnances, name='liste_ordonnances'),
+    path('ordonnances/create/', CreateOrdonnanceView.as_view(), name='create_ordonnance'),
+    path('ordonnances/<int:pk>/', OrdonnanceDetailView.as_view(), name='detail_ordonnance'),
 ]

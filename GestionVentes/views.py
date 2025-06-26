@@ -10,6 +10,11 @@ from django.db.models import Sum, DecimalField, IntegerField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import timedelta
+from django.views.generic import DetailView  # Add this import
+from django.views.generic import CreateView  # Also add this if using CreateView
+from django.urls import reverse_lazy
+from .models import Ordonnance, LigneOrdonnance, Medicament  # Ensure all models are imported
+from .forms import OrdonnanceForm, LigneOrdonnanceForm
 from django.db.models import Q
 import json
 import logging
@@ -24,7 +29,9 @@ from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-
+from .models import Ordonnance
+from .forms import OrdonnanceForm, LigneOrdonnanceForm
+from django.urls import reverse_lazy
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +71,31 @@ def pos_index(request):
     medicaments = Medicament.Medicament_disponible()
     return render(request, 'pos/index.html', {'categories': categories, 'medicaments': medicaments, 'username': username})
 
+from django.views.generic import CreateView, DetailView
+from django.urls import reverse_lazy
+from .models import Ordonnance
+from .forms import OrdonnanceForm
+
+class CreateOrdonnanceView(CreateView):
+    model = Ordonnance
+    form_class = OrdonnanceForm
+    template_name = 'ordonnance/create.html'
+    success_url = reverse_lazy('liste_ordonnances')  # Make sure this URL name exists
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+class OrdonnanceDetailView(DetailView):
+    model = Ordonnance
+    template_name = 'ordonnance/detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lignes'] = self.object.ligneordonnance_set.all()
+        context['ligne_form'] = LigneOrdonnanceForm(initial={'ordonnance': self.object})
+        return context
+    
 @login_required
 @role_required('gestionnaire_ventes')
 def pos_view(request):
@@ -421,3 +453,23 @@ def check_auth(request):
         'authenticated': request.user.is_authenticated,
         'username': request.user.username if request.user.is_authenticated else None
     })
+
+    model = Ordonnance
+    form_class = OrdonnanceForm
+    template_name = 'ordonnance/create.html'
+    success_url = reverse_lazy('liste_ordonnances')
+
+    def form_valid(self, form):
+        # Add current user to the prescription
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+class OrdonnanceDetailView(DetailView):
+    model = Ordonnance
+    template_name = 'ordonnance/detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lignes'] = self.object.ligneordonnance_set.all()
+        context['ligne_form'] = LigneOrdonnanceForm(initial={'ordonnance': self.object})
+        return context

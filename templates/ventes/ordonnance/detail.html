@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Ordonnance {{ object.numero }}</h2>
+<p>Médecin: {{ object.medecin }}</p>
+<p>Patient: {{ object.patient }}</p>
+<p>Date: {{ object.date_prescription }}</p>
+
+<h3>Médicaments prescrits</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Médicament</th>
+            <th>Posologie</th>
+            <th>Durée (jours)</th>
+            <th>Quantité</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ligne in lignes %}
+        <tr>
+            <td>{{ ligne.medicament }}</td>
+            <td>{{ ligne.posologie }}</td>
+            <td>{{ ligne.duree }}</td>
+            <td>{{ ligne.quantite }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h4>Ajouter un médicament</h4>
+<form method="post" action="{% url 'ajouter_ligne' object.id %}">
+    {% csrf_token %}
+    {{ ligne_form.as_p }}
+    <button type="submit" class="btn btn-primary">Ajouter</button>
+</form>
+{% endblock %}
