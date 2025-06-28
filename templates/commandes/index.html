@@ -97,7 +97,7 @@
       </div>
       
       <button
-        onclick="openCreateModal()"
+        id="createCommandeBtn"
         class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,19 +211,19 @@
 </div>
 
 <!-- Create Commande Modal -->
-<div id="createModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+<div id="createCommandeModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl animate__animated animate__fadeIn">
     <div class="p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold text-gray-800 dark:text-white">Nouvelle Commande</h2>
-        <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+        <button id="closecreateCommandeModal" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
       
-      <form action="{% url 'commandes_create' %}" method="post">
+      <form id="createCommandeForm" class="space-y-4">
         {% csrf_token %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -291,7 +291,7 @@
         <div class="flex justify-end space-x-3 mt-6">
           <button
             type="button"
-            onclick="closeCreateModal()"
+            id="closecreateCommandeModal"
             class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Annuler
@@ -321,7 +321,7 @@
         </button>
       </div>
       
-      <form id="updateForm" method="post">
+      <form id="updateForm" class="space-y-4">
         {% csrf_token %}
         <div class="space-y-4">
           <div>
@@ -440,11 +440,20 @@
             name="statut"
             id="new_status"
             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            required
           >
+            <option value="">Sélectionnez un statut</option>
             <option value="en_attente">En attente</option>
             <option value="en_cours">En cours</option>
             <option value="livree">Livrée</option>
           </select>
+        </div>
+        
+        <div class="mb-4 p-4 bg-yellow-50 dark:bg-gray-700 rounded-lg">
+          <h3 class="font-medium text-yellow-800 dark:text-yellow-200">Informations</h3>
+          <p class="text-sm text-yellow-700 dark:text-yellow-300" id="statusChangeInfo">
+            Le changement de statut peut affecter les niveaux de stock.
+          </p>
         </div>
         
         <div class="flex justify-end space-x-3">
@@ -459,7 +468,7 @@
             type="submit"
             class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
-            Mettre à jour
+            Confirmer
           </button>
         </div>
       </form>
@@ -481,11 +490,78 @@
     {% endfor %}
   ];
 
+  // Données des commandes pour la modification
+  let commandesData = {
+    {% for commande in commandes %}
+      {{ commande.pk }}: {
+        medicament_id: {{ commande.medicament.id_Medicament }},
+        fournisseur_id: {{ commande.fournisseur.id }},
+        quantite: {{ commande.quantite_commande }},
+        statut: "{{ commande.statut }}",
+        medicament_nom: "{{ commande.medicament.nom }}",
+        fournisseur_nom: "{{ commande.fournisseur.nom }}"
+      },
+    {% endfor %}
+  };
+
+  // Fonction pour afficher les notifications
+  function showNotification(message, type) {
+    const notificationArea = document.getElementById('notificationArea');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    
+    const alertHTML = `
+        <div class="alert ${alertClass} animate__animated animate__fadeInRight mb-3 p-4 rounded-lg shadow-lg flex justify-between items-center">
+            <span>${message}</span>
+            <button onclick="this.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+        </div>
+    `;
+    
+    notificationArea.innerHTML = alertHTML;
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        const alert = notificationArea.querySelector('.alert');
+        if (alert) {
+            alert.classList.add('animate__fadeOutRight');
+            setTimeout(() => alert.remove(), 500);
+        }
+    }, 5000);
+  }
+
+  // Gestion des modals - Ouverture du modal de création
+  document.getElementById('createCommandeBtn').addEventListener('click', () => {
+    document.getElementById('createCommandeModal').classList.remove('hidden');
+  });
+
+  // Gestion des boutons de fermeture du modal de création
+  document.querySelectorAll('#closecreateCommandeModal').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closeCreateCommandeModal();
+    });
+  });
+
+  // Fonction pour fermer le modal de création et réinitialiser
+  function closeCreateCommandeModal() {
+    document.getElementById('createCommandeModal').classList.add('hidden');
+    const form = document.getElementById('createCommandeForm');
+    form.reset();
+    document.getElementById('medicament_search').value = '';
+    document.getElementById('medicament_select').value = '';
+    document.getElementById('fournisseur_search').value = '';
+    document.getElementById('fournisseur_select').value = '';
+    document.getElementById('medicament_results').classList.add('hidden');
+    document.getElementById('fournisseur_results').classList.add('hidden');
+  }
+
   // Fonction pour configurer la recherche
   function setupSearch(searchId, hiddenInputId, resultsId, items) {
     const searchInput = document.getElementById(searchId);
     const hiddenInput = document.getElementById(hiddenInputId);
     const resultsDiv = document.getElementById(resultsId);
+    
+    if (!searchInput || !hiddenInput || !resultsDiv) {
+      return;
+    }
     
     searchInput.addEventListener('input', function(e) {
       const searchValue = e.target.value.trim().toLowerCase();
@@ -530,41 +606,35 @@
     });
   }
 
-  // Fonctions pour les modals
-  function openCreateModal() {
-    document.getElementById('createModal').classList.remove('hidden');
-    document.getElementById('medicament_search').value = '';
-    document.getElementById('medicament_select').value = '';
-    document.getElementById('fournisseur_search').value = '';
-    document.getElementById('fournisseur_select').value = '';
-    document.getElementById('quantite_commande').value = '';
-    document.getElementById('statut').value = 'en_attente';
-  }
-
-  function closeCreateModal() {
-    document.getElementById('createModal').classList.add('hidden');
-  }
-
+  // Fonction pour ouvrir le modal de modification
   function openUpdateModal(pk) {
-    // Récupérer les données de la commande (simulé ici)
-    const commande = {
-      medicament_id: 1,
-      fournisseur_id: 1,
-      quantite: 10
-    };
+    const commande = commandesData[pk];
     
-document.getElementById('updateForm').action = `/stocks/commandes/update/${pk}/`;
+    if (!commande) {
+      showNotification('Erreur: Données de commande introuvables', 'error');
+      return;
+    }
+    
+    // Définir l'action du formulaire
+    document.getElementById('updateForm').action = `/stocks/commandes/update/${pk}/`;
+    
+    // Remplir les champs avec les bonnes valeurs
     document.getElementById('update_medicament').value = commande.medicament_id;
     document.getElementById('update_fournisseur').value = commande.fournisseur_id;
     document.getElementById('update_quantite').value = commande.quantite;
     
+    // Ouvrir le modal
     document.getElementById('updateModal').classList.remove('hidden');
+    
+    console.log('Commande à modifier:', commande);
   }
 
   function closeUpdateModal() {
     document.getElementById('updateModal').classList.add('hidden');
+    document.getElementById('updateForm').reset();
   }
 
+  // Fonctions pour le modal de suppression
   function openDeleteModal(pk) {
     document.getElementById('deleteForm').action = `/stocks/commandes/delete/${pk}/`;
     document.getElementById('deleteModal').classList.remove('hidden');
@@ -574,13 +644,105 @@ document.getElementById('updateForm').action = `/stocks/commandes/update/${pk}/`
     document.getElementById('deleteModal').classList.add('hidden');
   }
 
-  function openChangeStatusModal(pk) {
-    document.getElementById('changeStatusForm').action = `/stocks/commandes/change_status/${pk}/`;
+  // Fonction pour ouvrir le modal de changement de statut
+function openChangeStatusModal(pk) {
+    const commande = commandesData[pk];
+    
+    if (!commande) {
+        showNotification('Erreur: Données de commande introuvables', 'error');
+        return;
+    }
+    
+    // Définir l'action du formulaire
+    const form = document.getElementById('changeStatusForm');
+    form.action = `/stocks/commandes/change_status/${pk}/`;
+    
+    // Pré-sélectionner le statut actuel et désactiver l'option
+    const statusSelect = document.getElementById('new_status');
+    statusSelect.value = commande.statut;
+    
+    // Mettre à jour les informations contextuelles
+    updateStatusChangeInfo(commande.statut, commande.quantite, commande.medicament_nom);
+    
+    // Ouvrir le modal
     document.getElementById('changeStatusModal').classList.remove('hidden');
-  }
+    
+    // Écouter les changements de sélection
+    statusSelect.addEventListener('change', function() {
+        updateStatusChangeInfo(this.value, commande.quantite, commande.medicament_nom);
+    });
+}
+
+function updateStatusChangeInfo(newStatus, quantite, medicamentNom) {
+    const infoElement = document.getElementById('statusChangeInfo');
+    let infoText = '';
+    
+    switch(newStatus) {
+        case 'livree':
+            infoText = `En passant à "Livrée", ${quantite} unités de ${medicamentNom} seront ajoutées au stock.`;
+            break;
+        case 'en_attente':
+            infoText = `En passant à "En attente", ${quantite} unités de ${medicamentNom} seront retirées du stock si actuellement livrée.`;
+            break;
+        default:
+            infoText = 'Le changement de statut n\'affectera pas les niveaux de stock.';
+    }
+    
+    infoElement.textContent = infoText;
+}
+
+function closeChangeStatusModal() {
+    document.getElementById('changeStatusModal').classList.add('hidden');
+    // Réinitialiser le formulaire
+    document.getElementById('changeStatusForm').reset();
+}
+
+// Gestion de la soumission du formulaire de changement de statut
+document.getElementById('changeStatusForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const action = this.action;
+    const newStatus = formData.get('statut');
+    
+    if (!newStatus) {
+        showNotification('Veuillez sélectionner un statut', 'error');
+        return;
+    }
+    
+    fetch(action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest' // Pour gérer les réponses AJAX
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            closeChangeStatusModal();
+            showNotification(data.message || 'Statut modifié avec succès', 'success');
+            // Recharger après un court délai
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(data.error || 'Erreur lors du changement de statut', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showNotification('Erreur de connexion: ' + error.message, 'error');
+    });
+});
 
   function closeChangeStatusModal() {
     document.getElementById('changeStatusModal').classList.add('hidden');
+    document.getElementById('changeStatusForm').reset();
   }
 
   // Fonction de recherche pour le tableau
@@ -602,25 +764,180 @@ document.getElementById('updateForm').action = `/stocks/commandes/update/${pk}/`
     });
   });
 
-  // Initialisation au chargement
+  // Gestion de la soumission du formulaire de création de commande
+  document.getElementById('createCommandeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const medicamentId = document.getElementById('medicament_select').value;
+    const fournisseurId = document.getElementById('fournisseur_select').value;
+    const quantite = document.getElementById('quantite_commande').value;
+    
+    if (!medicamentId || !fournisseurId || !quantite) {
+      showNotification('Veuillez remplir tous les champs obligatoires', 'error');
+      return;
+    }
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "commandes_create" %}', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if(data.success) {
+        closeCreateCommandeModal();
+        showNotification('Commande créée avec succès', 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showNotification('Erreur: ' + (data.error || 'Échec de la création'), 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+      showNotification('Erreur de connexion: ' + error.message, 'error');
+    });
+  });
+
+  // GESTION CORRIGÉE de la soumission du formulaire de modification
+  document.getElementById('updateForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const action = this.action;
+    
+    if (!action) {
+      showNotification('Erreur: Action du formulaire non définie', 'error');
+      return;
+    }
+    
+    console.log('Envoi de la requête de modification vers:', action);
+    console.log('Données du formulaire:', Object.fromEntries(formData));
+    
+    fetch(action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      console.log('Statut de la réponse:', response.status);
+      console.log('Headers de la réponse:', response.headers);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Vérifier le type de contenu
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('La réponse n\'est pas du JSON valide');
+      }
+      
+      return response.json();
+    })
+    .then(data => {
+      console.log('Données reçues:', data);
+      
+      if(data.success) {
+        closeUpdateModal();
+        showNotification('Commande modifiée avec succès', 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showNotification('Erreur: ' + (data.error || 'Échec de la modification'), 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur complète:', error);
+      showNotification('Erreur de connexion: ' + error.message, 'error');
+    });
+  });
+
+  // Gestion de la soumission du formulaire de changement de statut
+  document.getElementById('changeStatusForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const action = this.action;
+    
+    if (!action) {
+      showNotification('Erreur: Action du formulaire non définie', 'error');
+      return;
+    }
+    
+    fetch(action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if(data.success) {
+        closeChangeStatusModal();
+        showNotification('Statut modifié avec succès', 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showNotification('Erreur: ' + (data.error || 'Échec du changement de statut'), 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+      showNotification('Erreur de connexion: ' + error.message, 'error');
+    });
+  });
+
+  // Initialisation au chargement de la page
   document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser la recherche pour les médicaments et fournisseurs
     setupSearch('medicament_search', 'medicament_select', 'medicament_results', medicaments);
     setupSearch('fournisseur_search', 'fournisseur_select', 'fournisseur_results', fournisseurs);
     
     // Fermer les modals quand on clique en dehors
-    const modals = ['createModal', 'updateModal', 'deleteModal', 'changeStatusModal'];
+    const modals = ['createCommandeModal', 'updateModal', 'deleteModal', 'changeStatusModal'];
     modals.forEach(modalId => {
       const modal = document.getElementById(modalId);
       if (modal) {
         modal.addEventListener('click', function(e) {
           if (e.target === this) {
-            this.classList.add('hidden');
+            switch(modalId) {
+              case 'createCommandeModal':
+                closeCreateCommandeModal();
+                break;
+              case 'updateModal':
+                closeUpdateModal();
+                break;
+              case 'deleteModal':
+                closeDeleteModal();
+                break;
+              case 'changeStatusModal':
+                closeChangeStatusModal();
+                break;
+            }
           }
         });
       }
     });
     
-    // Auto-close notifications
+    // Auto-close des notifications existantes
     setTimeout(() => {
       const alerts = document.querySelectorAll('.alert');
       alerts.forEach(alert => {
@@ -628,6 +945,33 @@ document.getElementById('updateForm').action = `/stocks/commandes/update/${pk}/`
         setTimeout(() => alert.remove(), 500);
       });
     }, 5000);
+
+    // Gestion du clavier (Escape pour fermer les modals)
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (!document.getElementById('createCommandeModal').classList.contains('hidden')) {
+          closeCreateCommandeModal();
+        }
+        if (!document.getElementById('updateModal').classList.contains('hidden')) {
+          closeUpdateModal();
+        }
+        if (!document.getElementById('deleteModal').classList.contains('hidden')) {
+          closeDeleteModal();
+        }
+        if (!document.getElementById('changeStatusModal').classList.contains('hidden')) {
+          closeChangeStatusModal();
+        }
+      }
+    });
+
+    // Debug
+    console.log('Données des commandes:', commandesData);
   });
+
+  // Fonction utilitaire pour debug
+  function debugCommande(pk) {
+    console.log('Commande ID:', pk);
+    console.log('Données:', commandesData[pk]);
+  }
 </script>
 {% endblock %}

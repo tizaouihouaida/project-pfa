@@ -456,109 +456,289 @@ def get_stock_for_update(request, id):
     except Exception as e:
         print(f"Error: {str(e)}")  # Debug log
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
-@login_required
-@role_required('gestionnaire_stocks')
-def commandes_index(request):
-    commandes_list = Commande.objects.all()
-    username = request.user.username
+# @login_required
+# @role_required('gestionnaire_stocks')
+# def commandes_index(request):
+#     commandes_list = Commande.objects.all()
+#     username = request.user.username
     
-    paginator = Paginator(commandes_list, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+#     paginator = Paginator(commandes_list, 10)
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
 
-    medicaments = Medicament.objects.filter(est_cachee=False)
-    fournisseurs = Fournisseur.objects.all()
+#     medicaments = Medicament.objects.filter(est_cachee=False)
+#     fournisseurs = Fournisseur.objects.all()
     
-    return render(request, 'commandes/index.html', {
-        'commandes': page_obj,
-        'medicaments': medicaments,
-        'fournisseurs': fournisseurs,
-        'username': username
-    })
+#     return render(request, 'commandes/index.html', {
+#         'commandes': page_obj,
+#         'medicaments': medicaments,
+#         'fournisseurs': fournisseurs,
+#         'username': username
+#     })
+# @login_required
+# @role_required('gestionnaire_stocks')
+# @csrf_protect
+# def commandes_create(request):
+#     if request.method == 'POST':
+#         form = CommandeForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('commandes_index')
+#     else:
+#         form = CommandeForm()
+
+#     medicaments = Medicament.objects.filter(est_cachee=False)
+#     fournisseurs = Fournisseur.objects.all()
+#     return render(request, 'commandes_index', {
+#         'form': form,
+#         'medicaments': medicaments,
+#         'fournisseurs': fournisseurs
+#     })
+# from django.shortcuts import render, get_object_or_404, redirect
+# from .models import Commande, Medicament, Fournisseur
+
+# def commandes_update(request, pk):
+#     commande = get_object_or_404(Commande, pk=pk)
+
+#     if request.method == 'POST':
+#         medicament_id = request.POST.get('medicament')
+#         fournisseur_id = request.POST.get('fournisseur')
+#         quantite = request.POST.get('quantite_commande')
+
+#         commande.medicament_id = medicament_id
+#         commande.fournisseur_id = fournisseur_id
+#         commande.quantite_commande = quantite
+#         commande.save()
+#         return redirect('commandes_index')  # ou l'URL de ta liste de commandes
+
+#     medicaments = Medicament.objects.all()
+#     fournisseurs = Fournisseur.objects.all()
+
+#     return render(request, 'commande_update.html', {
+#         'commande': commande,
+#         'medicaments': medicaments,
+#         'fournisseurs': fournisseurs
+#     })
+
+# @login_required
+# @role_required('gestionnaire_stocks')
+# @require_POST
+# def commandes_delete(request, pk):
+#     commande = get_object_or_404(Commande, pk=pk)
+#     commande.supprimerCommande()
+#     return redirect('commandes_index')
+# @login_required
+# @role_required('gestionnaire_stocks')
+# @require_POST
+# def commandes_change_status(request, pk):
+#     try:
+#         commande = get_object_or_404(Commande, pk=pk)
+#         if commande.statut == 'en_attente':
+#             commande.livrer_commande()
+#         else:
+#             # Si on veut revenir à "en_attente", il faut retirer la quantité du stock
+#             stock = Stock.objects.filter(medicament=commande.medicament).first()
+#             if stock:
+#                 if stock.quantite >= commande.quantite_commande:
+#                     stock.quantite -= commande.quantite_commande
+#                     stock.save()
+#                     commande.statut = 'en_attente'
+#                     commande.save()
+#                 else:
+#                     messages.error(request, "Impossible de changer le statut : quantité insuffisante en stock.")
+#                     return redirect('commandes_index')
+#             else:
+#                 messages.error(request, "Impossible de changer le statut : aucun stock trouvé")
+#                 return redirect('commandes_index')
+        
+#         messages.success(request, "Le statut de la commande a été mis à jour avec succès")
+#         return redirect('commandes_index')
+    
+#     except Exception as e:
+#         messages.error(request, f"Une erreur est survenue : {str(e)}")
+#         return redirect('commandes_index')
+    
+
+
 @login_required
 @role_required('gestionnaire_stocks')
 @csrf_protect
 def commandes_create(request):
-    if request.method == 'POST':
+    try:
         form = CommandeForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('commandes_index')
-    else:
-        form = CommandeForm()
+            commande = form.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Commande créée avec succès!',
+                'commande_id': commande.id
+            })
+        else:
+            return JsonResponse({
+                'success': False, 
+                'errors': form.errors
+            }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
-    medicaments = Medicament.objects.filter(est_cachee=False)
-    fournisseurs = Fournisseur.objects.all()
-    return render(request, 'commandes/create.html', {
-        'form': form,
-        'medicaments': medicaments,
-        'fournisseurs': fournisseurs
-    })
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Commande, Medicament, Fournisseur
-
+@login_required
+@role_required('gestionnaire_stocks')
 def commandes_update(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-
+    
     if request.method == 'POST':
-        medicament_id = request.POST.get('medicament')
-        fournisseur_id = request.POST.get('fournisseur')
-        quantite = request.POST.get('quantite_commande')
-
-        commande.medicament_id = medicament_id
-        commande.fournisseur_id = fournisseur_id
-        commande.quantite_commande = quantite
-        commande.save()
-        return redirect('commandes_index')  # ou l'URL de ta liste de commandes
-
-    medicaments = Medicament.objects.all()
+        # Pour les requêtes AJAX
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            try:
+                # Récupérer les données du POST
+                medicament_id = request.POST.get('medicament')
+                fournisseur_id = request.POST.get('fournisseur')
+                quantite_commande = request.POST.get('quantite_commande')
+                
+                # Validation basique
+                if not all([medicament_id, fournisseur_id, quantite_commande]):
+                    return JsonResponse({
+                        'success': False, 
+                        'error': 'Tous les champs sont obligatoires'
+                    }, status=400)
+                
+                # Mettre à jour la commande
+                commande.medicament = get_object_or_404(Medicament, id_Medicament=medicament_id)
+                commande.fournisseur = get_object_or_404(Fournisseur, id=fournisseur_id)
+                commande.quantite_commande = float(quantite_commande)
+                commande.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Commande modifiée avec succès',
+                    'commande': {
+                        'id': commande.pk,
+                        'medicament': commande.medicament.nom,
+                        'fournisseur': commande.fournisseur.nom,
+                        'quantite_commande': float(commande.quantite_commande),
+                        'statut': commande.statut
+                    }
+                })
+                
+            except Medicament.DoesNotExist:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Médicament introuvable'
+                }, status=400)
+            except Fournisseur.DoesNotExist:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Fournisseur introuvable'
+                }, status=400)
+            except ValueError:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Quantité invalide'
+                }, status=400)
+            except Exception as e:
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Erreur lors de la modification: {str(e)}'
+                }, status=500)
+        
+        # Pour les requêtes POST normales (formulaire classique)
+        else:
+            form = CommandeForm(request.POST, instance=commande)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Commande modifiée avec succès')
+                return redirect('commandes_index')
+    
+    # Pour les requêtes GET
+    medicaments = Medicament.objects.filter(est_cachee=False)
     fournisseurs = Fournisseur.objects.all()
-
-    return render(request, 'commande_update.html', {
+    return render(request, 'commandes/index.html', {
         'commande': commande,
         'medicaments': medicaments,
         'fournisseurs': fournisseurs
     })
-
+    
 @login_required
 @role_required('gestionnaire_stocks')
 @require_POST
 def commandes_delete(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-    commande.supprimerCommande()
+    commande.delete()
     return redirect('commandes_index')
+
+
 @login_required
 @role_required('gestionnaire_stocks')
 @require_POST
 def commandes_change_status(request, pk):
     try:
         commande = get_object_or_404(Commande, pk=pk)
-        if commande.statut == 'en_attente':
-            commande.livrer_commande()
-        else:
-            # Si on veut revenir à "en_attente", il faut retirer la quantité du stock
-            stock = Stock.objects.filter(medicament=commande.medicament).first()
-            if stock:
-                if stock.quantite >= commande.quantite_commande:
-                    stock.quantite -= commande.quantite_commande
-                    stock.save()
-                    commande.statut = 'en_attente'
-                    commande.save()
-                else:
-                    messages.error(request, "Impossible de changer le statut : quantité insuffisante en stock.")
-                    return redirect('commandes_index')
-            else:
-                messages.error(request, "Impossible de changer le statut : aucun stock trouvé")
-                return redirect('commandes_index')
+        new_status = request.POST.get('statut')
         
-        messages.success(request, "Le statut de la commande a été mis à jour avec succès")
+        if not new_status:
+            messages.error(request, "Aucun statut sélectionné")
+            return redirect('commandes_index')
+            
+        # Vérifier si le statut est valide
+        if new_status not in ['en_attente', 'en_cours', 'livree']:
+            messages.error(request, "Statut invalide")
+            return redirect('commandes_index')
+            
+        # Si le statut ne change pas
+        if commande.statut == new_status:
+            messages.warning(request, "Le statut est déjà à cette valeur")
+            return redirect('commandes_index')
+            
+        # Logique de changement de statut
+        if new_status == 'livree':
+            # Vérifier le stock avant de livrer
+            stock = Stock.objects.filter(medicament=commande.medicament).first()
+            if not stock:
+                messages.error(request, "Aucun stock trouvé pour ce médicament")
+                return redirect('commandes_index')
+                
+            if stock.quantite < commande.quantite_commande:
+                messages.error(request, "Stock insuffisant pour livrer cette commande")
+                return redirect('commandes_index')
+                
+            # Livrer la commande
+            stock.quantite += commande.quantite_commande
+            stock.save()
+            commande.statut = 'livree'
+            commande.save()
+            
+        elif new_status == 'en_attente' and commande.statut == 'livree':
+            # Retirer la quantité du stock si on revient à "en_attente"
+            stock = Stock.objects.filter(medicament=commande.medicament).first()
+            if not stock:
+                messages.error(request, "Aucun stock trouvé pour ce médicament")
+                return redirect('commandes_index')
+                
+            if stock.quantite < commande.quantite_commande:
+                messages.error(request, "Stock insuffisant pour annuler la livraison")
+                return redirect('commandes_index')
+                
+            stock.quantite -= commande.quantite_commande
+            stock.save()
+            commande.statut = 'en_attente'
+            commande.save()
+            
+        else:
+            # Pour les autres changements (en_cours, etc.)
+            commande.statut = new_status
+            commande.save()
+            
+        messages.success(request, f"Statut de la commande mis à jour: {commande.get_statut_display()}")
         return redirect('commandes_index')
-    
+        
     except Exception as e:
-        messages.error(request, f"Une erreur est survenue : {str(e)}")
+        messages.error(request, f"Erreur lors du changement de statut: {str(e)}")
         return redirect('commandes_index')
     
-
+    
 @login_required
 @role_required('gestionnaire_stocks')
 def notifications_index(request):
@@ -670,4 +850,23 @@ def ventes_index(request):
     return render(request, 'ventes/index.html', {
         'medicaments': medicaments,
         'username': request.user.username,
+    })
+@login_required
+@role_required('gestionnaire_stocks')
+def commandes_index(request):
+    commandes_list = Commande.objects.all()
+    username = request.user.username
+    
+    paginator = Paginator(commandes_list, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    medicaments = Medicament.objects.filter(est_cachee=False)
+    fournisseurs = Fournisseur.objects.all()
+    
+    return render(request, 'commandes/index.html', {
+        'commandes': page_obj,
+        'medicaments': medicaments,
+        'fournisseurs': fournisseurs,
+        'username': username
     })
