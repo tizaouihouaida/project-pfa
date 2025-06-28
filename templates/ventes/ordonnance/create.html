@@ -1,0 +1,130 @@
+{% extends 'layout/base_vente.html' %}
+
+{% block title %}Nouvelle Ordonnance{% endblock %}
+
+{% block main_content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Nouvelle Ordonnance</h2>
+    </div>
+    <div class="card-body">
+        <form method="post" id="ordonnance-form">
+            {% csrf_token %}
+            
+            <!-- Basic Prescription Info -->
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Numéro:</label>
+                <div class="col-sm-10">
+                    {{ form.numero }}
+                </div>
+            </div>
+            
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Médecin:</label>
+                <div class="col-sm-10">
+                    {{ form.medecin }}
+                </div>
+            </div>
+            
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Patient:</label>
+                <div class="col-sm-10">
+                    {{ form.patient }}
+                </div>
+            </div>
+            
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Date prescription:</label>
+                <div class="col-sm-10">
+                    {{ form.date_prescription }}
+                </div>
+            </div>
+            
+            <!-- Medications Section -->
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Médicaments Prescrits</h4>
+                    <button type="button" class="btn btn-sm btn-success" id="add-medication">
+                        <i class="fas fa-plus"></i> Ajouter Médicament
+                    </button>
+                </div>
+                <div class="card-body" id="medications-container">
+                    {{ ligne_ordonnance_formset.management_form }}
+                    {% for form in ligne_ordonnance_formset %}
+                    <div class="medication-form row mb-3">
+                        <div class="col-md-4">
+                            <label>Médicament</label>
+                            {{ form.medicament }}
+                        </div>
+                        <div class="col-md-2">
+                            <label>Quantité</label>
+                            {{ form.quantite }}
+                        </div>
+                        <div class="col-md-4">
+                            <label>Posologie</label>
+                            {{ form.posologie }}
+                        </div>
+                        <div class="col-md-2">
+                            <label>Durée (jours)</label>
+                            {{ form.duree }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Notes Section -->
+            <div class="form-group row mt-4">
+                <label class="col-sm-2 col-form-label">Notes:</label>
+                <div class="col-sm-10">
+                    {{ form.notes }}
+                </div>
+            </div>
+            
+            <div class="form-group row mt-4">
+                <div class="col-sm-10 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <a href="{% url 'liste_ordonnances' %}" class="btn btn-secondary">Annuler</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add medication form
+    const addButton = document.getElementById('add-medication');
+    if (addButton) {
+        addButton.addEventListener('click', function() {
+            const formCount = document.getElementById('id_ligneordonnance_set-TOTAL_FORMS');
+            const container = document.getElementById('medications-container');
+            const emptyForm = container.querySelector('.medication-form').cloneNode(true);
+            const newIndex = parseInt(formCount.value);
+            
+            // Update all field names/ids with new index
+            emptyForm.innerHTML = emptyForm.innerHTML.replace(/ligneordonnance_set-(\d+)-/g, `ligneordonnance_set-${newIndex}-`);
+            emptyForm.innerHTML = emptyForm.innerHTML.replace(/id_ligneordonnance_set-(\d+)-/g, `id_ligneordonnance_set-${newIndex}-`);
+            
+            // Clear values
+            emptyForm.querySelectorAll('input, select').forEach(field => {
+                if (field.type !== 'hidden') field.value = '';
+                field.required = false;  // Make new fields not required
+            });
+            
+            container.appendChild(emptyForm);
+            formCount.value = newIndex + 1;
+        });
+    }
+});
+</script>
+
+<style>
+.medication-form {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+</style>
+{% endblock %}

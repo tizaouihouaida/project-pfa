@@ -18,6 +18,28 @@
       href="{% static 'assets/images/logos/logo2.png' %}"
     />
   </head>
+  <!-- Add this just before </body> in base.html -->
+<script>
+// Simple popup notification
+function showCartPopup(message) {
+    const popup = document.createElement('div');
+    popup.style.position = 'fixed';
+    popup.style.bottom = '20px';
+    popup.style.right = '20px';
+    popup.style.backgroundColor = '#28a745';
+    popup.style.color = 'white';
+    popup.style.padding = '10px 20px';
+    popup.style.borderRadius = '5px';
+    popup.style.zIndex = '9999';
+    popup.textContent = message;
+    
+    document.body.appendChild(popup);
+    
+    setTimeout(() => {
+        popup.remove();
+    }, 3000);
+}
+</script>
   <body>
     <div
       class="page-wrapper"

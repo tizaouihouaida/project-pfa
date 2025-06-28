@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-4">Médicaments disponibles</h1>
+
+<div class="search-box mb-4">
+    <form method="GET">
+        <input type="text" name="q" value="{{ query }}" placeholder="Rechercher un médicament..." class="form-control">
+    </form>
+</div>
+
+<div class="row">
+    {% for product in products %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text">
+                    <strong>Prix:</strong> {{ product.price }}.00<br>
+                    <strong>Stock:</strong> {{ product.quantity }}
+                </p>
+            </div>
+            <div class="card-footer bg-white">
+                <button class="btn btn-primary add-to-cart" 
+                        data-product-id="{{ product.id }}"
+                        {% if product.quantity == 0 %}disabled{% endif %}>
+                    Ajouter au panier
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="cartToast" class="toast align-items-center text-white bg-success" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize toast
+    const cartToast = new bootstrap.Toast(document.getElementById('cartToast'));
+    
+    // Add to cart with AJAX
+    $('.add-to-cart').click(function() {
+        const productId = $(this).data('product-id');
+        
+        $.ajax({
+            url: `/add/${productId}/`,
+            type: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                $('#toast-message').text(response.message);
+                cartToast.show();
+                // Update cart count in navbar
+                $('.cart-count').text(response.cart_count);
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                $('#toast-message').text(response.message);
+                cartToast.show();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
